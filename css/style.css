@@ -363,10 +363,14 @@ body.dashboard {
 }
 
 .section-card .section-title {
-  font-size: 18px;
+  display: inline-block;
+  font-size: 16px;
   font-weight: 900;
-  color: var(--blue-900);
-  margin: 0 0 4px;
+  color: var(--white);
+  background: var(--blue-900);
+  padding: 8px 16px;
+  border-radius: 10px;
+  margin: 0 0 10px;
 }
 
 .section-card .section-hint {
@@ -976,10 +980,14 @@ body.landing {
 }
 
 .landing-section h2 {
-  font-size: 22px;
+  display: inline-block;
+  font-size: 18px;
   font-weight: 900;
-  color: var(--blue-900);
-  margin: 0 0 6px;
+  color: var(--white);
+  background: var(--blue-900);
+  padding: 8px 18px;
+  border-radius: 10px;
+  margin: 0 0 10px;
 }
 
 .landing-section .section-hint { margin-bottom: 20px; }
@@ -1057,4 +1065,40 @@ body.landing {
   padding: 24px 20px 40px;
   color: var(--gray-500);
   font-size: 13.5px;
+}
+
+/* ============================================
+   تحسينات لشاشات الهواتف
+   ============================================ */
+@media (max-width: 480px) {
+  /* أزرار تسجيل الدخول/الخروج أصغر تناسب الهاتف */
+  .btn-outline {
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+
+  .landing-nav .btn-primary {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  /* عنوان "لوحة العيادة" ونحوها أصغر على الهاتف */
+  .dashboard-header .header-titles .brand-title {
+    font-size: 15px;
+  }
+
+  .dashboard-header .header-titles .brand-subtitle {
+    font-size: 12px;
+  }
+
+  .dashboard-header .header-brand .brand-mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .notif-bell {
+    width: 38px;
+    height: 38px;
+    font-size: 17px;
+  }
 }

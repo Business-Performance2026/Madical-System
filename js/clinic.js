@@ -194,31 +194,53 @@ function renderBookingsActionTable(bookings) {
           </tr>
         </thead>
         <tbody>
-          ${bookings.map((b) => `
-            <tr>
-              <td class="cell-name">${escapeHtml(b.patientName)}</td>
-              <td class="cell-sub">${bookingNumber(b.id)}</td>
-              <td>${escapeHtml(b.doctorName)}</td>
-              <td class="cell-sub">${b.date}</td>
-              <td class="cell-sub">${b.time}</td>
-              <td>
-                ${b.patientPhone
-                  ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">💬 واتساب</a>`
-                  : '<span class="cell-sub">—</span>'}
-              </td>
-              <td>
-                <div class="row-actions">
-                  <button class="btn-xs approve" data-action="accept" data-id="${b.id}">قبول</button>
-                  <button class="btn-xs reject" data-action="reject" data-id="${b.id}">رفض</button>
-                  <button class="btn-xs toggle" data-action="edit" data-id="${b.id}">✏️</button>
-                  <button class="btn-xs delete" data-action="delete" data-id="${b.id}">🗑️</button>
-                </div>
-              </td>
-            </tr>
-          `).join('')}
+          ${bookings.map((b) => (b.id === editingBookingId ? renderBookingEditRow(b, 7) : renderBookingRow(b))).join('')}
         </tbody>
       </table>
     </div>
+  `;
+}
+
+function renderBookingRow(b) {
+  return `
+    <tr>
+      <td class="cell-name">${escapeHtml(b.patientName)}</td>
+      <td class="cell-sub">${bookingNumber(b.id)}</td>
+      <td>${escapeHtml(b.doctorName)}</td>
+      <td class="cell-sub">${b.date}</td>
+      <td class="cell-sub">${b.time}</td>
+      <td>
+        ${b.patientPhone
+          ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">💬 واتساب</a>`
+          : '<span class="cell-sub">—</span>'}
+      </td>
+      <td>
+        <div class="row-actions">
+          <button class="btn-xs approve" data-action="accept" data-id="${b.id}">قبول</button>
+          <button class="btn-xs reject" data-action="reject" data-id="${b.id}">رفض</button>
+          <button class="btn-xs toggle" data-action="edit" data-id="${b.id}">✏️</button>
+          <button class="btn-xs delete" data-action="delete" data-id="${b.id}">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+// صف تعديل شامل: اسم المريض + جواله + التاريخ + الوقت مع بعض
+function renderBookingEditRow(b, colspan) {
+  return `
+    <tr>
+      <td colspan="${colspan}">
+        <div class="mini-form">
+          <input type="text" class="edit-booking-name" placeholder="اسم المريض" value="${escapeHtml(b.patientName)}">
+          <input type="tel" class="edit-booking-phone" placeholder="رقم الجوال" value="${escapeHtml(b.patientPhone || '')}">
+          <input type="date" class="edit-booking-date" value="${b.date}">
+          <input type="time" class="edit-booking-time" value="${b.time}">
+          <button type="button" class="btn-xs approve" data-action="save-booking-edit" data-id="${b.id}">💾 حفظ</button>
+          <button type="button" class="btn-xs delete" data-action="cancel-booking-edit" data-id="${b.id}">إلغاء</button>
+        </div>
+      </td>
+    </tr>
   `;
 }
 
@@ -230,7 +252,13 @@ function bindBookingsActionEvents(wrap) {
     btn.addEventListener('click', () => respondToBooking(btn.dataset.id, 'rejected'));
   });
   wrap.querySelectorAll('[data-action="edit"]').forEach((btn) => {
-    btn.addEventListener('click', () => editBooking(btn.dataset.id));
+    btn.addEventListener('click', () => startBookingEdit(btn.dataset.id));
+  });
+  wrap.querySelectorAll('[data-action="cancel-booking-edit"]').forEach((btn) => {
+    btn.addEventListener('click', cancelBookingEdit);
+  });
+  wrap.querySelectorAll('[data-action="save-booking-edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => saveBookingEdit(btn.dataset.id));
   });
   wrap.querySelectorAll('[data-action="delete"]').forEach((btn) => {
     btn.addEventListener('click', () => deleteBooking(btn.dataset.id));
@@ -262,25 +290,35 @@ function buildLockId(doctorId, date, time) {
 }
 
 // تعديل موعد الحجز (تاريخ/وقت) - لو كان مقبول، ننقل قفل الوقت للموعد الجديد تلقائياً
-async function editBooking(bookingId) {
-  const booking = cachedBookings.find((b) => b.id === bookingId);
-  if (!booking) return;
+let editingBookingId = null;
 
-  const newDate = prompt('التاريخ الجديد (YYYY-MM-DD):', booking.date);
-  if (!newDate) return;
+// حفظ كل بيانات الحجز مع بعض (اسم المريض، جواله، التاريخ، الوقت)
+// ملاحظة: يعدّل بيانات هذا الحجز فقط، ما يعدّل بيانات حساب المريض نفسه
+async function saveBookingEdit(bookingId) {
+  const row = document.querySelector(`[data-action="save-booking-edit"][data-id="${bookingId}"]`).closest('tr');
+  const patientName = row.querySelector('.edit-booking-name').value.trim();
+  const patientPhone = row.querySelector('.edit-booking-phone').value.trim();
+  const newDate = row.querySelector('.edit-booking-date').value;
+  const newTime = row.querySelector('.edit-booking-time').value;
 
-  const newTime = prompt('الوقت الجديد (HH:MM):', booking.time);
-  if (!newTime) return;
-
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate) || !/^\d{2}:\d{2}$/.test(newTime)) {
-    alert('صيغة التاريخ أو الوقت غير صحيحة');
+  if (!patientName || !newDate || !newTime) {
+    alert('الاسم والتاريخ والوقت إجباريين');
     return;
   }
 
-  try {
-    await db.collection('bookings').doc(bookingId).update({ date: newDate, time: newTime });
+  const booking = cachedBookings.find((b) => b.id === bookingId);
+  if (!booking) return;
 
-    if (booking.status === 'accepted') {
+  try {
+    await db.collection('bookings').doc(bookingId).update({
+      patientName,
+      patientPhone,
+      date: newDate,
+      time: newTime,
+    });
+
+    // لو كان الحجز مقبول وتغيّر الموعد، ننقل قفل الوقت للموعد الجديد تلقائياً
+    if (booking.status === 'accepted' && (newDate !== booking.date || newTime !== booking.time)) {
       await db.collection('lockedSlots').doc(buildLockId(booking.doctorId, booking.date, booking.time)).delete();
       await db.collection('lockedSlots').doc(buildLockId(booking.doctorId, newDate, newTime)).set({
         doctorId: booking.doctorId,
@@ -291,11 +329,26 @@ async function editBooking(bookingId) {
       });
     }
 
-    loadDashboard();
+    editingBookingId = null;
+    // ما نحتاج نستدعي تحميل يدوي، الاستماع الفوري (onSnapshot) بيحدّث الجداول تلقائياً
   } catch (err) {
-    console.error('editBooking error:', err);
-    alert('تعذر تعديل الموعد، حاول مرة أخرى');
+    console.error('saveBookingEdit error:', err);
+    alert('تعذر حفظ التعديلات، حاول مرة أخرى');
   }
+}
+
+function startBookingEdit(bookingId) {
+  editingBookingId = bookingId;
+  renderBookingRequests();
+  renderRejectedBookings();
+  renderWeeklySchedule();
+}
+
+function cancelBookingEdit() {
+  editingBookingId = null;
+  renderBookingRequests();
+  renderRejectedBookings();
+  renderWeeklySchedule();
 }
 
 // حذف حجز نهائياً - لو كان مقبول، نحرر قفل الوقت أيضاً
@@ -539,7 +592,7 @@ function renderWeeklySchedule() {
               </tr>
             </thead>
             <tbody>
-              ${dayBookings.map((b) => `
+              ${dayBookings.map((b) => (b.id === editingBookingId ? renderBookingEditRow(b, 6) : `
                 <tr>
                   <td class="cell-sub">${b.time}</td>
                   <td class="cell-name">${escapeHtml(b.patientName)}</td>
@@ -557,7 +610,7 @@ function renderWeeklySchedule() {
                     </div>
                   </td>
                 </tr>
-              `).join('')}
+              `)).join('')}
             </tbody>
           </table>
         </div>
@@ -566,10 +619,16 @@ function renderWeeklySchedule() {
   }).join('');
 
   wrap.querySelectorAll('[data-action="edit-schedule"]').forEach((btn) => {
-    btn.addEventListener('click', () => editBooking(btn.dataset.id));
+    btn.addEventListener('click', () => startBookingEdit(btn.dataset.id));
   });
   wrap.querySelectorAll('[data-action="delete-schedule"]').forEach((btn) => {
     btn.addEventListener('click', () => deleteBooking(btn.dataset.id));
+  });
+  wrap.querySelectorAll('[data-action="cancel-booking-edit"]').forEach((btn) => {
+    btn.addEventListener('click', cancelBookingEdit);
+  });
+  wrap.querySelectorAll('[data-action="save-booking-edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => saveBookingEdit(btn.dataset.id));
   });
 }
 
