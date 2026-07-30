@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>موعد | احجز موعدك الطبي بسهولة</title>
+  <title>موعد | دليل العيادات واحجز موعدك الطبي</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="landing">
@@ -18,39 +18,48 @@
     <a href="login.html" class="btn-primary">تسجيل الدخول</a>
   </nav>
 
-  <header class="hero">
-    <h1>احجز موعدك الطبي بثواني، من غير اتصال ولا انتظار</h1>
-    <p>دوّر على عيادتك المفضّلة، اختر الطبيب والوقت المناسب لك، وتابع حالة حجزك أول بأول.</p>
+  <header class="hero-compact">
+    <h1>دليل العيادات — دوّر واحجز بثواني</h1>
+    <p>ابحث باسم العيادة أو التخصص، وشوف الأطباء والأوقات المتاحة فوراً</p>
     <form id="hero-search-form" class="hero-search">
       <input type="text" id="hero-search-input" placeholder="دوّر على تخصص أو اسم عيادة...">
       <button type="submit">ابحث</button>
     </form>
+    <p class="hero-stats-line" id="hero-stats-line"></p>
   </header>
 
-  <section class="landing-section">
-    <h2>تصفح حسب التخصص</h2>
-    <p class="section-hint">اختر التخصص اللي تحتاجه وشوف العيادات المتوفرة</p>
-    <div class="specialty-grid">
-      <button type="button" class="specialty-chip" data-specialty="أسنان"><span class="specialty-icon">🦷</span>أسنان</button>
-      <button type="button" class="specialty-chip" data-specialty="جلدية"><span class="specialty-icon">🧴</span>جلدية</button>
-      <button type="button" class="specialty-chip" data-specialty="أطفال"><span class="specialty-icon">🧸</span>أطفال</button>
-      <button type="button" class="specialty-chip" data-specialty="باطنية"><span class="specialty-icon">🩺</span>باطنية</button>
-      <button type="button" class="specialty-chip" data-specialty="عيون"><span class="specialty-icon">👁️</span>عيون</button>
-      <button type="button" class="specialty-chip" data-specialty="عظام"><span class="specialty-icon">🦴</span>عظام</button>
+  <main class="directory-section">
+    <div class="specialty-filter-bar" id="specialty-filter-bar">
+      <button type="button" class="specialty-pill active" data-specialty="">
+        <span class="pill-icon">🏥</span>الكل
+      </button>
+      <button type="button" class="specialty-pill" data-specialty="أسنان">
+        <span class="pill-icon">🦷</span>أسنان<span class="pill-count" data-count-for="أسنان"></span>
+      </button>
+      <button type="button" class="specialty-pill" data-specialty="جلدية">
+        <span class="pill-icon">🧴</span>جلدية<span class="pill-count" data-count-for="جلدية"></span>
+      </button>
+      <button type="button" class="specialty-pill" data-specialty="أطفال">
+        <span class="pill-icon">🧸</span>أطفال<span class="pill-count" data-count-for="أطفال"></span>
+      </button>
+      <button type="button" class="specialty-pill" data-specialty="باطنية">
+        <span class="pill-icon">🩺</span>باطنية<span class="pill-count" data-count-for="باطنية"></span>
+      </button>
+      <button type="button" class="specialty-pill" data-specialty="عيون">
+        <span class="pill-icon">👁️</span>عيون<span class="pill-count" data-count-for="عيون"></span>
+      </button>
+      <button type="button" class="specialty-pill" data-specialty="عظام">
+        <span class="pill-icon">🦴</span>عظام<span class="pill-count" data-count-for="عظام"></span>
+      </button>
     </div>
-  </section>
 
-  <section class="landing-section hidden" id="search-results-section">
-    <h2 id="search-results-title">نتائج البحث</h2>
-    <p class="section-hint">تصفح مجاني — سجّل دخولك بس وقت ما تبي تحجز فعلياً</p>
-    <div id="search-results-wrap" class="loading-state">جاري البحث...</div>
-  </section>
+    <div class="directory-header">
+      <h2 id="directory-title">كل العيادات</h2>
+      <p class="section-hint" id="directory-hint">تصفح مجاني بالكامل — تسجيل الدخول يلزم بس وقت الحجز الفعلي</p>
+    </div>
 
-  <section class="landing-section">
-    <h2>أحدث العيادات المنضمّة</h2>
-    <p class="section-hint">عيادات مفعّلة وجاهزة تستقبل حجوزاتك</p>
-    <div id="latest-clinics-wrap" class="loading-state">جاري التحميل...</div>
-  </section>
+    <div id="clinics-directory-wrap" class="loading-state">جاري تحميل العيادات...</div>
+  </main>
 
   <div class="cta-banner">
     <h2>جاهز تحجز موعدك؟</h2>

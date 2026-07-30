@@ -3,6 +3,10 @@
 // ============================================
 let allClinics = [];
 let allDoctors = [];
+let activeSpecialty = '';
+let searchQuery = '';
+
+const SPECIALTIES = ['أسنان', 'جلدية', 'أطفال', 'باطنية', 'عيون', 'عظام'];
 
 async function initLanding() {
   try {
@@ -20,104 +24,135 @@ async function initLanding() {
       .map((doc) => ({ id: doc.id, ...doc.data() }))
       .filter((d) => clinicIds.has(d.clinicId));
 
-    renderLatestClinics();
+    renderStatsLine();
+    renderSpecialtyCounts();
+    renderDirectory();
   } catch (err) {
     console.error('initLanding error:', err);
-    document.getElementById('latest-clinics-wrap').innerHTML =
+    document.getElementById('clinics-directory-wrap').innerHTML =
       '<p class="empty-state">تعذر تحميل العيادات حالياً</p>';
   }
 }
 
-// ============================================
-// أحدث العيادات الفعّالة
-// ============================================
-function renderLatestClinics() {
-  const wrap = document.getElementById('latest-clinics-wrap');
+function renderStatsLine() {
+  const specialtiesCount = new Set(allDoctors.map((d) => d.specialty).filter(Boolean)).size;
+  document.getElementById('hero-stats-line').textContent =
+    `${allClinics.length} عيادة مسجّلة • ${allDoctors.length} طبيب • ${specialtiesCount} تخصص متوفر`;
+}
 
-  const clinics = [...allClinics]
-    .sort((a, b) => {
-      if (!a.createdAt || !b.createdAt) return 0;
-      return b.createdAt.toMillis() - a.createdAt.toMillis();
-    })
-    .slice(0, 6);
-
-  if (clinics.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">ما فيه عيادات مسجّلة بعد، كن أول عيادة تنضم!</p>';
-    return;
-  }
-
-  wrap.innerHTML = renderClinicCards(clinics);
+// عدد العيادات لكل تخصص، يظهر بجانب كل تبويب تخصص
+function renderSpecialtyCounts() {
+  SPECIALTIES.forEach((spec) => {
+    const clinicIds = new Set(
+      allDoctors.filter((d) => d.specialty && d.specialty.includes(spec)).map((d) => d.clinicId)
+    );
+    const el = document.querySelector(`[data-count-for="${spec}"]`);
+    if (el) el.textContent = clinicIds.size > 0 ? clinicIds.size : '';
+  });
 }
 
 // ============================================
-// البحث + التصفح حسب التخصص (بدون تسجيل دخول)
+// البحث + فلتر التخصص (يشتغلون مع بعض)
 // ============================================
 document.getElementById('hero-search-form').addEventListener('submit', (e) => {
   e.preventDefault();
-  const query = document.getElementById('hero-search-input').value.trim();
-  performSearch(query);
+  searchQuery = document.getElementById('hero-search-input').value.trim();
+  renderDirectory();
 });
 
-document.querySelectorAll('.specialty-chip').forEach((chip) => {
-  chip.addEventListener('click', () => {
-    document.getElementById('hero-search-input').value = chip.dataset.specialty;
-    performSearch(chip.dataset.specialty);
+document.querySelectorAll('.specialty-pill').forEach((pill) => {
+  pill.addEventListener('click', () => {
+    activeSpecialty = pill.dataset.specialty;
+    document.querySelectorAll('.specialty-pill').forEach((p) => p.classList.remove('active'));
+    pill.classList.add('active');
+    renderDirectory();
   });
 });
 
-function performSearch(query) {
-  if (!query) return;
+function getFilteredClinics() {
+  return allClinics.filter((c) => {
+    const clinicDoctors = allDoctors.filter((d) => d.clinicId === c.id);
 
-  const matchedClinicIds = new Set();
+    const matchesSpecialty = !activeSpecialty
+      || clinicDoctors.some((d) => d.specialty && d.specialty.includes(activeSpecialty));
 
-  allClinics.forEach((c) => {
-    if (c.name && c.name.includes(query)) matchedClinicIds.add(c.id);
+    const matchesSearch = !searchQuery
+      || (c.name && c.name.includes(searchQuery))
+      || clinicDoctors.some((d) =>
+          (d.specialty && d.specialty.includes(searchQuery)) || (d.name && d.name.includes(searchQuery))
+        );
+
+    return matchesSpecialty && matchesSearch;
   });
-  allDoctors.forEach((d) => {
-    if ((d.specialty && d.specialty.includes(query)) || (d.name && d.name.includes(query))) {
-      matchedClinicIds.add(d.clinicId);
-    }
-  });
-
-  const results = allClinics.filter((c) => matchedClinicIds.has(c.id));
-  renderSearchResults(query, results);
 }
 
-function renderSearchResults(query, results) {
-  const section = document.getElementById('search-results-section');
-  section.classList.remove('hidden');
-  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+function renderDirectory() {
+  const results = getFilteredClinics();
 
-  document.getElementById('search-results-title').textContent = `نتائج البحث عن "${query}"`;
+  const titleEl = document.getElementById('directory-title');
+  const hintEl = document.getElementById('directory-hint');
 
-  const wrap = document.getElementById('search-results-wrap');
+  if (activeSpecialty || searchQuery) {
+    const parts = [];
+    if (searchQuery) parts.push(`"${searchQuery}"`);
+    if (activeSpecialty) parts.push(activeSpecialty);
+    titleEl.textContent = `نتائج البحث: ${parts.join(' • ')}`;
+    hintEl.textContent = `${results.length} عيادة مطابقة`;
+  } else {
+    titleEl.textContent = 'كل العيادات';
+    hintEl.textContent = 'تصفح مجاني بالكامل — تسجيل الدخول يلزم بس وقت الحجز الفعلي';
+  }
+
+  const wrap = document.getElementById('clinics-directory-wrap');
 
   if (results.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">ما فيه نتائج مطابقة، جرب كلمة ثانية</p>';
+    wrap.innerHTML = '<p class="empty-state">ما فيه عيادات مطابقة، جرب تخصص أو كلمة بحث ثانية</p>';
     return;
   }
 
-  wrap.innerHTML = renderClinicCards(results);
+  wrap.innerHTML = `
+    <div class="clinics-directory-grid">
+      ${results.map((c) => renderClinicCard(c)).join('')}
+    </div>
+  `;
+}
+
+function renderClinicCard(c) {
+  const doctors = allDoctors.filter((d) => d.clinicId === c.id);
+  const specialties = [...new Set(doctors.map((d) => d.specialty).filter(Boolean))];
+
+  return `
+    <a href="login.html" class="clinic-directory-card">
+      <div class="clinic-card-top">
+        <div class="clinic-avatar" style="background:${avatarColor(c.name)}">${escapeHtml(initials(c.name))}</div>
+        <div>
+          <p class="cp-name">${escapeHtml(c.name)}</p>
+          <p class="cp-doctor-count">${doctors.length} ${doctors.length === 1 ? 'طبيب' : 'أطباء'}</p>
+        </div>
+      </div>
+      <div class="clinic-card-tags">
+        ${specialties.length > 0
+          ? specialties.slice(0, 4).map((s) => `<span class="specialty-tag">${escapeHtml(s)}</span>`).join('')
+          : '<span class="specialty-tag specialty-tag-muted">ما تم إضافة تخصصات بعد</span>'}
+      </div>
+      <span class="clinic-card-cta">احجز الآن ←</span>
+    </a>
+  `;
 }
 
 // ============================================
 // أدوات مساعدة
 // ============================================
-function renderClinicCards(clinics) {
-  return `
-    <div class="clinics-preview-grid">
-      ${clinics.map((c) => {
-        const doctors = allDoctors.filter((d) => d.clinicId === c.id);
-        const specialties = [...new Set(doctors.map((d) => d.specialty).filter(Boolean))];
-        return `
-          <a href="login.html" class="clinic-preview-card">
-            <p class="cp-name">${escapeHtml(c.name)}</p>
-            <p class="cp-sub">${specialties.length ? escapeHtml(specialties.join('، ')) : 'عيادة مسجّلة ومفعّلة'}</p>
-          </a>
-        `;
-      }).join('')}
-    </div>
-  `;
+function initials(name) {
+  if (!name) return '؟';
+  return name.trim().slice(0, 1);
+}
+
+const AVATAR_COLORS = ['#158A7E', '#0F2440', '#1C6B93', '#2E9E6D', '#4A7A9E', '#0E7A72'];
+function avatarColor(name) {
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
 function escapeHtml(str) {

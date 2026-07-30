@@ -939,39 +939,45 @@ body.landing {
 
 .landing-nav .btn-primary { width: auto; padding: 11px 22px; font-size: 15px; }
 
-.hero {
-  background: linear-gradient(160deg, var(--blue-100) 0%, var(--white) 55%, var(--white) 100%);
-  padding: 40px 20px 56px;
+/* ============================================
+   هيرو مضغوط (البحث هو محور الصفحة، مو الكلام التسويقي)
+   ============================================ */
+.hero-compact {
+  background: linear-gradient(160deg, var(--blue-100) 0%, var(--white) 70%, var(--white) 100%);
+  padding: 36px 20px 30px;
   text-align: center;
   position: relative;
+  overflow: hidden;
 }
 
-.hero::before {
+.hero-compact::before {
   content: '';
   position: absolute;
-  top: -60px;
-  right: -60px;
-  width: 220px;
-  height: 220px;
+  top: -70px;
+  right: -70px;
+  width: 240px;
+  height: 240px;
   background: radial-gradient(circle, var(--teal-glow) 0%, transparent 70%);
-  opacity: 0.35;
+  opacity: 0.3;
   pointer-events: none;
 }
 
-.hero h1 {
-  font-size: 30px;
+.hero-compact h1 {
+  font-size: 26px;
   font-weight: 900;
   color: var(--blue-900);
   max-width: 560px;
-  margin: 0 auto 12px;
+  margin: 0 auto 8px;
   line-height: 1.4;
+  position: relative;
 }
 
-.hero p {
-  font-size: 17px;
+.hero-compact > p {
+  font-size: 15.5px;
   color: var(--gray-500);
   max-width: 480px;
-  margin: 0 auto 26px;
+  margin: 0 auto 22px;
+  position: relative;
 }
 
 .hero-search {
@@ -979,6 +985,7 @@ body.landing {
   gap: 8px;
   max-width: 480px;
   margin: 0 auto;
+  position: relative;
 }
 
 .hero-search input {
@@ -999,78 +1006,162 @@ body.landing {
   font-size: 16px;
   font-weight: 700;
   color: var(--white);
-  background: var(--blue-700);
+  background: linear-gradient(135deg, var(--teal-glow), var(--blue-700) 70%);
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
   white-space: nowrap;
 }
 
-.hero-search button:hover { background: var(--blue-900); }
+.hero-search button:hover { filter: brightness(0.95); }
 
-.landing-section {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 44px 20px;
+.hero-stats-line {
+  margin: 16px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue-700);
+  position: relative;
+  min-height: 18px;
 }
 
-.landing-section h2 {
+/* ============================================
+   دليل العيادات - نجم الصفحة
+   ============================================ */
+.directory-section {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 30px 20px 44px;
+}
+
+.specialty-filter-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 24px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.specialty-pill {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 2px solid var(--gray-200);
+  background: var(--white);
+  color: var(--gray-800);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.specialty-pill:hover { border-color: var(--blue-500); }
+
+.specialty-pill.active {
+  background: var(--blue-900);
+  border-color: var(--blue-900);
+  color: var(--white);
+}
+
+.pill-icon { font-size: 15px; }
+
+.pill-count {
+  font-size: 11.5px;
+  font-weight: 900;
+  opacity: 0.75;
+}
+
+.pill-count:empty { display: none; }
+
+.directory-header { margin-bottom: 18px; }
+
+.directory-header h2 {
   display: inline-block;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 900;
   color: var(--white);
   background: var(--blue-900);
   padding: 8px 18px;
   border-radius: 10px;
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 
-.landing-section .section-hint { margin-bottom: 20px; }
+.directory-header .section-hint { margin: 0; }
 
-.specialty-grid {
+.clinics-directory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
 }
 
-.specialty-chip {
-  display: block;
-  width: 100%;
-  text-align: center;
-  padding: 20px 10px;
-  background: var(--gray-50);
-  border: none;
-  border-radius: var(--radius-md);
-  text-decoration: none;
-  color: var(--gray-800);
-  font-family: inherit;
-  font-weight: 700;
-  font-size: 14.5px;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
-}
-
-.specialty-chip:hover { background: var(--blue-100); transform: translateY(-2px); }
-.specialty-chip .specialty-icon { font-size: 28px; display: block; margin-bottom: 8px; }
-
-.clinics-preview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+.clinic-directory-card {
+  display: flex;
+  flex-direction: column;
   gap: 14px;
-}
-
-.clinic-preview-card {
-  padding: 18px;
+  padding: 20px;
   border: 2px solid var(--gray-200);
   border-radius: var(--radius-lg);
   text-decoration: none;
-  display: block;
-  transition: border-color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.2s;
+  background: var(--white);
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
 }
 
-.clinic-preview-card:hover { border-color: var(--blue-500); background: var(--blue-100); transform: translateY(-3px); box-shadow: var(--shadow-card); }
-.clinic-preview-card .cp-name { font-weight: 900; color: var(--blue-900); font-size: 16px; margin: 0 0 4px; }
-.clinic-preview-card .cp-sub { font-size: 13.5px; color: var(--gray-500); margin: 0; }
+.clinic-directory-card:hover {
+  border-color: var(--blue-500);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card);
+}
+
+.clinic-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.clinic-avatar {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: 900;
+  font-size: 18px;
+}
+
+.cp-name { font-weight: 900; color: var(--blue-900); font-size: 16px; margin: 0 0 2px; }
+.cp-doctor-count { font-size: 12.5px; color: var(--gray-500); margin: 0; }
+
+.clinic-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.specialty-tag {
+  background: var(--blue-100);
+  color: var(--blue-700);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.specialty-tag-muted { background: var(--gray-50); color: var(--gray-500); }
+
+.clinic-card-cta {
+  margin-top: auto;
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--blue-700);
+}
 
 .cta-banner {
   background: var(--blue-700);
@@ -1374,4 +1465,18 @@ body.landing {
   font-size: 14.5px;
   color: var(--blue-900);
   margin: 0 0 14px;
+}
+
+/* تحسينات الهاتف لدليل العيادات بالشاشة الرئيسية */
+@media (max-width: 480px) {
+  .hero-compact { padding: 26px 16px 22px; }
+  .hero-compact h1 { font-size: 21px; }
+  .hero-compact > p { font-size: 14px; }
+  .hero-search { flex-direction: column; }
+  .hero-search button { width: 100%; }
+
+  .directory-section { padding: 22px 14px 32px; }
+  .clinics-directory-grid { grid-template-columns: 1fr; gap: 12px; }
+  .specialty-pill { padding: 8px 12px; font-size: 13px; }
+  .clinic-directory-card { padding: 16px; }
 }
