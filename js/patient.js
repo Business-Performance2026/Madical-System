@@ -54,50 +54,64 @@ let selectedDate = '';
 let selectedTime = '';
 
 async function loadClinics() {
-  const snap = await db.collection('users').where('role', '==', 'clinic').where('status', '==', 'active').get();
-  allClinics = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  renderClinicsStep();
+  try {
+    const snap = await db.collection('users').get();
+    allClinics = snap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .filter((u) => u.role === 'clinic' && u.status === 'active');
+    renderClinicsStep();
+  } catch (err) {
+    console.error('loadClinics error:', err);
+    document.getElementById('booking-steps').innerHTML =
+      '<p class="empty-state">حدث خطأ أثناء تحميل العيادات، حدّث الصفحة وحاول مرة أخرى</p>';
+  }
 }
 
 // ============================================
 // الخطوة 1: اختيار العيادة
 // ============================================
-function renderClinicsStep(query = '') {
+function renderClinicsStep() {
   const wrap = document.getElementById('booking-steps');
-
-  let list = allClinics;
-  if (query) list = list.filter((c) => c.name && c.name.includes(query));
 
   wrap.innerHTML = `
     <span class="step-hint">الخطوة 1 من 3: اختر العيادة</span>
-    <input type="text" id="clinic-search" class="search-box" placeholder="ابحث باسم العيادة..." value="${escapeHtml(query)}">
+    <input type="text" id="clinic-search" class="search-box" placeholder="ابحث باسم العيادة...">
     <div class="choice-list" id="clinics-list"></div>
   `;
 
-  const listEl = document.getElementById('clinics-list');
-  if (list.length === 0) {
-    listEl.innerHTML = '<p class="empty-state">ما فيه عيادات مطابقة</p>';
-  } else {
-    listEl.innerHTML = list.map((c) => `
-      <div class="choice-card" data-id="${c.id}">
-        <div>
-          <p class="choice-title">${escapeHtml(c.name)}</p>
-          <p class="choice-sub">${escapeHtml(c.email)}</p>
-        </div>
-        <span class="choice-arrow">‹</span>
-      </div>
-    `).join('');
+  document.getElementById('clinic-search').addEventListener('input', (e) => {
+    updateClinicsList(e.target.value.trim());
+  });
 
-    listEl.querySelectorAll('.choice-card').forEach((card) => {
-      card.addEventListener('click', () => {
-        selectedClinic = list.find((c) => c.id === card.dataset.id);
-        goToDoctorsStep();
-      });
-    });
+  updateClinicsList('');
+}
+
+function updateClinicsList(query) {
+  let list = allClinics;
+  if (query) list = list.filter((c) => c.name && c.name.includes(query));
+
+  const listEl = document.getElementById('clinics-list');
+
+  if (list.length === 0) {
+    listEl.innerHTML = `<p class="empty-state">${allClinics.length === 0 ? 'ما فيه عيادات فعّالة حالياً' : 'ما فيه عيادات مطابقة'}</p>`;
+    return;
   }
 
-  document.getElementById('clinic-search').addEventListener('input', (e) => {
-    renderClinicsStep(e.target.value.trim());
+  listEl.innerHTML = list.map((c) => `
+    <div class="choice-card" data-id="${c.id}">
+      <div>
+        <p class="choice-title">${escapeHtml(c.name)}</p>
+        <p class="choice-sub">${escapeHtml(c.email)}</p>
+      </div>
+      <span class="choice-arrow">‹</span>
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('.choice-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      selectedClinic = list.find((c) => c.id === card.dataset.id);
+      goToDoctorsStep();
+    });
   });
 }
 
