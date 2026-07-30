@@ -57,10 +57,12 @@ let selectedTime = '';
 
 async function loadClinics() {
   try {
-    const snap = await db.collection('users').get();
-    allClinics = snap.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }))
-      .filter((u) => u.role === 'clinic' && u.status === 'active');
+    const snap = await db.collection('users')
+      .where('role', '==', 'clinic')
+      .where('status', '==', 'active')
+      .get();
+
+    allClinics = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     renderClinicsStep();
   } catch (err) {
     console.error('loadClinics error:', err);
@@ -207,14 +209,14 @@ async function renderAvailableSlots() {
     return;
   }
 
-  // نجيب الحجوزات المقبولة لنفس الطبيب ونفس اليوم عشان نستثني أوقاتها
-  const bookedSnap = await db.collection('bookings')
+  // نجيب أوقات هذا الطبيب المقفولة بهذا اليوم من مجموعة lockedSlots
+  // (بدون قراءة حجوزات مرضى ثانين مباشرة - محمية بقواعد الأمان)
+  const lockedSnap = await db.collection('lockedSlots')
     .where('doctorId', '==', selectedDoctor.id)
     .where('date', '==', selectedDate)
-    .where('status', '==', 'accepted')
     .get();
 
-  const bookedTimes = new Set(bookedSnap.docs.map((doc) => doc.data().time));
+  const bookedTimes = new Set(lockedSnap.docs.map((doc) => doc.data().time));
 
   const allSlots = hoursForDay.flatMap((h) => generateSlots(h.start, h.end));
   const availableSlots = [...new Set(allSlots)].filter((t) => !bookedTimes.has(t)).sort();
@@ -287,9 +289,12 @@ async function submitBooking() {
 // ============================================
 // مواعيدي
 // ============================================
+let cachedMyBookings = [];
+
 async function loadMyBookings() {
   const snap = await db.collection('bookings').where('patientId', '==', currentUid).get();
   const bookings = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  cachedMyBookings = bookings;
 
   const todayStr = todayISO();
   const upcoming = bookings
@@ -335,13 +340,25 @@ async function cancelBooking(bookingId) {
   const sure = confirm('متأكد إنك تبي تلغي هذا الحجز؟');
   if (!sure) return;
 
+  const booking = cachedMyBookings.find((b) => b.id === bookingId);
+
   try {
     await db.collection('bookings').doc(bookingId).update({ status: 'cancelled' });
+
+    // لو كان الحجز مقبول (أي وقته مقفول)، نحرر الوقت بحذف قفله
+    if (booking && booking.status === 'accepted') {
+      await db.collection('lockedSlots').doc(buildLockId(booking.doctorId, booking.date, booking.time)).delete();
+    }
+
     loadMyBookings();
   } catch (err) {
     console.error('cancelBooking error:', err);
     alert('تعذر إلغاء الحجز، حاول مرة أخرى');
   }
+}
+
+function buildLockId(doctorId, date, time) {
+  return `${doctorId}_${date}_${time.replace(':', '')}`;
 }
 
 // ============================================

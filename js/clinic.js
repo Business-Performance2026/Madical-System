@@ -140,10 +140,27 @@ function renderBookingRequests() {
 }
 
 async function respondToBooking(bookingId, status) {
-  // عند القبول: هذا الوقت يصير مقفول تلقائياً لأن صفحة المريض بتتحقق
-  // من الحجوزات المقبولة (status == accepted) قبل ما تعرض الوقت كمتاح
+  const booking = cachedBookings.find((b) => b.id === bookingId);
+
   await db.collection('bookings').doc(bookingId).update({ status });
+
+  // عند القبول: نسجل قفل وقت مستقل بمجموعة lockedSlots (بدون أي بيانات شخصية)
+  // عشان صفحة المريض تقدر تتحقق من الأوقات المتاحة بدون ما تشوف حجوزات مرضى ثانين
+  if (status === 'accepted' && booking) {
+    await db.collection('lockedSlots').doc(buildLockId(booking.doctorId, booking.date, booking.time)).set({
+      doctorId: booking.doctorId,
+      clinicId: booking.clinicId,
+      date: booking.date,
+      time: booking.time,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
   loadDashboard();
+}
+
+function buildLockId(doctorId, date, time) {
+  return `${doctorId}_${date}_${time.replace(':', '')}`;
 }
 
 // ============================================
