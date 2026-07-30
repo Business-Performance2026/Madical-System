@@ -50,6 +50,7 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 // ============================================
 let allClinics = [];
 let clinicDoctors = [];
+let clinicSpecialtiesMap = {};
 let selectedClinic = null;
 let selectedDoctor = null;
 let selectedDate = '';
@@ -63,6 +64,19 @@ async function loadClinics() {
       .get();
 
     allClinics = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+    // نجيب كل الأطباء عشان نعرض تخصصات كل عيادة بدل الإيميل (مجموعة doctors قراءتها عامة)
+    const clinicIds = new Set(allClinics.map((c) => c.id));
+    const doctorsSnap = await db.collection('doctors').get();
+
+    clinicSpecialtiesMap = {};
+    doctorsSnap.docs.forEach((doc) => {
+      const d = doc.data();
+      if (!clinicIds.has(d.clinicId) || !d.specialty) return;
+      if (!clinicSpecialtiesMap[d.clinicId]) clinicSpecialtiesMap[d.clinicId] = new Set();
+      clinicSpecialtiesMap[d.clinicId].add(d.specialty);
+    });
+
     renderClinicsStep();
   } catch (err) {
     console.error('loadClinics error:', err);
@@ -101,15 +115,19 @@ function updateClinicsList(query) {
     return;
   }
 
-  listEl.innerHTML = list.map((c) => `
-    <div class="choice-card" data-id="${c.id}">
-      <div>
-        <p class="choice-title">${escapeHtml(c.name)}</p>
-        <p class="choice-sub">${escapeHtml(c.email)}</p>
+  listEl.innerHTML = list.map((c) => {
+    const specialties = clinicSpecialtiesMap[c.id] ? [...clinicSpecialtiesMap[c.id]] : [];
+    const subText = specialties.length ? specialties.join('، ') : 'ما تم إضافة تخصصات بعد';
+    return `
+      <div class="choice-card" data-id="${c.id}">
+        <div>
+          <p class="choice-title">${escapeHtml(c.name)}</p>
+          <p class="choice-sub">${escapeHtml(subText)}</p>
+        </div>
+        <span class="choice-arrow">‹</span>
       </div>
-      <span class="choice-arrow">‹</span>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   listEl.querySelectorAll('.choice-card').forEach((card) => {
     card.addEventListener('click', () => {
@@ -205,7 +223,7 @@ async function renderAvailableSlots() {
   const hoursForDay = (selectedDoctor.workingHours || []).filter((h) => h.day === dayKey);
 
   if (hoursForDay.length === 0) {
-    slotsWrap.innerHTML = '<p class="empty-state">الطبيب ما عنده دوام باليوم المختار، جرّب يوم ثاني</p>';
+    slotsWrap.innerHTML = '<p class="warning-text">⚠️ الطبيب ما عنده دوام باليوم المختار، جرّب يوم ثاني</p>';
     return;
   }
 
@@ -222,7 +240,7 @@ async function renderAvailableSlots() {
   const availableSlots = [...new Set(allSlots)].filter((t) => !bookedTimes.has(t)).sort();
 
   if (availableSlots.length === 0) {
-    slotsWrap.innerHTML = '<p class="empty-state">كل الأوقات محجوزة باليوم المختار، جرّب يوم ثاني</p>';
+    slotsWrap.innerHTML = '<p class="warning-text">⚠️ كل الأوقات محجوزة باليوم المختار، جرّب يوم ثاني</p>';
     return;
   }
 
@@ -272,18 +290,37 @@ async function submitBooking() {
 
     const code = bookingNumber(docRef.id);
 
-    document.getElementById('booking-steps').innerHTML = `
-      <p class="empty-state">✅ تم إرسال طلب الحجز<br>رقم حجزك: <strong>${code}</strong><br>بتوصلك حالته بعد ما تراجعه العيادة</p>
-      <button type="button" class="btn-primary" id="new-booking-btn" style="max-width:260px;">حجز موعد جديد</button>
-    `;
-    document.getElementById('new-booking-btn').addEventListener('click', renderClinicsStep);
-
+    renderClinicsStep();
     loadMyBookings();
+
+    showModal(`
+      <h3>✅ تم إرسال طلب الحجز</h3>
+      <p>رقم حجزك</p>
+      <p class="modal-code">${code}</p>
+      <p class="cell-sub">بتوصلك حالته بعد ما تراجعه العيادة، وتقدر تتابعها من قسم "المواعيد القادمة" تحت</p>
+      <button type="button" class="btn-primary" id="modal-ok-btn">تم</button>
+    `);
+    document.getElementById('modal-ok-btn').addEventListener('click', closeModal);
   } catch (err) {
     alert('حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى');
     btn.disabled = false;
     btn.textContent = 'إرسال طلب الحجز';
   }
+}
+
+// ============================================
+// نافذة منبثقة (Modal) عامة
+// ============================================
+function showModal(html) {
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `<div class="modal-overlay" id="modal-overlay"><div class="modal-box">${html}</div></div>`;
+  document.getElementById('modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-overlay') closeModal();
+  });
+}
+
+function closeModal() {
+  document.getElementById('modal-root').innerHTML = '';
 }
 
 // ============================================
