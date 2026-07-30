@@ -3,6 +3,7 @@
 // ============================================
 let currentUid = null;
 let patientName = '';
+let patientPhone = '';
 
 const DAYS = [
   { key: 'sunday', label: 'الأحد' },
@@ -32,6 +33,7 @@ auth.onAuthStateChanged(async (user) => {
 
   currentUid = user.uid;
   patientName = userDoc.data().name || 'مريض';
+  patientPhone = userDoc.data().phone || '';
   document.getElementById('patient-name').textContent = patientName;
 
   loadClinics();
@@ -253,20 +255,23 @@ async function submitBooking() {
   btn.textContent = 'جاري الإرسال...';
 
   try {
-    await db.collection('bookings').add({
+    const docRef = await db.collection('bookings').add({
       clinicId: selectedClinic.id,
       doctorId: selectedDoctor.id,
       doctorName: selectedDoctor.name,
       patientId: currentUid,
       patientName: patientName,
+      patientPhone: patientPhone,
       date: selectedDate,
       time: selectedTime,
       status: 'pending',
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
+    const code = bookingNumber(docRef.id);
+
     document.getElementById('booking-steps').innerHTML = `
-      <p class="empty-state">✅ تم إرسال طلب الحجز، بتوصلك حالته بعد ما تراجعه العيادة</p>
+      <p class="empty-state">✅ تم إرسال طلب الحجز<br>رقم حجزك: <strong>${code}</strong><br>بتوصلك حالته بعد ما تراجعه العيادة</p>
       <button type="button" class="btn-primary" id="new-booking-btn" style="max-width:260px;">حجز موعد جديد</button>
     `;
     document.getElementById('new-booking-btn').addEventListener('click', renderClinicsStep);
@@ -310,7 +315,7 @@ function renderBookingsList(elementId, bookings, emptyText, allowCancel) {
     <div class="appt-card">
       <div>
         <p class="appt-main">د. ${escapeHtml(b.doctorName)}</p>
-        <p class="appt-sub">${b.date} — ${b.time}</p>
+        <p class="appt-sub">${b.date} — ${b.time} • رقم الحجز: ${bookingNumber(b.id)}</p>
       </div>
       <div class="appt-actions">
         ${bookingStatusBadge(b.status)}
@@ -362,6 +367,10 @@ function bookingStatusBadge(status) {
   const labels = { pending: 'قيد الانتظار', accepted: 'مقبول', rejected: 'مرفوض', cancelled: 'ملغى' };
   const cls = { pending: 'badge-pending', accepted: 'badge-active', rejected: 'badge-rejected', cancelled: 'badge-cancelled' };
   return `<span class="badge ${cls[status] || ''}">${labels[status] || status}</span>`;
+}
+
+function bookingNumber(id) {
+  return id.slice(-6).toUpperCase();
 }
 
 function todayISO() {

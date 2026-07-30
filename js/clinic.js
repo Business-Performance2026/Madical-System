@@ -2,6 +2,7 @@
 // حماية الصفحة: لازم عيادة مسجّلة دخول وحسابها فعّال
 // ============================================
 let currentUid = null;
+let clinicName = '';
 
 const DAYS = [
   { key: 'sunday', label: 'الأحد' },
@@ -28,7 +29,8 @@ auth.onAuthStateChanged(async (user) => {
   }
 
   currentUid = user.uid;
-  document.getElementById('clinic-name').textContent = userDoc.data().name || 'العيادة';
+  clinicName = userDoc.data().name || 'العيادة';
+  document.getElementById('clinic-name').textContent = clinicName;
 
   loadDashboard();
 });
@@ -95,9 +97,11 @@ function renderBookingRequests() {
         <thead>
           <tr>
             <th>المريض</th>
+            <th>رقم الحجز</th>
             <th>الطبيب</th>
             <th>التاريخ</th>
             <th>الوقت</th>
+            <th>تواصل</th>
             <th>إجراء</th>
           </tr>
         </thead>
@@ -105,9 +109,15 @@ function renderBookingRequests() {
           ${pending.map((b) => `
             <tr>
               <td class="cell-name">${escapeHtml(b.patientName)}</td>
+              <td class="cell-sub">${bookingNumber(b.id)}</td>
               <td>${escapeHtml(b.doctorName)}</td>
               <td class="cell-sub">${b.date}</td>
               <td class="cell-sub">${b.time}</td>
+              <td>
+                ${b.patientPhone
+                  ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">💬 واتساب</a>`
+                  : '<span class="cell-sub">—</span>'}
+              </td>
               <td>
                 <div class="row-actions">
                   <button class="btn-xs approve" data-action="accept" data-id="${b.id}">قبول</button>
@@ -308,7 +318,7 @@ function renderPatientSearch(query) {
   const patientsMap = new Map();
   cachedBookings.forEach((b) => {
     if (!patientsMap.has(b.patientId)) {
-      patientsMap.set(b.patientId, { name: b.patientName, count: 0, lastDate: b.date });
+      patientsMap.set(b.patientId, { name: b.patientName, phone: b.patientPhone, count: 0, lastDate: b.date });
     }
     const entry = patientsMap.get(b.patientId);
     entry.count += 1;
@@ -332,6 +342,7 @@ function renderPatientSearch(query) {
         <thead>
           <tr>
             <th>اسم المريض</th>
+            <th>رقم الجوال</th>
             <th>عدد الحجوزات</th>
             <th>آخر موعد</th>
           </tr>
@@ -340,6 +351,7 @@ function renderPatientSearch(query) {
           ${patients.map((p) => `
             <tr>
               <td class="cell-name">${escapeHtml(p.name)}</td>
+              <td class="cell-sub">${escapeHtml(p.phone) || '—'}</td>
               <td>${p.count}</td>
               <td class="cell-sub">${p.lastDate}</td>
             </tr>
@@ -348,6 +360,36 @@ function renderPatientSearch(query) {
       </table>
     </div>
   `;
+}
+
+// ============================================
+// رسالة واتساب رسمية للمريض (تحتوي رقم الحجز والموعد واسم العيادة)
+// ============================================
+function buildWhatsAppLink(booking) {
+  const message = buildBookingMessage(booking);
+  return `https://wa.me/${sanitizePhone(booking.patientPhone)}?text=${encodeURIComponent(message)}`;
+}
+
+function buildBookingMessage(booking) {
+  return [
+    `السلام عليكم ${booking.patientName}،`,
+    ``,
+    `نفيدكم بخصوص طلب الحجز رقم ${bookingNumber(booking.id)}`,
+    `📅 التاريخ: ${booking.date}`,
+    `🕐 الوقت: ${booking.time}`,
+    ``,
+    `نأمل تأكيد الحضور في الموعد المحدد، ولأي استفسار نحن بخدمتكم.`,
+    ``,
+    `مع تحيات إدارة ${clinicName}`,
+  ].join('\n');
+}
+
+function bookingNumber(id) {
+  return id.slice(-6).toUpperCase();
+}
+
+function sanitizePhone(phone) {
+  return (phone || '').replace(/[^0-9]/g, '');
 }
 
 // ============================================

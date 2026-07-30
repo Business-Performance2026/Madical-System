@@ -5,10 +5,12 @@ const tabLogin = document.getElementById('tab-login');
 const tabSignup = document.getElementById('tab-signup');
 
 const nameField = document.getElementById('field-name');
+const phoneField = document.getElementById('field-phone');
 const roleSelectWrap = document.getElementById('field-role');
 const roleOptions = document.querySelectorAll('.role-option');
 
 const nameInput = document.getElementById('name');
+const phoneInput = document.getElementById('phone');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 
@@ -34,9 +36,16 @@ function setMode(newMode) {
 
   nameField.classList.toggle('hidden', !isSignup);
   roleSelectWrap.classList.toggle('hidden', !isSignup);
+  updatePhoneVisibility();
 
   submitBtn.textContent = isSignup ? 'إنشاء الحساب' : 'تسجيل الدخول';
   clearStatus();
+}
+
+// حقل رقم الجوال يظهر بس عند تسجيل حساب مريض جديد
+function updatePhoneVisibility() {
+  const showPhone = mode === 'signup' && selectedRole === 'patient';
+  phoneField.classList.toggle('hidden', !showPhone);
 }
 
 // اختيار نوع الحساب (مريض / عيادة) عند التسجيل
@@ -45,6 +54,7 @@ roleOptions.forEach((option) => {
     roleOptions.forEach((o) => o.classList.remove('selected'));
     option.classList.add('selected');
     selectedRole = option.dataset.role;
+    updatePhoneVisibility();
   });
 });
 
@@ -76,6 +86,19 @@ async function handleSignup(email, password) {
     return;
   }
 
+  let phone = '';
+  if (selectedRole === 'patient') {
+    phone = phoneInput.value.trim();
+    if (!phone) {
+      showStatus('فضلاً أدخل رقم الجوال', 'error');
+      return;
+    }
+    if (!/^[0-9+\s-]{8,15}$/.test(phone)) {
+      showStatus('صيغة رقم الجوال غير صحيحة', 'error');
+      return;
+    }
+  }
+
   setLoading(true);
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, password);
@@ -84,13 +107,19 @@ async function handleSignup(email, password) {
     // العيادة تحتاج موافقة الأدمن أولاً، المريض يصبح فعّال مباشرة
     const initialStatus = selectedRole === 'clinic' ? 'pending' : 'active';
 
-    await db.collection('users').doc(uid).set({
+    const userData = {
       name: name,
       email: email,
       role: selectedRole,
       status: initialStatus,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
+    };
+
+    if (selectedRole === 'patient') {
+      userData.phone = phone;
+    }
+
+    await db.collection('users').doc(uid).set(userData);
 
     if (selectedRole === 'clinic') {
       showStatus('تم إنشاء حساب العيادة، بانتظار موافقة الإدارة', 'info');

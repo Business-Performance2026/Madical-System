@@ -41,13 +41,15 @@ service cloud.firestore {
 
       // إنشاء حساب جديد عند التسجيل: المستخدم ينشئ مستنده هو بس،
       // وما يقدر يسجل نفسه كـ admin، والحالة الأولية لازم تكون صحيحة
+      // المريض لازم يحط رقم جوال (نحتاجه لاحقاً عشان العيادة تتواصل معه)
       allow create: if isSignedIn()
         && request.auth.uid == userId
         && request.resource.data.role in ['patient', 'clinic']
         && request.resource.data.status ==
              (request.resource.data.role == 'clinic' ? 'pending' : 'active')
         && request.resource.data.name is string
-        && request.resource.data.email is string;
+        && request.resource.data.email is string
+        && (request.resource.data.role != 'patient' || request.resource.data.phone is string);
 
       // تعديل: الأدمن يقدر يعدل أي حساب (موافقة عيادة / إيقاف / تفعيل)
       // المستخدم العادي يقدر يعدل بياناته (مثل الاسم) لكن ما يقدر يغيّر role أو status لحاله
@@ -90,7 +92,8 @@ service cloud.firestore {
         && request.resource.data.clinicId is string
         && request.resource.data.doctorId is string
         && request.resource.data.date is string
-        && request.resource.data.time is string;
+        && request.resource.data.time is string
+        && request.resource.data.patientPhone is string;
 
       // تعديل: العيادة صاحبة الحجز تقدر تقبل/ترفض، والمريض صاحب الحجز يقدر يلغيه
       allow update: if (isActiveClinic(resource.data.clinicId)
