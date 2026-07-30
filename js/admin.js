@@ -212,7 +212,7 @@ function renderStaffList(allUsers) {
     btn.addEventListener('click', () => updateUserStatus(btn.dataset.uid, 'active'));
   });
   wrap.querySelectorAll('[data-action="reset-password"]').forEach((btn) => {
-    btn.addEventListener('click', () => resetStaffPassword(btn.dataset.email));
+    btn.addEventListener('click', () => resetUserPassword(btn.dataset.email));
   });
   wrap.querySelectorAll('[data-action="delete"]').forEach((btn) => {
     btn.addEventListener('click', () => deleteUser(btn.dataset.uid));
@@ -246,15 +246,15 @@ function renderStaffRow(s, allUsers) {
 }
 
 // يرسل بريد إعادة تعيين كلمة المرور لهذا الموظف (رابط آمن، ما يكشف كلمة المرور لأحد حتى الأدمن)
-async function resetStaffPassword(email) {
+async function resetUserPassword(email) {
   const sure = confirm(`إرسال رابط إعادة تعيين كلمة المرور إلى ${email}؟`);
   if (!sure) return;
 
   try {
     await auth.sendPasswordResetEmail(email);
-    alert('تم إرسال رابط إعادة التعيين بنجاح، الموظف يفتح بريده ويتابع الخطوات');
+    alert('تم إرسال رابط إعادة التعيين بنجاح، صاحب الحساب يفتح بريده ويتابع الخطوات');
   } catch (err) {
-    console.error('resetStaffPassword error:', err);
+    console.error('resetUserPassword error:', err);
     alert('تعذر إرسال رابط إعادة التعيين، تأكد من صحة البريد الإلكتروني');
   }
 }
@@ -373,6 +373,7 @@ function renderUserRow(u) {
           ${u.status === 'disabled'
             ? `<button class="btn-xs approve" data-action="enable" data-uid="${u.id}">✅ تفعيل</button>`
             : `<button class="btn-xs reject" data-action="disable" data-uid="${u.id}">⛔ إيقاف</button>`}
+          <button class="btn-xs toggle" data-action="reset-password" data-email="${escapeHtml(u.email)}">🔄 Reset</button>
           <button class="btn-xs delete" data-action="delete" data-uid="${u.id}">🗑️ حذف</button>
         </div>
       </td>
@@ -418,6 +419,9 @@ function bindUserRowEvents(wrap) {
   });
   wrap.querySelectorAll('[data-action="enable"]').forEach((btn) => {
     btn.addEventListener('click', () => updateUserStatus(btn.dataset.uid, 'active'));
+  });
+  wrap.querySelectorAll('[data-action="reset-password"]').forEach((btn) => {
+    btn.addEventListener('click', () => resetUserPassword(btn.dataset.email));
   });
   wrap.querySelectorAll('[data-action="delete"]').forEach((btn) => {
     btn.addEventListener('click', () => deleteUser(btn.dataset.uid));

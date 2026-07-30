@@ -1061,6 +1061,7 @@ function renderStaffList() {
             <th>الاسم</th>
             <th>البريد الإلكتروني</th>
             <th>الحالة</th>
+            <th>إجراءات</th>
           </tr>
         </thead>
         <tbody>
@@ -1069,13 +1070,33 @@ function renderStaffList() {
               <td class="cell-name">${escapeHtml(s.name)}</td>
               <td class="cell-sub">${escapeHtml(s.email)}</td>
               <td>${staffStatusBadge(s.status)}</td>
+              <td>
+                <button class="btn-xs toggle" data-action="reset-staff-password" data-email="${escapeHtml(s.email)}">🔄 Reset</button>
+              </td>
             </tr>
           `).join('')}
         </tbody>
       </table>
     </div>
-    <p class="section-hint" style="margin-top:12px;">لإيقاف موظف أو إعادة تعيين كلمة مروره، تواصل مع إدارة "موعد" (لوحة الأدمن)</p>
   `;
+
+  wrap.querySelectorAll('[data-action="reset-staff-password"]').forEach((btn) => {
+    btn.addEventListener('click', () => resetStaffPassword(btn.dataset.email));
+  });
+}
+
+// يرسل بريد إعادة تعيين كلمة المرور للموظف (رابط آمن، ما يكشف كلمة المرور لأحد)
+async function resetStaffPassword(email) {
+  const sure = confirm(`إرسال رابط إعادة تعيين كلمة المرور إلى ${email}؟`);
+  if (!sure) return;
+
+  try {
+    await auth.sendPasswordResetEmail(email);
+    alert('تم إرسال رابط إعادة التعيين بنجاح، الموظف يفتح بريده ويتابع الخطوات');
+  } catch (err) {
+    console.error('resetStaffPassword error:', err);
+    alert('تعذر إرسال رابط إعادة التعيين، تأكد من صحة البريد الإلكتروني');
+  }
 }
 
 function staffStatusBadge(status) {
