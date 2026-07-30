@@ -43,8 +43,11 @@ function renderStatsLine() {
 // عدد العيادات لكل تخصص، يظهر بجانب كل تبويب تخصص
 function renderSpecialtyCounts() {
   SPECIALTIES.forEach((spec) => {
+    const normalizedSpec = normalizeArabic(spec);
     const clinicIds = new Set(
-      allDoctors.filter((d) => d.specialty && d.specialty.includes(spec)).map((d) => d.clinicId)
+      allDoctors
+        .filter((d) => d.specialty && normalizeArabic(d.specialty).includes(normalizedSpec))
+        .map((d) => d.clinicId)
     );
     const el = document.querySelector(`[data-count-for="${spec}"]`);
     if (el) el.textContent = clinicIds.size > 0 ? clinicIds.size : '';
@@ -54,10 +57,36 @@ function renderSpecialtyCounts() {
 // ============================================
 // البحث + فلتر التخصص (يشتغلون مع بعض)
 // ============================================
+// تطبيع النص العربي: توحيد أشكال الهمزة والألف وغيرها،
+// عشان البحث يشتغل صح سواء كتب "أسنان" أو "اسنان"
+function normalizeArabic(text) {
+  if (!text) return '';
+  return text
+    .replace(/[إأآا]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .trim()
+    .toLowerCase();
+}
+
+let searchDebounceTimer = null;
+const heroSearchInput = document.getElementById('hero-search-input');
+
 document.getElementById('hero-search-form').addEventListener('submit', (e) => {
   e.preventDefault();
-  searchQuery = document.getElementById('hero-search-input').value.trim();
+  searchQuery = heroSearchInput.value.trim();
   renderDirectory();
+});
+
+// بحث حي أثناء الكتابة (وأهم شي: يتحدث فوراً لما تمسح الكلمة كاملة)
+heroSearchInput.addEventListener('input', () => {
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    searchQuery = heroSearchInput.value.trim();
+    renderDirectory();
+  }, 200);
 });
 
 document.querySelectorAll('.specialty-pill').forEach((pill) => {
@@ -70,16 +99,20 @@ document.querySelectorAll('.specialty-pill').forEach((pill) => {
 });
 
 function getFilteredClinics() {
+  const normalizedQuery = normalizeArabic(searchQuery);
+  const normalizedSpecialty = normalizeArabic(activeSpecialty);
+
   return allClinics.filter((c) => {
     const clinicDoctors = allDoctors.filter((d) => d.clinicId === c.id);
 
     const matchesSpecialty = !activeSpecialty
-      || clinicDoctors.some((d) => d.specialty && d.specialty.includes(activeSpecialty));
+      || clinicDoctors.some((d) => d.specialty && normalizeArabic(d.specialty).includes(normalizedSpecialty));
 
     const matchesSearch = !searchQuery
-      || (c.name && c.name.includes(searchQuery))
+      || (c.name && normalizeArabic(c.name).includes(normalizedQuery))
       || clinicDoctors.some((d) =>
-          (d.specialty && d.specialty.includes(searchQuery)) || (d.name && d.name.includes(searchQuery))
+          (d.specialty && normalizeArabic(d.specialty).includes(normalizedQuery))
+          || (d.name && normalizeArabic(d.name).includes(normalizedQuery))
         );
 
     return matchesSpecialty && matchesSearch;
