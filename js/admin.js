@@ -209,16 +209,17 @@ function drawUsersTable() {
             <tr>
               <td>
                 <div class="cell-name">${escapeHtml(u.name)}</div>
-                <div class="cell-sub">${escapeHtml(u.email)}</div>
+                <div class="cell-sub">${escapeHtml(u.email)}${u.phone ? ' • ' + escapeHtml(u.phone) : ''}</div>
               </td>
               <td>${roleBadge(u.role)}</td>
               <td>${statusBadge(u.status)}</td>
               <td>
                 <div class="row-actions">
+                  <button class="btn-xs toggle" data-action="edit" data-uid="${u.id}">✏️ تعديل</button>
                   ${u.status === 'disabled'
-                    ? `<button class="btn-xs toggle" data-action="enable" data-uid="${u.id}">تفعيل</button>`
-                    : `<button class="btn-xs toggle" data-action="disable" data-uid="${u.id}">إيقاف</button>`}
-                  <button class="btn-xs delete" data-action="delete" data-uid="${u.id}">حذف</button>
+                    ? `<button class="btn-xs approve" data-action="enable" data-uid="${u.id}">✅ تفعيل</button>`
+                    : `<button class="btn-xs reject" data-action="disable" data-uid="${u.id}">⛔ إيقاف</button>`}
+                  <button class="btn-xs delete" data-action="delete" data-uid="${u.id}">🗑️ حذف</button>
                 </div>
               </td>
             </tr>
@@ -228,6 +229,9 @@ function drawUsersTable() {
     </div>
   `;
 
+  wrap.querySelectorAll('[data-action="edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => editUser(btn.dataset.uid));
+  });
   wrap.querySelectorAll('[data-action="disable"]').forEach((btn) => {
     btn.addEventListener('click', () => updateUserStatus(btn.dataset.uid, 'disabled'));
   });
@@ -237,6 +241,36 @@ function drawUsersTable() {
   wrap.querySelectorAll('[data-action="delete"]').forEach((btn) => {
     btn.addEventListener('click', () => deleteUser(btn.dataset.uid));
   });
+}
+
+// تعديل بيانات مستخدم (اسم، بريد، ورقم جوال للمريض)
+// ملاحظة: هذا يعدّل بيانات الملف الشخصي بـ Firestore بس،
+// ما يغيّر بريد الدخول الفعلي بـ Firebase Authentication
+async function editUser(uid) {
+  const user = cachedUsers.find((u) => u.id === uid);
+  if (!user) return;
+
+  const newName = prompt('الاسم:', user.name || '');
+  if (newName === null || !newName.trim()) return;
+
+  const newEmail = prompt('البريد الإلكتروني (للعرض فقط، ما يغيّر بريد الدخول):', user.email || '');
+  if (newEmail === null || !newEmail.trim()) return;
+
+  const updates = { name: newName.trim(), email: newEmail.trim() };
+
+  if (user.role === 'patient') {
+    const newPhone = prompt('رقم الجوال:', user.phone || '');
+    if (newPhone === null || !newPhone.trim()) return;
+    updates.phone = newPhone.trim();
+  }
+
+  try {
+    await db.collection('users').doc(uid).update(updates);
+    loadDashboard();
+  } catch (err) {
+    console.error('editUser error:', err);
+    alert('تعذر حفظ التعديلات، حاول مرة أخرى');
+  }
 }
 
 async function updateUserStatus(uid, status) {

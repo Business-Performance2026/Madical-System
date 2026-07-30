@@ -95,17 +95,18 @@ service cloud.firestore {
         && request.resource.data.time is string
         && request.resource.data.patientPhone is string;
 
-      // تعديل: العيادة صاحبة الحجز تقدر تقبل/ترفض، والمريض صاحب الحجز يقدر يلغيه
+      // تعديل: العيادة صاحبة الحجز تقدر تقبل/ترفض/تعدّل التاريخ والوقت (إعادة جدولة)،
+      // والمريض صاحب الحجز يقدر يلغيه بس
       allow update: if (isActiveClinic(resource.data.clinicId)
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-            && request.resource.data.status in ['accepted', 'rejected'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'date', 'time'])
+            && request.resource.data.status in ['pending', 'accepted', 'rejected'])
         || (isActivePatient() && resource.data.patientId == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
             && resource.data.status in ['pending', 'accepted']
             && request.resource.data.status == 'cancelled');
 
-      // حذف حجز: الأدمن بس (ما فيه ميزة حذف بالتطبيق حالياً)
-      allow delete: if isAdmin();
+      // حذف حجز: الأدمن، أو العيادة صاحبة الحجز
+      allow delete: if isAdmin() || isActiveClinic(resource.data.clinicId);
     }
 
     // ============================================

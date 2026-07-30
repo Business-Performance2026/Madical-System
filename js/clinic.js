@@ -122,6 +122,8 @@ function renderBookingRequests() {
                 <div class="row-actions">
                   <button class="btn-xs approve" data-action="accept" data-id="${b.id}">قبول</button>
                   <button class="btn-xs reject" data-action="reject" data-id="${b.id}">رفض</button>
+                  <button class="btn-xs toggle" data-action="edit" data-id="${b.id}">✏️</button>
+                  <button class="btn-xs delete" data-action="delete" data-id="${b.id}">🗑️</button>
                 </div>
               </td>
             </tr>
@@ -136,6 +138,12 @@ function renderBookingRequests() {
   });
   wrap.querySelectorAll('[data-action="reject"]').forEach((btn) => {
     btn.addEventListener('click', () => respondToBooking(btn.dataset.id, 'rejected'));
+  });
+  wrap.querySelectorAll('[data-action="edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => editBooking(btn.dataset.id));
+  });
+  wrap.querySelectorAll('[data-action="delete"]').forEach((btn) => {
+    btn.addEventListener('click', () => deleteBooking(btn.dataset.id));
   });
 }
 
@@ -161,6 +169,64 @@ async function respondToBooking(bookingId, status) {
 
 function buildLockId(doctorId, date, time) {
   return `${doctorId}_${date}_${time.replace(':', '')}`;
+}
+
+// تعديل موعد الحجز (تاريخ/وقت) - لو كان مقبول، ننقل قفل الوقت للموعد الجديد تلقائياً
+async function editBooking(bookingId) {
+  const booking = cachedBookings.find((b) => b.id === bookingId);
+  if (!booking) return;
+
+  const newDate = prompt('التاريخ الجديد (YYYY-MM-DD):', booking.date);
+  if (!newDate) return;
+
+  const newTime = prompt('الوقت الجديد (HH:MM):', booking.time);
+  if (!newTime) return;
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate) || !/^\d{2}:\d{2}$/.test(newTime)) {
+    alert('صيغة التاريخ أو الوقت غير صحيحة');
+    return;
+  }
+
+  try {
+    await db.collection('bookings').doc(bookingId).update({ date: newDate, time: newTime });
+
+    if (booking.status === 'accepted') {
+      await db.collection('lockedSlots').doc(buildLockId(booking.doctorId, booking.date, booking.time)).delete();
+      await db.collection('lockedSlots').doc(buildLockId(booking.doctorId, newDate, newTime)).set({
+        doctorId: booking.doctorId,
+        clinicId: booking.clinicId,
+        date: newDate,
+        time: newTime,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
+    loadDashboard();
+  } catch (err) {
+    console.error('editBooking error:', err);
+    alert('تعذر تعديل الموعد، حاول مرة أخرى');
+  }
+}
+
+// حذف حجز نهائياً - لو كان مقبول، نحرر قفل الوقت أيضاً
+async function deleteBooking(bookingId) {
+  const sure = confirm('متأكد إنك تبي تحذف هذا الحجز نهائياً؟ لا يمكن التراجع.');
+  if (!sure) return;
+
+  const booking = cachedBookings.find((b) => b.id === bookingId);
+
+  try {
+    await db.collection('bookings').doc(bookingId).delete();
+
+    if (booking && booking.status === 'accepted') {
+      await db.collection('lockedSlots').doc(buildLockId(booking.doctorId, booking.date, booking.time)).delete();
+    }
+
+    loadDashboard();
+  } catch (err) {
+    console.error('deleteBooking error:', err);
+    alert('تعذر حذف الحجز، حاول مرة أخرى');
+  }
 }
 
 // ============================================
@@ -299,15 +365,51 @@ function renderWeeklySchedule() {
     return `
       <div class="schedule-day">
         <p class="schedule-day-title">${d.label} — ${d.iso}</p>
-        ${dayBookings.map((b) => `
-          <div class="schedule-slot">
-            <span>${b.time} — ${escapeHtml(b.patientName)}</span>
-            <span class="cell-sub">${escapeHtml(b.doctorName)}</span>
-          </div>
-        `).join('')}
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>الوقت</th>
+                <th>المريض</th>
+                <th>رقم الحجز</th>
+                <th>الطبيب</th>
+                <th>تواصل</th>
+                <th>إجراء</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dayBookings.map((b) => `
+                <tr>
+                  <td class="cell-sub">${b.time}</td>
+                  <td class="cell-name">${escapeHtml(b.patientName)}</td>
+                  <td class="cell-sub">${bookingNumber(b.id)}</td>
+                  <td>${escapeHtml(b.doctorName)}</td>
+                  <td>
+                    ${b.patientPhone
+                      ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">💬 واتساب</a>`
+                      : '<span class="cell-sub">—</span>'}
+                  </td>
+                  <td>
+                    <div class="row-actions">
+                      <button class="btn-xs toggle" data-action="edit-schedule" data-id="${b.id}">✏️</button>
+                      <button class="btn-xs delete" data-action="delete-schedule" data-id="${b.id}">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
     `;
   }).join('');
+
+  wrap.querySelectorAll('[data-action="edit-schedule"]').forEach((btn) => {
+    btn.addEventListener('click', () => editBooking(btn.dataset.id));
+  });
+  wrap.querySelectorAll('[data-action="delete-schedule"]').forEach((btn) => {
+    btn.addEventListener('click', () => deleteBooking(btn.dataset.id));
+  });
 }
 
 function getWeekDates() {
