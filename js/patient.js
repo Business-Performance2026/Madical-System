@@ -301,7 +301,7 @@ async function submitBooking() {
       <h3>✅ تم إرسال طلب الحجز</h3>
       <p>رقم حجزك</p>
       <p class="modal-code">${code}</p>
-      <p class="cell-sub">بتوصلك حالته بعد ما تراجعه العيادة، وتقدر تتابعها من قسم "المواعيد القادمة" تحت</p>
+      <p class="cell-sub">بتوصلك حالته بعد ما تراجعه العيادة، وتقدر تتابعها من قسم "مواعيدي الحالية" تحت</p>
       <button type="button" class="btn-primary" id="modal-ok-btn">تم</button>
     `);
     document.getElementById('modal-ok-btn').addEventListener('click', closeModal);

@@ -1073,32 +1073,116 @@ body.landing {
 @media (max-width: 480px) {
   /* أزرار تسجيل الدخول/الخروج أصغر تناسب الهاتف */
   .btn-outline {
-    padding: 7px 12px;
-    font-size: 13px;
+    padding: 6px 10px;
+    font-size: 12.5px;
   }
 
   .landing-nav .btn-primary {
-    padding: 8px 14px;
-    font-size: 13px;
+    padding: 7px 12px;
+    font-size: 12.5px;
   }
 
-  /* عنوان "لوحة العيادة" ونحوها أصغر على الهاتف */
+  /* عنوان "لوحة العيادة" / "لوحة الأدمن" ونحوها أصغر على الهاتف */
+  .dashboard-header {
+    padding: 12px 14px;
+    gap: 8px;
+  }
+
   .dashboard-header .header-titles .brand-title {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .dashboard-header .header-titles .brand-subtitle {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .dashboard-header .header-brand .brand-mark {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
   }
 
+  .header-actions { gap: 6px; }
+
   .notif-bell {
-    width: 38px;
-    height: 38px;
-    font-size: 17px;
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+  }
+
+  .notif-badge {
+    min-width: 17px;
+    height: 17px;
+    font-size: 10.5px;
+  }
+
+  /* مساحات أضيق للوحة كاملة عشان تستوعب الشاشة الصغيرة */
+  .dashboard-shell {
+    padding: 12px 10px 40px;
+  }
+
+  .section-card {
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+
+  .section-card .section-title,
+  .landing-section h2 {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 12px 8px;
+  }
+
+  .stat-card .stat-number { font-size: 24px; }
+  .stat-card .stat-label { font-size: 12px; }
+
+  /* الجداول (طلبات الحجز، المرفوضة، جدول الأسبوع، حسابات الأدمن) أضيق وأخط أصغر */
+  .data-table { font-size: 12.5px; }
+  .data-table th, .data-table td { padding: 8px 6px; }
+  .row-actions { gap: 4px; }
+  .btn-xs { padding: 6px 9px; font-size: 12px; }
+
+  /* بطاقات العيادات والتخصصات عمودين، وبطاقات الأطباء عمود واحد (محتواها أكثر) */
+  .clinics-preview-grid,
+  .specialty-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .doctors-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* النماذج المصغّرة (إضافة طبيب/وقت/تعديل) تصير عمودية بدل صف أفقي مزدحم */
+  .mini-form,
+  .inline-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mini-form select,
+  .mini-form input,
+  .inline-form input {
+    width: 100%;
+  }
+
+  .mini-form button,
+  .inline-form .btn-primary {
+    width: 100%;
+  }
+
+  /* كروت الاختيار والمواعيد بحشو أقل */
+  .choice-card,
+  .appt-card,
+  .doctor-card {
+    padding: 12px;
   }
 }
