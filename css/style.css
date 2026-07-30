@@ -601,3 +601,101 @@ body.dashboard {
   border-color: var(--blue-700);
   background: var(--white);
 }
+
+/* ============================================
+   لوحة المريض - خطوات الحجز
+   ============================================ */
+.step-hint {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--blue-700);
+  background: var(--blue-100);
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.choice-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  background: var(--white);
+  transition: border-color 0.2s, background 0.2s;
+  text-align: right;
+}
+
+.choice-card:hover { border-color: var(--blue-500); background: var(--blue-100); }
+
+.choice-card .choice-title { font-weight: 900; font-size: 17px; color: var(--blue-900); margin: 0; }
+.choice-card .choice-sub { font-size: 14px; color: var(--gray-500); margin: 3px 0 0; }
+.choice-card .choice-arrow { font-size: 20px; color: var(--blue-700); flex-shrink: 0; }
+
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.slot-btn {
+  padding: 14px 8px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--blue-900);
+  background: var(--blue-100);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.slot-btn:hover { border-color: var(--blue-700); }
+.slot-btn.selected { background: var(--blue-700); color: var(--white); }
+
+.date-input {
+  width: 100%;
+  max-width: 260px;
+  padding: 13px 16px;
+  font-family: inherit;
+  font-size: 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+  margin-bottom: 6px;
+}
+
+.confirm-box {
+  margin-top: 18px;
+  padding: 16px;
+  background: var(--blue-100);
+  border-radius: var(--radius-md);
+}
+
+.confirm-box p { margin: 0 0 12px; font-weight: 700; color: var(--blue-900); }
+
+.appt-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  margin-bottom: 10px;
+}
+
+.appt-card .appt-main { font-weight: 700; color: var(--gray-800); }
+.appt-card .appt-sub { font-size: 13.5px; color: var(--gray-500); margin-top: 2px; }

@@ -32,10 +32,15 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 // تحميل كل بيانات اللوحة
 // ============================================
 async function loadDashboard() {
-  const usersSnap = await db.collection('users').get();
+  const [usersSnap, doctorsSnap, bookingsSnap] = await Promise.all([
+    db.collection('users').get(),
+    db.collection('doctors').get(),
+    db.collection('bookings').get(),
+  ]);
+
   const allUsers = usersSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-  renderStats(allUsers);
+  renderStats(allUsers, doctorsSnap.size, bookingsSnap.size);
   renderPendingClinics(allUsers);
   renderRecentUsers(allUsers);
   renderAllUsersTable(allUsers);
@@ -44,15 +49,14 @@ async function loadDashboard() {
 // ============================================
 // شبكة الإحصائيات
 // ============================================
-function renderStats(allUsers) {
+function renderStats(allUsers, doctorsCount, bookingsCount) {
   const clinics = allUsers.filter((u) => u.role === 'clinic' && u.status === 'active');
   const patients = allUsers.filter((u) => u.role === 'patient');
 
   document.getElementById('stat-clinics').textContent = clinics.length;
   document.getElementById('stat-patients').textContent = patients.length;
-  // الأطباء والحجوزات مجموعاتهم لسا ما انبنت بالتطبيق، فتظهر 0 مؤقتاً
-  document.getElementById('stat-doctors').textContent = '0';
-  document.getElementById('stat-bookings').textContent = '0';
+  document.getElementById('stat-doctors').textContent = doctorsCount;
+  document.getElementById('stat-bookings').textContent = bookingsCount;
 }
 
 // ============================================
