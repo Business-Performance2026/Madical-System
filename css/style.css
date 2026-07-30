@@ -4,22 +4,23 @@
    نظام الألوان والمقاسات (Design Tokens)
    ============================================ */
 :root {
-  --blue-900: #0E4C6E;   /* أزرق طبي غامق - نصوص وعناوين */
-  --blue-700: #146C94;   /* أزرق طبي أساسي - أزرار وروابط */
-  --blue-500: #2E8FBF;   /* أزرق فاتح قليلاً - تفاعل/حركة */
-  --blue-100: #E8F3FA;   /* أزرق فاتح جداً - خلفيات ثانوية */
+  --blue-900: #0F2440;   /* نيفي غامق (من الشعار) - نصوص وعناوين */
+  --blue-700: #158A7E;   /* تركوازي أساسي (من الشعار) - أزرار وروابط */
+  --blue-500: #3FC7B5;   /* تركوازي فاتح - تفاعل/حركة */
+  --blue-100: #E3F6F3;   /* تركوازي فاتح جداً - خلفيات ثانوية */
+  --teal-glow: #4ED9C4;  /* تركوازي مضيء - تدرجات وأزرار */
   --white: #FFFFFF;
-  --gray-50: #F5F7F9;    /* خلفية الصفحة */
+  --gray-50: #F6F8F9;    /* خلفية الصفحة */
   --gray-200: #E3E8EC;   /* حدود */
   --gray-500: #6B7A85;   /* نص ثانوي */
-  --gray-800: #2B333A;   /* نص أساسي */
+  --gray-800: #23303D;   /* نص أساسي */
   --green-600: #2E9E6D;  /* مقبول */
   --amber-600: #C98A1F;  /* قيد الانتظار */
   --red-600: #D0483F;    /* مرفوض */
 
   --radius-md: 14px;
   --radius-lg: 20px;
-  --shadow-card: 0 10px 30px rgba(14, 76, 110, 0.10);
+  --shadow-card: 0 10px 30px rgba(15, 36, 64, 0.10);
 }
 
 * { box-sizing: border-box; }
@@ -64,6 +65,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .pulse-line {
@@ -208,14 +216,16 @@ body {
   font-size: 18px;
   font-weight: 700;
   color: var(--white);
-  background: var(--blue-700);
+  background: linear-gradient(135deg, var(--teal-glow), var(--blue-700) 60%, var(--blue-900));
+  background-size: 160% 160%;
+  background-position: 0% 50%;
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.2s, transform 0.05s;
+  transition: background-position 0.35s ease, transform 0.05s;
 }
 
-.btn-primary:hover { background: var(--blue-900); }
+.btn-primary:hover { background-position: 100% 50%; }
 .btn-primary:active { transform: scale(0.99); }
 .btn-primary:disabled { background: var(--gray-200); color: var(--gray-500); cursor: not-allowed; }
 
@@ -324,7 +334,10 @@ body.dashboard {
   box-shadow: var(--shadow-card);
   padding: 18px 16px;
   text-align: center;
+  transition: transform 0.15s;
 }
+
+.stat-card:hover { transform: translateY(-2px); }
 
 .stat-card .stat-number {
   font-size: 32px;
@@ -635,11 +648,11 @@ body.dashboard {
   border-radius: var(--radius-md);
   cursor: pointer;
   background: var(--white);
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.2s;
   text-align: right;
 }
 
-.choice-card:hover { border-color: var(--blue-500); background: var(--blue-100); }
+.choice-card:hover { border-color: var(--blue-500); background: var(--blue-100); transform: translateY(-2px); box-shadow: var(--shadow-card); }
 
 .choice-card .choice-title { font-weight: 900; font-size: 17px; color: var(--blue-900); margin: 0; }
 .choice-card .choice-sub { font-size: 14px; color: var(--gray-500); margin: 3px 0 0; }
@@ -751,6 +764,49 @@ body.dashboard {
 .modal-box .btn-primary { margin-top: 8px; }
 
 /* ============================================
+   تنبيه منبثق (Toast) - حجز جديد وصل
+   ============================================ */
+#toast-root {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 320px;
+}
+
+.toast-notification {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(15, 36, 64, 0.22);
+  padding: 14px 16px;
+  border-right: 5px solid var(--teal-glow);
+  cursor: pointer;
+  animation: toast-in 0.3s ease;
+}
+
+.toast-notification .toast-title {
+  font-weight: 900;
+  color: var(--blue-900);
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.toast-notification .toast-body {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--gray-500);
+  line-height: 1.5;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
    الشاشة الرئيسية العامة (قبل تسجيل الدخول)
    ============================================ */
 .back-home-link {
@@ -800,9 +856,22 @@ body.landing {
 .landing-nav .btn-primary { width: auto; padding: 11px 22px; font-size: 15px; }
 
 .hero {
-  background: linear-gradient(180deg, var(--blue-100) 0%, var(--white) 100%);
+  background: linear-gradient(160deg, var(--blue-100) 0%, var(--white) 55%, var(--white) 100%);
   padding: 40px 20px 56px;
   text-align: center;
+  position: relative;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, var(--teal-glow) 0%, transparent 70%);
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 .hero h1 {
@@ -908,10 +977,10 @@ body.landing {
   border-radius: var(--radius-lg);
   text-decoration: none;
   display: block;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.2s;
 }
 
-.clinic-preview-card:hover { border-color: var(--blue-500); background: var(--blue-100); }
+.clinic-preview-card:hover { border-color: var(--blue-500); background: var(--blue-100); transform: translateY(-3px); box-shadow: var(--shadow-card); }
 .clinic-preview-card .cp-name { font-weight: 900; color: var(--blue-900); font-size: 16px; margin: 0 0 4px; }
 .clinic-preview-card .cp-sub { font-size: 13.5px; color: var(--gray-500); margin: 0; }
 

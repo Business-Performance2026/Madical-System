@@ -46,21 +46,70 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 let cachedDoctors = [];
 let editingDoctorId = null;
 let cachedBookings = [];
+let unsubscribeBookings = null;
+let isInitialBookingsLoad = true;
+let previousPendingIds = new Set();
 
 async function loadDashboard() {
-  const [doctorsSnap, bookingsSnap] = await Promise.all([
-    db.collection('doctors').where('clinicId', '==', currentUid).get(),
-    db.collection('bookings').where('clinicId', '==', currentUid).get(),
-  ]);
+  await loadDoctorsOnly();
+  setupBookingsListener();
+}
 
+async function loadDoctorsOnly() {
+  const doctorsSnap = await db.collection('doctors').where('clinicId', '==', currentUid).get();
   cachedDoctors = doctorsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  cachedBookings = bookingsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-  renderStats();
-  renderBookingRequests();
-  renderRejectedBookings();
   renderDoctors();
-  renderWeeklySchedule();
+}
+
+// استماع فوري لمجموعة الحجوزات - أي حجز جديد يوصل يظهر مباشرة بدون تحديث الصفحة،
+// مع تنبيه منبثق (toast) لو كان الحجز الجديد "قيد الانتظار"
+function setupBookingsListener() {
+  if (unsubscribeBookings) return; // مستمع شغّال أصلاً، ما نكرره
+
+  unsubscribeBookings = db.collection('bookings')
+    .where('clinicId', '==', currentUid)
+    .onSnapshot((snap) => {
+      const newBookings = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const newPendingIds = newBookings.filter((b) => b.status === 'pending').map((b) => b.id);
+
+      if (!isInitialBookingsLoad) {
+        const freshlyAdded = newPendingIds.filter((id) => !previousPendingIds.has(id));
+        if (freshlyAdded.length > 0) {
+          const booking = newBookings.find((b) => b.id === freshlyAdded[0]);
+          showNewBookingToast(booking, freshlyAdded.length);
+        }
+      }
+
+      previousPendingIds = new Set(newPendingIds);
+      isInitialBookingsLoad = false;
+      cachedBookings = newBookings;
+
+      renderStats();
+      renderBookingRequests();
+      renderRejectedBookings();
+      renderWeeklySchedule();
+    }, (err) => {
+      console.error('bookings listener error:', err);
+    });
+}
+
+// ============================================
+// تنبيه منبثق (Toast) لحجز جديد
+// ============================================
+function showNewBookingToast(booking, count) {
+  const root = document.getElementById('toast-root');
+  const el = document.createElement('div');
+  el.className = 'toast-notification';
+  el.innerHTML = `
+    <p class="toast-title">🔔 حجز جديد وصل${count > 1 ? ` (${count})` : ''}</p>
+    <p class="toast-body">${escapeHtml(booking.patientName)} — ${escapeHtml(booking.doctorName)}<br>${booking.date} — ${booking.time}</p>
+  `;
+  el.addEventListener('click', () => {
+    document.getElementById('requests-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.remove();
+  });
+  root.appendChild(el);
+  setTimeout(() => el.remove(), 8000);
 }
 
 // ============================================
