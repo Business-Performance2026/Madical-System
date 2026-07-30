@@ -4,23 +4,25 @@
    نظام الألوان والمقاسات (Design Tokens)
    ============================================ */
 :root {
-  --blue-900: #044059;   /* أزرق غامق (حسب الطلب) - نصوص وعناوين رئيسية */
-  --blue-700: #158A7E;   /* تركوازي أساسي (من الشعار) - أزرار وروابط */
-  --blue-500: #3FC7B5;   /* تركوازي فاتح - تفاعل/حركة */
-  --blue-100: #E3F6F3;   /* تركوازي فاتح جداً - خلفيات ثانوية */
-  --teal-glow: #4ED9C4;  /* تركوازي مضيء - تدرجات وأزرار */
+  --blue-900: #044059;   /* كحلي غامق - نصوص وعناوين وصناديق تمييز فوق البطاقات الفاتحة */
+  --blue-700: #0E5478;   /* أزرق كحلي متوسط - روابط وحدود وعناصر ثانوية */
+  --blue-500: #3E7CA6;   /* أزرق فاتح قليلاً - تفاعل/حركة */
+  --blue-100: #E9F0F5;   /* أزرق فاتح جداً - خلفيات ثانوية بالبطاقات */
+  --gold-600: #D19F00;   /* الذهبي - اللون المميز الثانوي (أزرار رئيسية وتمييزات) */
+  --gold-glow: #E8C24D;  /* ذهبي فاتح - تدرجات وتوهج */
+  --page-bg: #05314D;    /* خلفية التطبيق العامة الجديدة */
   --white: #FFFFFF;
-  --gray-50: #F6F8F9;    /* خلفية الصفحة */
+  --gray-50: #F4F6F8;    /* خلفية فاتحة ثانوية داخل البطاقات */
   --gray-200: #E3E8EC;   /* حدود */
-  --gray-500: #6B7A85;   /* نص ثانوي */
-  --gray-800: #23303D;   /* نص أساسي */
+  --gray-500: #6B7A85;   /* نص ثانوي (فوق خلفيات فاتحة) */
+  --gray-800: #23303D;   /* نص أساسي (فوق خلفيات فاتحة) */
   --green-600: #2E9E6D;  /* مقبول */
   --amber-600: #C98A1F;  /* قيد الانتظار */
   --red-600: #D0483F;    /* مرفوض */
 
   --radius-md: 14px;
   --radius-lg: 20px;
-  --shadow-card: 0 10px 30px rgba(15, 36, 64, 0.10);
+  --shadow-card: 0 10px 30px rgba(5, 49, 77, 0.18);
 }
 
 * { box-sizing: border-box; }
@@ -33,7 +35,7 @@ html, body {
 
 body {
   font-family: 'Tajawal', sans-serif;
-  background: linear-gradient(180deg, var(--blue-100) 0%, var(--gray-50) 60%);
+  background: var(--page-bg);
   color: var(--gray-800);
   font-size: 18px;
   line-height: 1.6;
@@ -105,6 +107,10 @@ body {
   color: var(--gray-500);
   margin: 0;
 }
+
+/* صفحة تسجيل الدخول فقط: الشعار يطلع مباشرة فوق الخلفية الغامقة (بدون بطاقة بيضاء) فيحتاج ألوان فاتحة */
+.brand .brand-title { color: var(--white); }
+.brand .brand-subtitle { color: var(--gold-glow); }
 
 /* ============================================
    بطاقة تسجيل الدخول / إنشاء الحساب
@@ -216,7 +222,7 @@ body {
   font-size: 18px;
   font-weight: 700;
   color: var(--white);
-  background: linear-gradient(135deg, var(--teal-glow), var(--blue-700) 60%, var(--blue-900));
+  background: linear-gradient(135deg, var(--gold-glow), var(--gold-600) 45%, var(--blue-900));
   background-size: 160% 160%;
   background-position: 0% 50%;
   border: none;
@@ -288,7 +294,7 @@ footer.disclaimer {
 .page-tabs button:hover { transform: translateY(-1px); }
 
 .page-tabs button.active {
-  background: var(--blue-900);
+  background: var(--gold-600);
   color: var(--white);
 }
 
@@ -298,7 +304,7 @@ body.dashboard {
   padding: 0;
   align-items: initial;
   justify-content: initial;
-  background: var(--gray-50);
+  background: var(--page-bg);
 }
 
 .dashboard-shell {
@@ -529,6 +535,12 @@ body.dashboard {
   padding: 24px;
   color: var(--gray-500);
   font-size: 15px;
+}
+
+/* دليل العيادات بالشاشة الرئيسية: النص يطلع مباشرة فوق الخلفية الغامقة، فيحتاج لون فاتح */
+#clinics-directory-wrap.loading-state,
+#clinics-directory-wrap .empty-state {
+  color: #B9CBDA;
 }
 
 /* ============================================
@@ -821,7 +833,7 @@ body.dashboard {
   border-radius: var(--radius-md);
   box-shadow: 0 12px 32px rgba(15, 36, 64, 0.22);
   padding: 14px 16px;
-  border-right: 5px solid var(--teal-glow);
+  border-right: 5px solid var(--gold-glow);
   cursor: pointer;
   animation: toast-in 0.3s ease;
 }
@@ -909,7 +921,7 @@ body.landing {
   padding: 0;
   align-items: initial;
   justify-content: initial;
-  background: var(--white);
+  background: var(--page-bg);
 }
 
 .landing-nav {
@@ -935,7 +947,7 @@ body.landing {
 }
 
 .landing-nav .nav-brand svg { width: 24px; height: auto; }
-.landing-nav .nav-brand span { font-weight: 900; font-size: 18px; color: var(--blue-900); }
+.landing-nav .nav-brand span { font-weight: 900; font-size: 18px; color: var(--white); }
 
 .landing-nav .btn-primary { width: auto; padding: 11px 22px; font-size: 15px; }
 
@@ -943,7 +955,7 @@ body.landing {
    هيرو مضغوط (البحث هو محور الصفحة، مو الكلام التسويقي)
    ============================================ */
 .hero-compact {
-  background: linear-gradient(160deg, var(--blue-100) 0%, var(--white) 70%, var(--white) 100%);
+  background: linear-gradient(160deg, #073E5E 0%, var(--page-bg) 70%, var(--page-bg) 100%);
   padding: 36px 20px 30px;
   text-align: center;
   position: relative;
@@ -957,15 +969,15 @@ body.landing {
   right: -70px;
   width: 240px;
   height: 240px;
-  background: radial-gradient(circle, var(--teal-glow) 0%, transparent 70%);
-  opacity: 0.3;
+  background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+  opacity: 0.25;
   pointer-events: none;
 }
 
 .hero-compact h1 {
   font-size: 26px;
   font-weight: 900;
-  color: var(--blue-900);
+  color: var(--white);
   max-width: 560px;
   margin: 0 auto 8px;
   line-height: 1.4;
@@ -974,7 +986,7 @@ body.landing {
 
 .hero-compact > p {
   font-size: 15.5px;
-  color: var(--gray-500);
+  color: #B9CBDA;
   max-width: 480px;
   margin: 0 auto 22px;
   position: relative;
@@ -1006,7 +1018,7 @@ body.landing {
   font-size: 16px;
   font-weight: 700;
   color: var(--white);
-  background: linear-gradient(135deg, var(--teal-glow), var(--blue-700) 70%);
+  background: linear-gradient(135deg, var(--gold-glow), var(--gold-600) 70%);
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -1019,7 +1031,7 @@ body.landing {
   margin: 16px 0 0;
   font-size: 13px;
   font-weight: 700;
-  color: var(--blue-700);
+  color: var(--gold-glow);
   position: relative;
   min-height: 18px;
 }
@@ -1063,8 +1075,8 @@ body.landing {
 .specialty-pill:hover { border-color: var(--blue-500); }
 
 .specialty-pill.active {
-  background: var(--blue-900);
-  border-color: var(--blue-900);
+  background: var(--gold-600);
+  border-color: var(--gold-600);
   color: var(--white);
 }
 
@@ -1084,14 +1096,14 @@ body.landing {
   display: inline-block;
   font-size: 19px;
   font-weight: 900;
-  color: var(--white);
-  background: var(--blue-900);
+  color: var(--blue-900);
+  background: var(--gold-600);
   padding: 8px 18px;
   border-radius: 10px;
   margin: 0 0 8px;
 }
 
-.directory-header .section-hint { margin: 0; }
+.directory-header .section-hint { margin: 0; color: #B9CBDA; }
 
 .clinics-directory-grid {
   display: grid;
@@ -1164,7 +1176,7 @@ body.landing {
 }
 
 .cta-banner {
-  background: var(--blue-700);
+  background: linear-gradient(135deg, var(--gold-glow), var(--gold-600));
   border-radius: var(--radius-lg);
   padding: 40px 24px;
   text-align: center;
@@ -1172,14 +1184,14 @@ body.landing {
   margin: 0 auto 44px;
 }
 
-.cta-banner h2 { color: var(--white); margin-bottom: 10px; }
-.cta-banner p { color: var(--blue-100); margin-bottom: 22px; font-size: 15.5px; }
+.cta-banner h2 { color: var(--blue-900); margin-bottom: 10px; }
+.cta-banner p { color: #12466A; margin-bottom: 22px; font-size: 15.5px; }
 
 .cta-banner .btn-primary {
   width: auto;
   padding: 15px 34px;
-  background: var(--white);
-  color: var(--blue-700);
+  background: var(--blue-900);
+  color: var(--white);
   display: inline-block;
   text-decoration: none;
 }
@@ -1189,7 +1201,7 @@ body.landing {
 .landing-footer {
   text-align: center;
   padding: 24px 20px 40px;
-  color: var(--gray-500);
+  color: #7C93A5;
   font-size: 13.5px;
 }
 
