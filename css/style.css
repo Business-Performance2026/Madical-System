@@ -833,14 +833,18 @@ body.landing {
 
 .specialty-chip {
   display: block;
+  width: 100%;
   text-align: center;
   padding: 20px 10px;
   background: var(--gray-50);
+  border: none;
   border-radius: var(--radius-md);
   text-decoration: none;
   color: var(--gray-800);
+  font-family: inherit;
   font-weight: 700;
   font-size: 14.5px;
+  cursor: pointer;
   transition: background 0.2s, transform 0.15s;
 }
 

@@ -24,22 +24,28 @@
     <h1>احجز موعدك الطبي بثواني، من غير اتصال ولا انتظار</h1>
     <p>دوّر على عيادتك المفضّلة، اختر الطبيب والوقت المناسب لك، وتابع حالة حجزك أول بأول.</p>
     <form id="hero-search-form" class="hero-search">
-      <input type="text" placeholder="دوّر على تخصص أو اسم عيادة...">
+      <input type="text" id="hero-search-input" placeholder="دوّر على تخصص أو اسم عيادة...">
       <button type="submit">ابحث</button>
     </form>
   </header>
 
   <section class="landing-section">
     <h2>تصفح حسب التخصص</h2>
-    <p class="section-hint">اختر التخصص اللي تحتاجه وابدأ رحلة الحجز</p>
+    <p class="section-hint">اختر التخصص اللي تحتاجه وشوف العيادات المتوفرة</p>
     <div class="specialty-grid">
-      <a href="login.html" class="specialty-chip"><span class="specialty-icon">🦷</span>أسنان</a>
-      <a href="login.html" class="specialty-chip"><span class="specialty-icon">🧴</span>جلدية</a>
-      <a href="login.html" class="specialty-chip"><span class="specialty-icon">🧸</span>أطفال</a>
-      <a href="login.html" class="specialty-chip"><span class="specialty-icon">🩺</span>باطنية</a>
-      <a href="login.html" class="specialty-chip"><span class="specialty-icon">👁️</span>عيون</a>
-      <a href="login.html" class="specialty-chip"><span class="specialty-icon">🦴</span>عظام</a>
+      <button type="button" class="specialty-chip" data-specialty="أسنان"><span class="specialty-icon">🦷</span>أسنان</button>
+      <button type="button" class="specialty-chip" data-specialty="جلدية"><span class="specialty-icon">🧴</span>جلدية</button>
+      <button type="button" class="specialty-chip" data-specialty="أطفال"><span class="specialty-icon">🧸</span>أطفال</button>
+      <button type="button" class="specialty-chip" data-specialty="باطنية"><span class="specialty-icon">🩺</span>باطنية</button>
+      <button type="button" class="specialty-chip" data-specialty="عيون"><span class="specialty-icon">👁️</span>عيون</button>
+      <button type="button" class="specialty-chip" data-specialty="عظام"><span class="specialty-icon">🦴</span>عظام</button>
     </div>
+  </section>
+
+  <section class="landing-section hidden" id="search-results-section">
+    <h2 id="search-results-title">نتائج البحث</h2>
+    <p class="section-hint">تصفح مجاني — سجّل دخولك بس وقت ما تبي تحجز فعلياً</p>
+    <div id="search-results-wrap" class="loading-state">جاري البحث...</div>
   </section>
 
   <section class="landing-section">

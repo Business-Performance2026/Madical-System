@@ -44,6 +44,7 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 // تحميل بيانات اللوحة
 // ============================================
 let cachedDoctors = [];
+let editingDoctorId = null;
 let cachedBookings = [];
 
 async function loadDashboard() {
@@ -264,38 +265,25 @@ function renderDoctors() {
 
   wrap.innerHTML = `
     <div class="doctors-grid">
-      ${cachedDoctors.map((doc) => `
-        <div class="doctor-card">
-          <div class="doctor-head">
-            <div>
-              <p class="doctor-name">${escapeHtml(doc.name)}</p>
-              <p class="doctor-specialty">${escapeHtml(doc.specialty)}</p>
-            </div>
-            <button class="btn-xs delete" data-action="delete-doctor" data-id="${doc.id}">حذف</button>
-          </div>
-
-          <div class="hours-list">
-            ${(doc.workingHours || []).length === 0
-              ? '<span class="cell-sub">ما تم تحديد أوقات عمل بعد</span>'
-              : doc.workingHours.map((h, i) => `
-                  <span class="hours-chip">
-                    ${dayLabel(h.day)} ${h.start} - ${h.end}
-                    <button data-action="remove-hour" data-id="${doc.id}" data-index="${i}">×</button>
-                  </span>
-                `).join('')}
-          </div>
-
-          <div class="mini-form" data-add-hour-for="${doc.id}">
-            <select class="hour-day">${DAYS.map((d) => `<option value="${d.key}">${d.label}</option>`).join('')}</select>
-            <input type="time" class="hour-start" value="09:00">
-            <input type="time" class="hour-end" value="14:00">
-            <button type="button" class="btn-xs toggle" data-action="add-hour" data-id="${doc.id}">إضافة وقت</button>
-          </div>
-        </div>
-      `).join('')}
+      ${cachedDoctors.map((doc) => (doc.id === editingDoctorId ? renderDoctorEditCard(doc) : renderDoctorCard(doc))).join('')}
     </div>
   `;
 
+  wrap.querySelectorAll('[data-action="edit-doctor"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      editingDoctorId = btn.dataset.id;
+      renderDoctors();
+    });
+  });
+  wrap.querySelectorAll('[data-action="cancel-doctor-edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      editingDoctorId = null;
+      renderDoctors();
+    });
+  });
+  wrap.querySelectorAll('[data-action="save-doctor-edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => saveDoctorEdit(btn.dataset.id));
+  });
   wrap.querySelectorAll('[data-action="delete-doctor"]').forEach((btn) => {
     btn.addEventListener('click', () => deleteDoctor(btn.dataset.id));
   });
@@ -305,6 +293,85 @@ function renderDoctors() {
   wrap.querySelectorAll('[data-action="add-hour"]').forEach((btn) => {
     btn.addEventListener('click', () => addWorkingHour(btn.dataset.id));
   });
+}
+
+function renderDoctorCard(doc) {
+  return `
+    <div class="doctor-card">
+      <div class="doctor-head">
+        <div>
+          <p class="doctor-name">${escapeHtml(doc.name)}</p>
+          <p class="doctor-specialty">${escapeHtml(doc.specialty)}</p>
+        </div>
+        <div class="row-actions">
+          <button class="btn-xs toggle" data-action="edit-doctor" data-id="${doc.id}">✏️</button>
+          <button class="btn-xs delete" data-action="delete-doctor" data-id="${doc.id}">🗑️</button>
+        </div>
+      </div>
+
+      ${renderDoctorHoursSection(doc)}
+    </div>
+  `;
+}
+
+// كرت التعديل: الاسم والتخصص مع بعض بنفس النموذج، وحفظ واحد للاثنين
+function renderDoctorEditCard(doc) {
+  return `
+    <div class="doctor-card">
+      <div class="mini-form" style="margin-bottom:14px;">
+        <input type="text" class="edit-doctor-name" placeholder="اسم الطبيب" value="${escapeHtml(doc.name)}">
+        <input type="text" class="edit-doctor-specialty" placeholder="التخصص" value="${escapeHtml(doc.specialty)}">
+        <button type="button" class="btn-xs approve" data-action="save-doctor-edit" data-id="${doc.id}">💾 حفظ</button>
+        <button type="button" class="btn-xs delete" data-action="cancel-doctor-edit" data-id="${doc.id}">إلغاء</button>
+      </div>
+
+      ${renderDoctorHoursSection(doc)}
+    </div>
+  `;
+}
+
+function renderDoctorHoursSection(doc) {
+  return `
+    <div class="hours-list">
+      ${(doc.workingHours || []).length === 0
+        ? '<span class="cell-sub">ما تم تحديد أوقات عمل بعد</span>'
+        : doc.workingHours.map((h, i) => `
+            <span class="hours-chip">
+              ${dayLabel(h.day)} ${h.start} - ${h.end}
+              <button data-action="remove-hour" data-id="${doc.id}" data-index="${i}">×</button>
+            </span>
+          `).join('')}
+    </div>
+
+    <div class="mini-form" data-add-hour-for="${doc.id}">
+      <select class="hour-day">${DAYS.map((d) => `<option value="${d.key}">${d.label}</option>`).join('')}</select>
+      <input type="time" class="hour-start" value="09:00">
+      <input type="time" class="hour-end" value="14:00">
+      <button type="button" class="btn-xs toggle" data-action="add-hour" data-id="${doc.id}">إضافة وقت</button>
+    </div>
+  `;
+}
+
+// حفظ اسم وتخصص الطبيب مع بعض
+// ملاحظة: ما يحدّث اسم الطبيب بالحجوزات القديمة المخزّنة مسبقاً (doctorName)، بس الجديدة بتاخذ الاسم المحدّث
+async function saveDoctorEdit(doctorId) {
+  const card = document.querySelector(`[data-action="save-doctor-edit"][data-id="${doctorId}"]`).closest('.doctor-card');
+  const name = card.querySelector('.edit-doctor-name').value.trim();
+  const specialty = card.querySelector('.edit-doctor-specialty').value.trim();
+
+  if (!name || !specialty) {
+    alert('اسم الطبيب والتخصص إجباريين');
+    return;
+  }
+
+  try {
+    await db.collection('doctors').doc(doctorId).update({ name, specialty });
+    editingDoctorId = null;
+    loadDashboard();
+  } catch (err) {
+    console.error('saveDoctorEdit error:', err);
+    alert('تعذر حفظ التعديلات، حاول مرة أخرى');
+  }
 }
 
 async function deleteDoctor(doctorId) {

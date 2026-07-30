@@ -165,6 +165,7 @@ function renderRecentUsers(allUsers) {
 // ============================================
 let activeFilter = 'all';
 let cachedUsers = [];
+let editingUid = null;
 
 function renderAllUsersTable(allUsers) {
   cachedUsers = allUsers;
@@ -172,6 +173,7 @@ function renderAllUsersTable(allUsers) {
   document.querySelectorAll('.filter-tabs button').forEach((btn) => {
     btn.onclick = () => {
       activeFilter = btn.dataset.filter;
+      editingUid = null;
       document.querySelectorAll('.filter-tabs button').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       drawUsersTable();
@@ -205,32 +207,69 @@ function drawUsersTable() {
           </tr>
         </thead>
         <tbody>
-          ${list.map((u) => `
-            <tr>
-              <td>
-                <div class="cell-name">${escapeHtml(u.name)}</div>
-                <div class="cell-sub">${escapeHtml(u.email)}${u.phone ? ' • ' + escapeHtml(u.phone) : ''}</div>
-              </td>
-              <td>${roleBadge(u.role)}</td>
-              <td>${statusBadge(u.status)}</td>
-              <td>
-                <div class="row-actions">
-                  <button class="btn-xs toggle" data-action="edit" data-uid="${u.id}">✏️ تعديل</button>
-                  ${u.status === 'disabled'
-                    ? `<button class="btn-xs approve" data-action="enable" data-uid="${u.id}">✅ تفعيل</button>`
-                    : `<button class="btn-xs reject" data-action="disable" data-uid="${u.id}">⛔ إيقاف</button>`}
-                  <button class="btn-xs delete" data-action="delete" data-uid="${u.id}">🗑️ حذف</button>
-                </div>
-              </td>
-            </tr>
-          `).join('')}
+          ${list.map((u) => (u.id === editingUid ? renderEditRow(u) : renderUserRow(u))).join('')}
         </tbody>
       </table>
     </div>
   `;
 
+  bindUserRowEvents(wrap);
+}
+
+function renderUserRow(u) {
+  return `
+    <tr>
+      <td>
+        <div class="cell-name">${escapeHtml(u.name)}</div>
+        <div class="cell-sub">${escapeHtml(u.email)}${u.phone ? ' • ' + escapeHtml(u.phone) : ''}</div>
+      </td>
+      <td>${roleBadge(u.role)}</td>
+      <td>${statusBadge(u.status)}</td>
+      <td>
+        <div class="row-actions">
+          <button class="btn-xs toggle" data-action="edit" data-uid="${u.id}">✏️ تعديل</button>
+          ${u.status === 'disabled'
+            ? `<button class="btn-xs approve" data-action="enable" data-uid="${u.id}">✅ تفعيل</button>`
+            : `<button class="btn-xs reject" data-action="disable" data-uid="${u.id}">⛔ إيقاف</button>`}
+          <button class="btn-xs delete" data-action="delete" data-uid="${u.id}">🗑️ حذف</button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+// صف التعديل: يفتح كل الحقول مع بعض (الاسم، البريد، ورقم الجوال للمريض)
+function renderEditRow(u) {
+  return `
+    <tr>
+      <td colspan="4">
+        <div class="mini-form">
+          <input type="text" class="edit-name" placeholder="الاسم" value="${escapeHtml(u.name)}">
+          <input type="email" class="edit-email" placeholder="البريد الإلكتروني" value="${escapeHtml(u.email)}">
+          ${u.role === 'patient' ? `<input type="tel" class="edit-phone" placeholder="رقم الجوال" value="${escapeHtml(u.phone || '')}">` : ''}
+          <button type="button" class="btn-xs approve" data-action="save-edit" data-uid="${u.id}">💾 حفظ</button>
+          <button type="button" class="btn-xs delete" data-action="cancel-edit" data-uid="${u.id}">إلغاء</button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function bindUserRowEvents(wrap) {
   wrap.querySelectorAll('[data-action="edit"]').forEach((btn) => {
-    btn.addEventListener('click', () => editUser(btn.dataset.uid));
+    btn.addEventListener('click', () => {
+      editingUid = btn.dataset.uid;
+      drawUsersTable();
+    });
+  });
+  wrap.querySelectorAll('[data-action="cancel-edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      editingUid = null;
+      drawUsersTable();
+    });
+  });
+  wrap.querySelectorAll('[data-action="save-edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => saveUserEdit(btn.dataset.uid));
   });
   wrap.querySelectorAll('[data-action="disable"]').forEach((btn) => {
     btn.addEventListener('click', () => updateUserStatus(btn.dataset.uid, 'disabled'));
@@ -243,32 +282,28 @@ function drawUsersTable() {
   });
 }
 
-// تعديل بيانات مستخدم (اسم، بريد، ورقم جوال للمريض)
-// ملاحظة: هذا يعدّل بيانات الملف الشخصي بـ Firestore بس،
-// ما يغيّر بريد الدخول الفعلي بـ Firebase Authentication
-async function editUser(uid) {
-  const user = cachedUsers.find((u) => u.id === uid);
-  if (!user) return;
+// حفظ كل الحقول مع بعض (اسم + بريد + جوال للمريض)
+// ملاحظة: يعدّل بيانات الملف الشخصي بـ Firestore بس، ما يغيّر بريد الدخول الفعلي بـ Firebase Authentication
+async function saveUserEdit(uid) {
+  const row = document.querySelector(`[data-action="save-edit"][data-uid="${uid}"]`).closest('tr');
+  const name = row.querySelector('.edit-name').value.trim();
+  const email = row.querySelector('.edit-email').value.trim();
+  const phoneInput = row.querySelector('.edit-phone');
 
-  const newName = prompt('الاسم:', user.name || '');
-  if (newName === null || !newName.trim()) return;
-
-  const newEmail = prompt('البريد الإلكتروني (للعرض فقط، ما يغيّر بريد الدخول):', user.email || '');
-  if (newEmail === null || !newEmail.trim()) return;
-
-  const updates = { name: newName.trim(), email: newEmail.trim() };
-
-  if (user.role === 'patient') {
-    const newPhone = prompt('رقم الجوال:', user.phone || '');
-    if (newPhone === null || !newPhone.trim()) return;
-    updates.phone = newPhone.trim();
+  if (!name || !email) {
+    alert('الاسم والبريد الإلكتروني إجباريين');
+    return;
   }
+
+  const updates = { name, email };
+  if (phoneInput) updates.phone = phoneInput.value.trim();
 
   try {
     await db.collection('users').doc(uid).update(updates);
+    editingUid = null;
     loadDashboard();
   } catch (err) {
-    console.error('editUser error:', err);
+    console.error('saveUserEdit error:', err);
     alert('تعذر حفظ التعديلات، حاول مرة أخرى');
   }
 }

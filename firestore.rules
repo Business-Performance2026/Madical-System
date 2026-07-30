@@ -66,8 +66,8 @@ service cloud.firestore {
     // doctors
     // ============================================
     match /doctors/{doctorId} {
-      // أي مستخدم مسجّل دخول يقدر يشوف الأطباء (يحتاجها المريض عند تصفح العيادات)
-      allow read: if isSignedIn();
+      // قراءة عامة حتى بدون تسجيل دخول (اسم وتخصص الطبيب معلومة عامة، تحتاجها الشاشة الرئيسية للتصفح والبحث)
+      allow read: if true;
 
       // إنشاء طبيب: العيادة صاحبة الحساب بس، ولازم تكون فعّالة
       allow create: if isActiveClinic(request.resource.data.clinicId);
