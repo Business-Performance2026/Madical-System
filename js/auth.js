@@ -187,6 +187,7 @@ function redirectByRole(role) {
   const destinations = {
     patient: 'patient/home.html',
     clinic: 'clinic/dashboard.html',
+    staff: 'clinic/dashboard.html',
     admin: 'admin/dashboard.html',
   };
   setTimeout(() => {

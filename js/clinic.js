@@ -1,8 +1,10 @@
 // ============================================
-// حماية الصفحة: لازم عيادة مسجّلة دخول وحسابها فعّال
+// حماية الصفحة: لازم عيادة (أو موظف تابع لها) مسجّل دخول وحسابه فعّال
 // ============================================
-let currentUid = null;
-let clinicName = '';
+let currentUid = null;      // uid الحساب المسجّل دخول فعلياً (عيادة أو موظف)
+let activeClinicUid = null; // uid العيادة الأساسية اللي تنتمي لها كل البيانات (أطباء/حجوزات)
+let clinicName = '';        // اسم العيادة نفسها (يُستخدم برسائل الواتساب والطباعة)
+let isPrimaryOwner = false; // true لو صاحب حساب العيادة الأصلي، false لو موظف تابع
 
 const DAYS = [
   { key: 'sunday', label: 'الأحد' },
@@ -21,16 +23,43 @@ auth.onAuthStateChanged(async (user) => {
   }
 
   const userDoc = await db.collection('users').doc(user.uid).get();
+  const userData = userDoc.exists ? userDoc.data() : null;
+  const validRole = userData && (userData.role === 'clinic' || userData.role === 'staff');
 
-  if (!userDoc.exists || userDoc.data().role !== 'clinic' || userDoc.data().status !== 'active') {
+  if (!validRole || userData.status !== 'active') {
     await auth.signOut();
     window.location.href = '../index.html';
     return;
   }
 
   currentUid = user.uid;
-  clinicName = userDoc.data().name || 'العيادة';
-  document.getElementById('clinic-name').textContent = clinicName;
+  isPrimaryOwner = userData.role === 'clinic';
+
+  if (isPrimaryOwner) {
+    activeClinicUid = user.uid;
+    clinicName = userData.name || 'العيادة';
+  } else {
+    // موظف: نجيب اسم العيادة الأساسية من حساب صاحبها
+    activeClinicUid = userData.staffOf;
+    const ownerDoc = await db.collection('users').doc(activeClinicUid).get();
+    clinicName = ownerDoc.exists ? (ownerDoc.data().name || 'العيادة') : 'العيادة';
+  }
+
+  document.getElementById('clinic-name').textContent = userData.name || clinicName;
+
+  const staffIndicator = document.getElementById('staff-indicator');
+  if (!isPrimaryOwner && staffIndicator) {
+    staffIndicator.textContent = ` (موظف لدى ${clinicName})`;
+    staffIndicator.classList.remove('hidden');
+  }
+
+  // قسم "الموظفين" يظهر بس لصاحب الحساب الأساسي، مو للموظفين أنفسهم
+  const staffTabBtn = document.querySelector('.page-tabs button[data-tab="staff"]');
+  const staffPanel = document.querySelector('.tab-panel[data-panel="staff"]');
+  if (!isPrimaryOwner) {
+    if (staffTabBtn) staffTabBtn.remove();
+    if (staffPanel) staffPanel.remove();
+  }
 
   loadDashboard();
 });
@@ -53,10 +82,11 @@ let previousPendingIds = new Set();
 async function loadDashboard() {
   await loadDoctorsOnly();
   setupBookingsListener();
+  if (isPrimaryOwner) loadStaffList();
 }
 
 async function loadDoctorsOnly() {
-  const doctorsSnap = await db.collection('doctors').where('clinicId', '==', currentUid).get();
+  const doctorsSnap = await db.collection('doctors').where('clinicId', '==', activeClinicUid).get();
   cachedDoctors = doctorsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   renderDoctors();
   populateDoctorFilterOptions();
@@ -68,7 +98,7 @@ function setupBookingsListener() {
   if (unsubscribeBookings) return; // مستمع شغّال أصلاً، ما نكرره
 
   unsubscribeBookings = db.collection('bookings')
-    .where('clinicId', '==', currentUid)
+    .where('clinicId', '==', activeClinicUid)
     .onSnapshot((snap) => {
       const newBookings = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       const newPendingIds = newBookings.filter((b) => b.status === 'pending').map((b) => b.id);
@@ -390,7 +420,7 @@ document.getElementById('add-doctor-form').addEventListener('submit', async (e) 
   if (!name || !specialty) return;
 
   await db.collection('doctors').add({
-    clinicId: currentUid,
+    clinicId: activeClinicUid,
     name,
     specialty,
     workingHours: [],
@@ -936,6 +966,122 @@ function initPageTabs() {
 function switchToTab(tabName) {
   const btn = document.querySelector(`.page-tabs button[data-tab="${tabName}"]`);
   if (btn) btn.click();
+}
+
+// ============================================
+// إدارة الموظفين (لصاحب حساب العيادة الأساسي بس)
+// ============================================
+let cachedStaff = [];
+
+const addStaffForm = document.getElementById('add-staff-form');
+if (addStaffForm) {
+  addStaffForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('new-staff-name').value.trim();
+    const email = document.getElementById('new-staff-email').value.trim();
+    const password = document.getElementById('new-staff-password').value;
+
+    if (!name || !email || password.length < 6) {
+      alert('تأكد من تعبئة كل الحقول (كلمة المرور 6 أحرف على الأقل)');
+      return;
+    }
+
+    const submitBtn = addStaffForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'جاري الإضافة...';
+
+    try {
+      await addStaffMember(name, email, password);
+      addStaffForm.reset();
+      loadStaffList();
+    } catch (err) {
+      console.error('addStaffMember error:', err);
+      const messages = {
+        'auth/email-already-in-use': 'هذا البريد الإلكتروني مستخدم مسبقاً',
+        'auth/invalid-email': 'صيغة البريد الإلكتروني غير صحيحة',
+        'auth/weak-password': 'كلمة المرور ضعيفة، استخدم 6 أحرف على الأقل',
+      };
+      alert(messages[err.code] || 'تعذر إضافة الموظف، حاول مرة أخرى');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'إضافة موظف';
+    }
+  });
+}
+
+// ننشئ حساب الموظف عن طريق تطبيق Firebase ثانوي منفصل،
+// عشان إنشاء الحساب الجديد ما يسجّل خروج العيادة الحالية تلقائياً
+async function addStaffMember(name, email, password) {
+  let secondaryApp = firebase.apps.find((a) => a.name === 'Secondary');
+  if (!secondaryApp) {
+    secondaryApp = firebase.initializeApp(firebaseConfig, 'Secondary');
+  }
+  const secondaryAuth = secondaryApp.auth();
+
+  const cred = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+  const staffUid = cred.user.uid;
+
+  await db.collection('users').doc(staffUid).set({
+    name,
+    email,
+    role: 'staff',
+    status: 'active',
+    staffOf: currentUid,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+
+  await secondaryAuth.signOut();
+}
+
+async function loadStaffList() {
+  const snap = await db.collection('users')
+    .where('staffOf', '==', currentUid)
+    .where('role', '==', 'staff')
+    .get();
+
+  cachedStaff = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  renderStaffList();
+}
+
+function renderStaffList() {
+  const wrap = document.getElementById('staff-wrap');
+  if (!wrap) return;
+
+  if (cachedStaff.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">ما أضفت أي موظف بعد</p>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الاسم</th>
+            <th>البريد الإلكتروني</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${cachedStaff.map((s) => `
+            <tr>
+              <td class="cell-name">${escapeHtml(s.name)}</td>
+              <td class="cell-sub">${escapeHtml(s.email)}</td>
+              <td>${staffStatusBadge(s.status)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <p class="section-hint" style="margin-top:12px;">لإيقاف موظف أو إعادة تعيين كلمة مروره، تواصل مع إدارة "موعد" (لوحة الأدمن)</p>
+  `;
+}
+
+function staffStatusBadge(status) {
+  const labels = { active: 'فعّال', disabled: 'موقوف' };
+  const cls = { active: 'badge-active', disabled: 'badge-disabled' };
+  return `<span class="badge ${cls[status] || ''}">${labels[status] || status}</span>`;
 }
 
 initPageTabs();

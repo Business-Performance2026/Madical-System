@@ -25,6 +25,17 @@ service cloud.firestore {
         && myData().role == 'clinic' && myData().status == 'active';
     }
 
+    // موظف فعّال تابع لعيادة معيّنة (صلاحياته نفس صلاحيات العيادة على بيانات تلك العيادة بس)
+    function isActiveStaffOf(clinicUid) {
+      return isSignedIn() && myData().role == 'staff' && myData().status == 'active'
+        && myData().staffOf == clinicUid;
+    }
+
+    // العيادة نفسها أو أحد موظفيها الفعّالين - يُستخدم لصلاحيات بيانات العيادة (أطباء/حجوزات/أقفال أوقات)
+    function isClinicOrStaff(clinicUid) {
+      return isActiveClinic(clinicUid) || isActiveStaffOf(clinicUid);
+    }
+
     function isActivePatient() {
       return isSignedIn() && myData().role == 'patient' && myData().status == 'active';
     }
@@ -34,22 +45,30 @@ service cloud.firestore {
     // ============================================
     match /users/{userId} {
       // المستخدم يقرأ بياناته هو، الأدمن يقرأ بيانات الجميع،
+      // العيادة الأساسية تقرأ بيانات موظفيها هي بس،
       // وأي زائر (حتى بدون تسجيل دخول) يقدر يقرأ بيانات العيادات الفعّالة بس
       // (تظهر بالشاشة الرئيسية العامة - اسم وبريد العيادة يصير معلومة عامة، وهذا مقصود لأنها حساب منشأة)
       allow read: if (resource.data.role == 'clinic' && resource.data.status == 'active')
-        || (isSignedIn() && (request.auth.uid == userId || isAdmin()));
+        || (isSignedIn() && (request.auth.uid == userId || isAdmin()))
+        || (resource.data.role == 'staff' && isActiveClinic(resource.data.staffOf));
 
       // إنشاء حساب جديد عند التسجيل: المستخدم ينشئ مستنده هو بس،
       // وما يقدر يسجل نفسه كـ admin، والحالة الأولية لازم تكون صحيحة
       // رقم الجوال (واتساب) إجباري لأي حساب جديد (مريض أو عيادة)
-      allow create: if isSignedIn()
-        && request.auth.uid == userId
-        && request.resource.data.role in ['patient', 'clinic']
-        && request.resource.data.status ==
-             (request.resource.data.role == 'clinic' ? 'pending' : 'active')
-        && request.resource.data.name is string
-        && request.resource.data.email is string
-        && request.resource.data.phone is string;
+      allow create: if (isSignedIn()
+            && request.auth.uid == userId
+            && request.resource.data.role in ['patient', 'clinic']
+            && request.resource.data.status ==
+                 (request.resource.data.role == 'clinic' ? 'pending' : 'active')
+            && request.resource.data.name is string
+            && request.resource.data.email is string
+            && request.resource.data.phone is string)
+        // العيادة الأساسية (مو موظف) تقدر تنشئ حساب موظف تابع لها، فعّال مباشرة بدون موافقة أدمن
+        || (isActiveClinic(request.resource.data.staffOf)
+            && request.resource.data.role == 'staff'
+            && request.resource.data.status == 'active'
+            && request.resource.data.name is string
+            && request.resource.data.email is string);
 
       // تعديل: الأدمن يقدر يعدل أي حساب (موافقة عيادة / إيقاف / تفعيل)
       // المستخدم العادي يقدر يعدل بياناته (مثل الاسم) لكن ما يقدر يغيّر role أو status لحاله
@@ -69,21 +88,21 @@ service cloud.firestore {
       // قراءة عامة حتى بدون تسجيل دخول (اسم وتخصص الطبيب معلومة عامة، تحتاجها الشاشة الرئيسية للتصفح والبحث)
       allow read: if true;
 
-      // إنشاء طبيب: العيادة صاحبة الحساب بس، ولازم تكون فعّالة
-      allow create: if isActiveClinic(request.resource.data.clinicId);
+      // إنشاء طبيب: العيادة صاحبة الحساب أو أحد موظفيها، ولازم تكون فعّالة
+      allow create: if isClinicOrStaff(request.resource.data.clinicId);
 
-      // تعديل/حذف: العيادة المالكة لهذا الطبيب بس
-      allow update, delete: if isActiveClinic(resource.data.clinicId);
+      // تعديل/حذف: العيادة المالكة لهذا الطبيب أو أحد موظفيها
+      allow update, delete: if isClinicOrStaff(resource.data.clinicId);
     }
 
     // ============================================
     // bookings
     // ============================================
     match /bookings/{bookingId} {
-      // المريض يشوف حجوزاته، العيادة تشوف حجوزاتها، الأدمن يشوف الكل
+      // المريض يشوف حجوزاته، العيادة وموظفيها يشوفون حجوزات العيادة، الأدمن يشوف الكل
       allow read: if isAdmin()
         || (isSignedIn() && resource.data.patientId == request.auth.uid)
-        || (isSignedIn() && resource.data.clinicId == request.auth.uid);
+        || isClinicOrStaff(resource.data.clinicId);
 
       // إنشاء حجز جديد: مريض فعّال، مربوط بحسابه هو، وحالته الأولية pending دايماً
       allow create: if isActivePatient()
@@ -95,9 +114,9 @@ service cloud.firestore {
         && request.resource.data.time is string
         && request.resource.data.patientPhone is string;
 
-      // تعديل: العيادة صاحبة الحجز تقدر تقبل/ترفض/تعدّل التاريخ والوقت واسم ورقم جوال المريض بهذا الحجز،
+      // تعديل: العيادة أو أحد موظفيها يقدر يقبل/يرفض/يعدّل التاريخ والوقت واسم ورقم جوال المريض بهذا الحجز،
       // والمريض صاحب الحجز يقدر يلغيه بس
-      allow update: if (isActiveClinic(resource.data.clinicId)
+      allow update: if (isClinicOrStaff(resource.data.clinicId)
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'date', 'time', 'patientName', 'patientPhone'])
             && request.resource.data.status in ['pending', 'accepted', 'rejected'])
         || (isActivePatient() && resource.data.patientId == request.auth.uid
@@ -105,8 +124,8 @@ service cloud.firestore {
             && resource.data.status in ['pending', 'accepted']
             && request.resource.data.status == 'cancelled');
 
-      // حذف حجز: الأدمن، أو العيادة صاحبة الحجز
-      allow delete: if isAdmin() || isActiveClinic(resource.data.clinicId);
+      // حذف حجز: الأدمن، أو العيادة صاحبة الحجز أو أحد موظفيها
+      allow delete: if isAdmin() || isClinicOrStaff(resource.data.clinicId);
     }
 
     // ============================================
@@ -118,8 +137,8 @@ service cloud.firestore {
       // أي مستخدم مسجّل دخول يقرأ (يحتاجها المريض عشان يشوف الأوقات المتاحة)
       allow read: if isSignedIn();
 
-      // العيادة تنشئ القفل لما تقبل حجز
-      allow create: if isActiveClinic(request.resource.data.clinicId);
+      // العيادة أو أحد موظفيها ينشئ القفل لما يقبل حجز
+      allow create: if isClinicOrStaff(request.resource.data.clinicId);
 
       // حذف القفل: العيادة صاحبته، أو المريض لما يلغي حجزه المقبول
       // (نسمح بشكل عام لأي مستخدم فعّال لأن هذا المستند ما فيه بيانات حساسة أصلاً)

@@ -43,6 +43,7 @@ async function loadDashboard() {
   renderStats(allUsers, doctorsSnap.size, bookingsSnap.size);
   renderPendingClinics(allUsers);
   renderRejectedClinics(allUsers);
+  renderStaffList(allUsers);
   renderRecentUsers(allUsers);
   renderAllUsersTable(allUsers);
 }
@@ -154,13 +155,111 @@ async function setClinicStatus(uid, status) {
 function rerenderFromCache() {
   renderPendingClinics(cachedUsers);
   renderRejectedClinics(cachedUsers);
+  renderStaffList(cachedUsers);
   renderRecentUsers(cachedUsers);
   drawUsersTable();
 }
 
 // ============================================
-// آخر التسجيلات (أحدث 5 حسابات)
+// موظفو العيادات (يشوفها ويديرها الأدمن بس)
 // ============================================
+function renderStaffList(allUsers) {
+  const wrap = document.getElementById('staff-list-wrap');
+  const staff = allUsers.filter((u) => u.role === 'staff');
+
+  if (staff.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">ما فيه موظفين مسجّلين حالياً</p>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الاسم</th>
+            <th>العيادة التابع لها</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${staff.map((s) => (s.id === editingUid ? renderEditRow(s, 4) : renderStaffRow(s, allUsers))).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  wrap.querySelectorAll('[data-action="edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      editingUid = btn.dataset.uid;
+      rerenderFromCache();
+    });
+  });
+  wrap.querySelectorAll('[data-action="cancel-edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      editingUid = null;
+      rerenderFromCache();
+    });
+  });
+  wrap.querySelectorAll('[data-action="save-edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => saveUserEdit(btn.dataset.uid));
+  });
+  wrap.querySelectorAll('[data-action="disable"]').forEach((btn) => {
+    btn.addEventListener('click', () => updateUserStatus(btn.dataset.uid, 'disabled'));
+  });
+  wrap.querySelectorAll('[data-action="enable"]').forEach((btn) => {
+    btn.addEventListener('click', () => updateUserStatus(btn.dataset.uid, 'active'));
+  });
+  wrap.querySelectorAll('[data-action="reset-password"]').forEach((btn) => {
+    btn.addEventListener('click', () => resetStaffPassword(btn.dataset.email));
+  });
+  wrap.querySelectorAll('[data-action="delete"]').forEach((btn) => {
+    btn.addEventListener('click', () => deleteUser(btn.dataset.uid));
+  });
+}
+
+function renderStaffRow(s, allUsers) {
+  const owner = allUsers.find((u) => u.id === s.staffOf);
+  const ownerName = owner ? owner.name : 'غير معروف';
+
+  return `
+    <tr>
+      <td>
+        <div class="cell-name">${escapeHtml(s.name)}</div>
+        <div class="cell-sub">${escapeHtml(s.email)}</div>
+      </td>
+      <td class="cell-sub">${escapeHtml(ownerName)}</td>
+      <td>${statusBadge(s.status)}</td>
+      <td>
+        <div class="row-actions">
+          <button class="btn-xs toggle" data-action="edit" data-uid="${s.id}">✏️ تعديل</button>
+          ${s.status === 'disabled'
+            ? `<button class="btn-xs approve" data-action="enable" data-uid="${s.id}">✅ تفعيل</button>`
+            : `<button class="btn-xs reject" data-action="disable" data-uid="${s.id}">⛔ إيقاف</button>`}
+          <button class="btn-xs toggle" data-action="reset-password" data-email="${escapeHtml(s.email)}">🔄 كلمة المرور</button>
+          <button class="btn-xs delete" data-action="delete" data-uid="${s.id}">🗑️ حذف</button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+// يرسل بريد إعادة تعيين كلمة المرور لهذا الموظف (رابط آمن، ما يكشف كلمة المرور لأحد حتى الأدمن)
+async function resetStaffPassword(email) {
+  const sure = confirm(`إرسال رابط إعادة تعيين كلمة المرور إلى ${email}؟`);
+  if (!sure) return;
+
+  try {
+    await auth.sendPasswordResetEmail(email);
+    alert('تم إرسال رابط إعادة التعيين بنجاح، الموظف يفتح بريده ويتابع الخطوات');
+  } catch (err) {
+    console.error('resetStaffPassword error:', err);
+    alert('تعذر إرسال رابط إعادة التعيين، تأكد من صحة البريد الإلكتروني');
+  }
+}
+
+
 function renderRecentUsers(allUsers) {
   const sorted = [...allUsers]
     .filter((u) => u.createdAt)

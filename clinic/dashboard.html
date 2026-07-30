@@ -17,7 +17,7 @@
         </div>
         <div class="header-titles">
           <p class="brand-title">لوحة العيادة</p>
-          <p class="brand-subtitle">مرحباً، <span id="clinic-name">...</span></p>
+          <p class="brand-subtitle">مرحباً، <span id="clinic-name">...</span><span id="staff-indicator" class="hidden"></span></p>
         </div>
       </div>
       <div class="header-actions">
@@ -54,6 +54,7 @@
       <button type="button" data-tab="doctors">الأطباء</button>
       <button type="button" data-tab="schedule">جدول الأسبوع</button>
       <button type="button" data-tab="patients">بحث المرضى</button>
+      <button type="button" data-tab="staff">الموظفين</button>
     </div>
 
     <section class="section-card tab-panel" data-panel="requests">
@@ -117,6 +118,29 @@
       <h2 class="section-title">البحث عن المرضى</h2>
       <input type="text" id="patient-search" class="search-box" placeholder="اكتب اسم المريض...">
       <div id="patients-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
+    <section class="section-card tab-panel hidden" data-panel="staff">
+      <h2 class="section-title">الموظفين</h2>
+      <p class="section-hint">أضف موظف يقدر يدخل يدير حجوزات وأطباء العيادة نيابة عنك. إيقاف الحساب أو إعادة تعيين كلمة المرور تصير من لوحة الأدمن فقط، للأمان</p>
+
+      <form id="add-staff-form" class="inline-form">
+        <div class="field">
+          <label for="new-staff-name">اسم الموظف</label>
+          <input type="text" id="new-staff-name" placeholder="مثال: سارة علي" required>
+        </div>
+        <div class="field">
+          <label for="new-staff-email">البريد الإلكتروني</label>
+          <input type="email" id="new-staff-email" placeholder="staff@example.com" required>
+        </div>
+        <div class="field">
+          <label for="new-staff-password">كلمة المرور</label>
+          <input type="password" id="new-staff-password" placeholder="6 أحرف على الأقل" minlength="6" required>
+        </div>
+        <button type="submit" class="btn-primary">إضافة موظف</button>
+      </form>
+
+      <div id="staff-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
   </div>
