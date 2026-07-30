@@ -15,11 +15,11 @@ const DAYS = [
   { key: 'saturday', label: 'السبت' },
 ];
 
-const SLOT_MINUTES = 30; // مدة كل موعد
+const SLOT_MINUTES = 20; // مدة كل موعد
 
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
-    window.location.href = '../login.html';
+    window.location.href = '../index.html';
     return;
   }
 
@@ -27,7 +27,7 @@ auth.onAuthStateChanged(async (user) => {
 
   if (!userDoc.exists || userDoc.data().role !== 'patient' || userDoc.data().status !== 'active') {
     await auth.signOut();
-    window.location.href = '../login.html';
+    window.location.href = '../index.html';
     return;
   }
 
@@ -42,7 +42,7 @@ auth.onAuthStateChanged(async (user) => {
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
   await auth.signOut();
-  window.location.href = '../login.html';
+  window.location.href = '../index.html';
 });
 
 // ============================================
@@ -219,8 +219,12 @@ async function renderAvailableSlots() {
   const slotsWrap = document.getElementById('slots-wrap');
   slotsWrap.innerHTML = '<p class="loading-state">جاري تحميل الأوقات المتاحة...</p>';
 
+  // نطابق أوقات العمل بالتاريخ المحدد فعلياً (النظام الجديد)،
+  // مع بقاء التوافق مع أي أوقات قديمة كانت محفوظة بيوم أسبوع متكرر
   const dayKey = DAYS[new Date(selectedDate + 'T00:00:00').getDay()].key;
-  const hoursForDay = (selectedDoctor.workingHours || []).filter((h) => h.day === dayKey);
+  const hoursForDay = (selectedDoctor.workingHours || []).filter(
+    (h) => h.date === selectedDate || (!h.date && h.day === dayKey)
+  );
 
   if (hoursForDay.length === 0) {
     slotsWrap.innerHTML = '<p class="warning-text">⚠️ الطبيب ما عنده دوام باليوم المختار، جرّب يوم ثاني</p>';

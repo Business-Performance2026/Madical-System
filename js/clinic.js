@@ -16,7 +16,7 @@ const DAYS = [
 
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
-    window.location.href = '../login.html';
+    window.location.href = '../index.html';
     return;
   }
 
@@ -24,7 +24,7 @@ auth.onAuthStateChanged(async (user) => {
 
   if (!userDoc.exists || userDoc.data().role !== 'clinic' || userDoc.data().status !== 'active') {
     await auth.signOut();
-    window.location.href = '../login.html';
+    window.location.href = '../index.html';
     return;
   }
 
@@ -37,7 +37,7 @@ auth.onAuthStateChanged(async (user) => {
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
   await auth.signOut();
-  window.location.href = '../login.html';
+  window.location.href = '../index.html';
 });
 
 // ============================================
@@ -58,6 +58,7 @@ async function loadDashboard() {
 
   renderStats();
   renderBookingRequests();
+  renderRejectedBookings();
   renderDoctors();
   renderWeeklySchedule();
 }
@@ -92,7 +93,31 @@ function renderBookingRequests() {
     return;
   }
 
-  wrap.innerHTML = `
+  wrap.innerHTML = renderBookingsActionTable(pending);
+  bindBookingsActionEvents(wrap);
+}
+
+// ============================================
+// المواعيد المرفوضة (يقدر يعدّل/يحذف/يرجع يقبلها من هنا)
+// ============================================
+function renderRejectedBookings() {
+  const wrap = document.getElementById('rejected-wrap');
+  const rejected = cachedBookings
+    .filter((b) => b.status === 'rejected')
+    .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+
+  if (rejected.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">لا توجد مواعيد مرفوضة حالياً</p>';
+    return;
+  }
+
+  wrap.innerHTML = renderBookingsActionTable(rejected);
+  bindBookingsActionEvents(wrap);
+}
+
+// جدول موحّد للحجوزات مع كل الإجراءات (يُستخدم لقسم الطلبات وقسم المرفوضة)
+function renderBookingsActionTable(bookings) {
+  return `
     <div class="table-wrap">
       <table class="data-table">
         <thead>
@@ -107,7 +132,7 @@ function renderBookingRequests() {
           </tr>
         </thead>
         <tbody>
-          ${pending.map((b) => `
+          ${bookings.map((b) => `
             <tr>
               <td class="cell-name">${escapeHtml(b.patientName)}</td>
               <td class="cell-sub">${bookingNumber(b.id)}</td>
@@ -133,7 +158,9 @@ function renderBookingRequests() {
       </table>
     </div>
   `;
+}
 
+function bindBookingsActionEvents(wrap) {
   wrap.querySelectorAll('[data-action="accept"]').forEach((btn) => {
     btn.addEventListener('click', () => respondToBooking(btn.dataset.id, 'accepted'));
   });
@@ -337,14 +364,14 @@ function renderDoctorHoursSection(doc) {
         ? '<span class="cell-sub">ما تم تحديد أوقات عمل بعد</span>'
         : doc.workingHours.map((h, i) => `
             <span class="hours-chip">
-              ${dayLabel(h.day)} ${h.start} - ${h.end}
+              ${h.date || dayLabel(h.day)} ${h.start} - ${h.end}
               <button data-action="remove-hour" data-id="${doc.id}" data-index="${i}">×</button>
             </span>
           `).join('')}
     </div>
 
     <div class="mini-form" data-add-hour-for="${doc.id}">
-      <select class="hour-day">${DAYS.map((d) => `<option value="${d.key}">${d.label}</option>`).join('')}</select>
+      <input type="date" class="hour-date">
       <input type="time" class="hour-start" value="09:00">
       <input type="time" class="hour-end" value="14:00">
       <button type="button" class="btn-xs toggle" data-action="add-hour" data-id="${doc.id}">إضافة وقت</button>
@@ -383,9 +410,14 @@ async function deleteDoctor(doctorId) {
 
 async function addWorkingHour(doctorId) {
   const card = document.querySelector(`[data-add-hour-for="${doctorId}"]`);
-  const day = card.querySelector('.hour-day').value;
+  const date = card.querySelector('.hour-date').value;
   const start = card.querySelector('.hour-start').value;
   const end = card.querySelector('.hour-end').value;
+
+  if (!date) {
+    alert('فضلاً اختر التاريخ');
+    return;
+  }
 
   if (!start || !end || start >= end) {
     alert('تأكد إن وقت البداية قبل وقت النهاية');
@@ -393,7 +425,7 @@ async function addWorkingHour(doctorId) {
   }
 
   const doctor = cachedDoctors.find((d) => d.id === doctorId);
-  const updatedHours = [...(doctor.workingHours || []), { day, start, end }];
+  const updatedHours = [...(doctor.workingHours || []), { date, start, end }];
 
   await db.collection('doctors').doc(doctorId).update({ workingHours: updatedHours });
   loadDashboard();
