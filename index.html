@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>عيادتي | تسجيل الدخول</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="brand">
+    <div class="brand-mark">
+      <!-- إشارة نبض بسيطة كعنصر تعريفي للتطبيق -->
+      <svg width="44" height="28" viewBox="0 0 140 40">
+        <path class="pulse-line" d="M0 20 H35 L45 5 L58 35 L70 20 H140" />
+      </svg>
+    </div>
+    <p class="brand-title">عيادتي</p>
+    <p class="brand-subtitle">احجز موعدك بسهولة وأمان</p>
+  </div>
+
+  <main class="auth-card">
+    <div class="mode-switch">
+      <button type="button" id="tab-login" class="active">تسجيل الدخول</button>
+      <button type="button" id="tab-signup">إنشاء حساب</button>
+    </div>
+
+    <form id="auth-form" novalidate>
+      <div class="field hidden" id="field-name">
+        <label for="name">الاسم الكامل</label>
+        <input type="text" id="name" autocomplete="name" placeholder="مثال: أحمد محمد">
+      </div>
+
+      <div class="field hidden" id="field-role">
+        <label>نوع الحساب</label>
+        <div class="role-select">
+          <div class="role-option selected" data-role="patient">
+            <span class="role-icon">🧑</span>
+            مريض
+          </div>
+          <div class="role-option" data-role="clinic">
+            <span class="role-icon">🏥</span>
+            عيادة
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="email">البريد الإلكتروني</label>
+        <input type="email" id="email" autocomplete="email" required placeholder="example@email.com">
+      </div>
+
+      <div class="field">
+        <label for="password">كلمة المرور</label>
+        <input type="password" id="password" autocomplete="current-password" required minlength="6" placeholder="6 أحرف على الأقل">
+      </div>
+
+      <button type="submit" class="btn-primary" id="submit-btn">تسجيل الدخول</button>
+
+      <p class="status-msg" id="status-msg" role="status" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <footer class="disclaimer">تسجيل حسابات العيادات يتطلب موافقة الإدارة قبل التفعيل</footer>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
