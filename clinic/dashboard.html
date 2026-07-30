@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>عيادتي | لوحة العيادة</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="dashboard">
+
+  <div class="dashboard-shell">
+
+    <header class="dashboard-header">
+      <div class="header-brand">
+        <div class="brand-mark">
+          <svg width="26" height="17" viewBox="0 0 140 40">
+            <path class="pulse-line" d="M0 20 H35 L45 5 L58 35 L70 20 H140" />
+          </svg>
+        </div>
+        <div class="header-titles">
+          <p class="brand-title">لوحة العيادة</p>
+          <p class="brand-subtitle">مرحباً، <span id="clinic-name">...</span></p>
+        </div>
+      </div>
+      <button class="btn-outline" id="logout-btn">تسجيل الخروج</button>
+    </header>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-number" id="stat-today">—</span>
+        <span class="stat-label">حجوزات اليوم</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="stat-upcoming">—</span>
+        <span class="stat-label">حجوزات قادمة</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="stat-pending">—</span>
+        <span class="stat-label">طلبات جديدة</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="stat-patients">—</span>
+        <span class="stat-label">إجمالي المرضى</span>
+      </div>
+    </div>
+
+    <section class="section-card">
+      <h2 class="section-title">طلبات الحجز الجديدة</h2>
+      <p class="section-hint">اقبل الطلب عشان يُقفل الوقت تلقائياً، أو ارفضه ليبقى متاح لمريض ثاني</p>
+      <div id="requests-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
+    <section class="section-card">
+      <h2 class="section-title">الأطباء وأوقات العمل</h2>
+      <p class="section-hint">أضف طبيب وحدد أوقات عمله، وهذي الأوقات هي اللي بتظهر للمريض عند الحجز</p>
+
+      <form id="add-doctor-form" class="inline-form">
+        <div class="field">
+          <label for="new-doctor-name">اسم الطبيب</label>
+          <input type="text" id="new-doctor-name" placeholder="د. سارة أحمد" required>
+        </div>
+        <div class="field">
+          <label for="new-doctor-specialty">التخصص</label>
+          <input type="text" id="new-doctor-specialty" placeholder="أسنان" required>
+        </div>
+        <button type="submit" class="btn-primary">إضافة طبيب</button>
+      </form>
+
+      <div id="doctors-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
+    <section class="section-card">
+      <h2 class="section-title">جدول هذا الأسبوع</h2>
+      <p class="section-hint">المواعيد المؤكدة فقط (من الأحد إلى السبت)</p>
+      <div id="schedule-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
+    <section class="section-card">
+      <h2 class="section-title">البحث عن المرضى</h2>
+      <input type="text" id="patient-search" class="search-box" placeholder="اكتب اسم المريض...">
+      <div id="patients-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/clinic.js"></script>
+</body>
+</html>
