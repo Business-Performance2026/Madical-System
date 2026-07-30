@@ -89,17 +89,27 @@
 
     <section class="section-card tab-panel hidden" data-panel="schedule">
       <h2 class="section-title">جدول هذا الأسبوع</h2>
-      <div class="schedule-toolbar">
-        <p class="section-hint">المواعيد المؤكدة فقط (من الأحد إلى السبت)</p>
-        <div class="schedule-controls">
-          <select id="schedule-sort" class="schedule-sort-select">
-            <option value="date">ترتيب: التاريخ</option>
-            <option value="doctor">ترتيب: اسم الطبيب</option>
-            <option value="time">ترتيب: الوقت</option>
+      <p class="section-hint">فلتر حسب الطبيب و/أو التاريخ و/أو الوقت — تقدر تجمعهم مع بعض أو تسيب أي وحدة فاضية</p>
+
+      <div class="schedule-filters">
+        <div class="field">
+          <label for="filter-doctor-select">الطبيب</label>
+          <select id="filter-doctor-select">
+            <option value="">كل الأطباء</option>
           </select>
-          <button type="button" class="btn-xs toggle" id="print-week-btn">🖨️ طباعة الأسبوع (PDF)</button>
         </div>
+        <div class="field">
+          <label for="filter-date-input">التاريخ</label>
+          <input type="date" id="filter-date-input">
+        </div>
+        <div class="field">
+          <label for="filter-time-input">الوقت</label>
+          <input type="time" id="filter-time-input">
+        </div>
+        <button type="button" class="btn-outline" id="clear-schedule-filters">مسح الفلاتر</button>
+        <button type="button" class="btn-xs toggle" id="print-week-btn">🖨️ طباعة/PDF لهذا العرض</button>
       </div>
+
       <div id="schedule-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 

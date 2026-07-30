@@ -59,6 +59,7 @@ async function loadDoctorsOnly() {
   const doctorsSnap = await db.collection('doctors').where('clinicId', '==', currentUid).get();
   cachedDoctors = doctorsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   renderDoctors();
+  populateDoctorFilterOptions();
 }
 
 // استماع فوري لمجموعة الحجوزات - أي حجز جديد يوصل يظهر مباشرة بدون تحديث الصفحة،
@@ -332,7 +333,11 @@ async function saveBookingEdit(bookingId) {
     }
 
     editingBookingId = null;
-    // ما نحتاج نستدعي تحميل يدوي، الاستماع الفوري (onSnapshot) بيحدّث الجداول تلقائياً
+    // نعيد الرسم فوراً بدل ما ننتظر وصول تحديث الاستماع الفوري (onSnapshot)،
+    // عشان وضع التعديل يقفل مباشرة بمجرد الحفظ بدون تأخير محسوس
+    renderBookingRequests();
+    renderRejectedBookings();
+    renderWeeklySchedule();
   } catch (err) {
     console.error('saveBookingEdit error:', err);
     alert('تعذر حفظ التعديلات، حاول مرة أخرى');
@@ -578,74 +583,74 @@ async function removeWorkingHour(doctorId, index) {
 }
 
 // ============================================
-// الجدول الأسبوعي (المواعيد المقبولة فقط) + فرز + طباعة
+// الجدول الأسبوعي (المواعيد المقبولة) + فلترة حقيقية + طباعة
 // ============================================
-let scheduleSortMode = 'date';
+let scheduleFilters = { doctorId: '', date: '', time: '' };
+let lastScheduleBookings = [];
 
-document.getElementById('schedule-sort').addEventListener('change', (e) => {
-  scheduleSortMode = e.target.value;
+document.getElementById('filter-doctor-select').addEventListener('change', (e) => {
+  scheduleFilters.doctorId = e.target.value;
   renderWeeklySchedule();
 });
+document.getElementById('filter-date-input').addEventListener('change', (e) => {
+  scheduleFilters.date = e.target.value;
+  renderWeeklySchedule();
+});
+document.getElementById('filter-time-input').addEventListener('change', (e) => {
+  scheduleFilters.time = e.target.value;
+  renderWeeklySchedule();
+});
+document.getElementById('clear-schedule-filters').addEventListener('click', () => {
+  scheduleFilters = { doctorId: '', date: '', time: '' };
+  document.getElementById('filter-doctor-select').value = '';
+  document.getElementById('filter-date-input').value = '';
+  document.getElementById('filter-time-input').value = '';
+  renderWeeklySchedule();
+});
+document.getElementById('print-week-btn').addEventListener('click', printCurrentSchedule);
 
-document.getElementById('print-week-btn').addEventListener('click', printWeekSchedule);
+// يحدّث قائمة الأطباء بفلتر الجدول الأسبوعي (يُستدعى كل ما نحمّل الأطباء)
+function populateDoctorFilterOptions() {
+  const select = document.getElementById('filter-doctor-select');
+  const currentValue = select.value;
+  select.innerHTML = '<option value="">كل الأطباء</option>' +
+    cachedDoctors.map((d) => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('');
+  if ([...select.options].some((o) => o.value === currentValue)) {
+    select.value = currentValue;
+  }
+}
 
 function renderWeeklySchedule() {
   const wrap = document.getElementById('schedule-wrap');
-  const weekDates = getWeekDates();
-  const weekIsoSet = new Set(weekDates.map((d) => d.iso));
+  let accepted = cachedBookings.filter((b) => b.status === 'accepted');
 
-  const accepted = cachedBookings.filter((b) => b.status === 'accepted' && weekIsoSet.has(b.date));
+  // بدون فلتر تاريخ محدد: نعرض هذا الأسبوع بس (السلوك الافتراضي)
+  // مع فلتر تاريخ محدد: نبحث بذاك التاريخ بالضبط، حتى لو خارج هذا الأسبوع
+  if (scheduleFilters.date) {
+    accepted = accepted.filter((b) => b.date === scheduleFilters.date);
+  } else {
+    const weekIsoSet = new Set(getWeekDates().map((d) => d.iso));
+    accepted = accepted.filter((b) => weekIsoSet.has(b.date));
+  }
+
+  if (scheduleFilters.doctorId) accepted = accepted.filter((b) => b.doctorId === scheduleFilters.doctorId);
+  if (scheduleFilters.time) accepted = accepted.filter((b) => b.time === scheduleFilters.time);
+
+  accepted.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time) || a.doctorName.localeCompare(b.doctorName, 'ar'));
+  lastScheduleBookings = accepted;
 
   if (accepted.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">لا توجد مواعيد مؤكدة هذا الأسبوع</p>';
+    wrap.innerHTML = '<p class="empty-state">ما فيه مواعيد مطابقة لهذا الفلتر</p>';
     return;
   }
 
-  if (scheduleSortMode === 'doctor') {
-    wrap.innerHTML = renderScheduleGroupedByDoctor(accepted);
-  } else if (scheduleSortMode === 'time') {
-    wrap.innerHTML = renderScheduleFlatByTime(accepted);
-  } else {
-    wrap.innerHTML = renderScheduleGroupedByDate(accepted, weekDates);
-  }
-
+  // نخفي عمود الطبيب لو مفلتر لطبيب واحد بس (عشان ما يتكرر بلا فايدة)
+  const showDoctor = !scheduleFilters.doctorId;
+  wrap.innerHTML = scheduleTableHtml(accepted, { showDate: true, showDoctor });
   bindScheduleRowEvents(wrap);
 }
 
-function renderScheduleGroupedByDate(accepted, weekDates) {
-  return weekDates.map((d) => {
-    const dayBookings = accepted.filter((b) => b.date === d.iso).sort((a, b) => a.time.localeCompare(b.time));
-    if (dayBookings.length === 0) return '';
-    return `
-      <div class="schedule-day">
-        <p class="schedule-day-title">${d.label} — ${d.iso}</p>
-        ${scheduleTableHtml(dayBookings, { showDate: false, showDoctor: true })}
-      </div>
-    `;
-  }).join('');
-}
-
-function renderScheduleGroupedByDoctor(accepted) {
-  const doctorNames = [...new Set(accepted.map((b) => b.doctorName))].sort((a, b) => a.localeCompare(b, 'ar'));
-  return doctorNames.map((name) => {
-    const docBookings = accepted
-      .filter((b) => b.doctorName === name)
-      .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-    return `
-      <div class="schedule-day">
-        <p class="schedule-day-title">👨‍⚕️ ${escapeHtml(name)}</p>
-        ${scheduleTableHtml(docBookings, { showDate: true, showDoctor: false })}
-      </div>
-    `;
-  }).join('');
-}
-
-function renderScheduleFlatByTime(accepted) {
-  const sorted = [...accepted].sort((a, b) => a.time.localeCompare(b.time) || a.date.localeCompare(b.date));
-  return `<div class="schedule-day">${scheduleTableHtml(sorted, { showDate: true, showDoctor: true })}</div>`;
-}
-
-// جدول موحّد يبني الأعمدة حسب طريقة الفرز (يضيف/يحذف عمود التاريخ أو الطبيب)
+// جدول موحّد يبني الأعمدة حسب طريقة العرض (يضيف/يحذف عمود الطبيب)
 function scheduleTableHtml(bookings, opts) {
   const colCount = 4 + (opts.showDate ? 1 : 0) + (opts.showDoctor ? 1 : 0);
   const heads = ['الوقت'];
@@ -740,18 +745,24 @@ function printDoctorSchedule(doctorId) {
   window.print();
 }
 
-function printWeekSchedule() {
-  const weekDates = getWeekDates();
-  const weekIsoSet = new Set(weekDates.map((d) => d.iso));
-  const bookings = cachedBookings
-    .filter((b) => b.status === 'accepted' && weekIsoSet.has(b.date))
-    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+function printCurrentSchedule() {
+  const filterParts = [];
+  if (scheduleFilters.doctorId) {
+    const doc = cachedDoctors.find((d) => d.id === scheduleFilters.doctorId);
+    if (doc) filterParts.push(`الطبيب: ${doc.name}`);
+  }
+  if (scheduleFilters.date) filterParts.push(`التاريخ: ${scheduleFilters.date}`);
+  if (scheduleFilters.time) filterParts.push(`الوقت: ${scheduleFilters.time}`);
+
+  const subtitle = filterParts.length > 0
+    ? `عيادة ${clinicName} — فلتر: ${filterParts.join(' | ')}`
+    : `عيادة ${clinicName} — جدول هذا الأسبوع`;
 
   renderPrintArea({
-    title: 'الجدول الأسبوعي الكامل',
-    subtitle: `عيادة ${clinicName} — الأسبوع من ${weekDates[0].iso} إلى ${weekDates[6].iso}`,
-    bookings,
-    showDoctor: true,
+    title: 'جدول المواعيد',
+    subtitle,
+    bookings: lastScheduleBookings,
+    showDoctor: !scheduleFilters.doctorId,
   });
 
   window.print();

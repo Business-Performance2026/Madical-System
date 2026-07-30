@@ -1293,35 +1293,42 @@ body.landing {
 .doctor-item-body.hidden { display: none; }
 
 /* ============================================
-   شريط أدوات جدول الأسبوع (فرز + طباعة)
+   شريط فلاتر جدول الأسبوع (طبيب + تاريخ + وقت + طباعة)
    ============================================ */
-.schedule-toolbar {
+.schedule-filters {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--gray-200);
 }
 
-.schedule-toolbar .section-hint { margin: 0; }
-
-.schedule-controls {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+.schedule-filters .field {
+  margin-bottom: 0;
+  min-width: 140px;
+  flex: 1;
 }
 
-.schedule-sort-select {
+.schedule-filters select,
+.schedule-filters input {
+  width: 100%;
   font-family: inherit;
   font-size: 13.5px;
   font-weight: 700;
   color: var(--blue-900);
-  padding: 8px 12px;
+  padding: 10px 12px;
   border: 2px solid var(--gray-200);
   border-radius: 8px;
   background: var(--white);
   cursor: pointer;
+}
+
+.schedule-filters .btn-outline,
+.schedule-filters .btn-xs {
+  white-space: nowrap;
+  height: 40px;
 }
 
 /* ============================================
