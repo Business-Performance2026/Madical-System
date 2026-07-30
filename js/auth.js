@@ -141,6 +141,13 @@ async function handleLogin(email, password) {
       return;
     }
 
+    if (userData.role === 'clinic' && userData.status === 'rejected') {
+      showStatus('تم رفض طلب تسجيل هذه العيادة', 'error');
+      await auth.signOut();
+      setLoading(false);
+      return;
+    }
+
     showStatus('تم تسجيل الدخول، جاري التوجيه...', 'success');
     redirectByRole(userData.role);
   } catch (err) {

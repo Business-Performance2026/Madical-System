@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>عيادتي | لوحة الأدمن</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="dashboard">
+
+  <div class="dashboard-shell">
+
+    <header class="dashboard-header">
+      <div class="header-brand">
+        <div class="brand-mark">
+          <svg width="26" height="17" viewBox="0 0 140 40">
+            <path class="pulse-line" d="M0 20 H35 L45 5 L58 35 L70 20 H140" />
+          </svg>
+        </div>
+        <div class="header-titles">
+          <p class="brand-title">لوحة الأدمن</p>
+          <p class="brand-subtitle">مرحباً، <span id="admin-name">...</span></p>
+        </div>
+      </div>
+      <button class="btn-outline" id="logout-btn">تسجيل الخروج</button>
+    </header>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-number" id="stat-clinics">—</span>
+        <span class="stat-label">عيادات فعّالة</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="stat-doctors">—</span>
+        <span class="stat-label">الأطباء</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="stat-patients">—</span>
+        <span class="stat-label">المرضى</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="stat-bookings">—</span>
+        <span class="stat-label">الحجوزات</span>
+      </div>
+    </div>
+
+    <section class="section-card">
+      <h2 class="section-title">طلبات تسجيل عيادات جديدة (<span id="pending-count">0</span>)</h2>
+      <p class="section-hint">راجع طلبات العيادات ووافق عليها أو ارفضها قبل ما تقدر تسجّل دخول</p>
+      <div id="pending-clinics-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
+    <section class="section-card">
+      <h2 class="section-title">آخر التسجيلات</h2>
+      <p class="section-hint">أحدث 5 حسابات انسجلت بالتطبيق</p>
+      <div id="recent-users-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
+    <section class="section-card">
+      <h2 class="section-title">إدارة الحسابات</h2>
+      <p class="section-hint">إيقاف أو حذف أي حساب عيادة أو مريض</p>
+      <div class="filter-tabs">
+        <button class="active" data-filter="all">الكل</button>
+        <button data-filter="clinic">عيادات</button>
+        <button data-filter="patient">مرضى</button>
+      </div>
+      <div id="all-users-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>
