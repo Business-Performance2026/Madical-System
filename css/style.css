@@ -257,8 +257,42 @@ footer.disclaimer {
 }
 
 /* ============================================
-   لوحات التحكم (أدمن / عيادة) - شكل عام مختلف عن شاشة الدخول
+   تبويبات فوق لأقسام اللوحة (الأدمن/العيادة/المريض)
    ============================================ */
+.page-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 20px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.page-tabs button {
+  flex-shrink: 0;
+  border: none;
+  background: var(--white);
+  color: var(--blue-900);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14.5px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.page-tabs button:hover { transform: translateY(-1px); }
+
+.page-tabs button.active {
+  background: var(--blue-900);
+  color: var(--white);
+}
+
+.tab-panel.hidden { display: none; }
 body.dashboard {
   display: block;
   padding: 0;

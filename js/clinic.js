@@ -105,6 +105,7 @@ function showNewBookingToast(booking, count) {
     <p class="toast-body">${escapeHtml(booking.patientName)} — ${escapeHtml(booking.doctorName)}<br>${booking.date} — ${booking.time}</p>
   `;
   el.addEventListener('click', () => {
+    switchToTab('requests');
     document.getElementById('requests-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
     el.remove();
   });
@@ -138,6 +139,7 @@ function updateNotifBadge(pendingCount) {
 }
 
 document.getElementById('notif-bell').addEventListener('click', () => {
+  switchToTab('requests');
   document.getElementById('requests-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
@@ -751,3 +753,27 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+
+// ============================================
+// تبويبات فوق لتبديل الأقسام
+// ============================================
+function initPageTabs() {
+  const tabButtons = document.querySelectorAll('.page-tabs button');
+  const panels = document.querySelectorAll('.tab-panel');
+
+  tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      panels.forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== btn.dataset.tab));
+    });
+  });
+}
+
+// يفعّل تبويب معيّن برمجياً (يُستخدم مثلاً عند الضغط على تنبيه يخص قسم ثاني)
+function switchToTab(tabName) {
+  const btn = document.querySelector(`.page-tabs button[data-tab="${tabName}"]`);
+  if (btn) btn.click();
+}
+
+initPageTabs();

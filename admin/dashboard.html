@@ -42,19 +42,25 @@
       </div>
     </div>
 
-    <section class="section-card">
-      <h2 class="section-title">طلبات تسجيل عيادات جديدة (<span id="pending-count">0</span>)</h2>
+    <div class="page-tabs">
+      <button type="button" class="active" data-tab="pending">طلبات العيادات (<span id="pending-count">0</span>)</button>
+      <button type="button" data-tab="recent">آخر التسجيلات</button>
+      <button type="button" data-tab="accounts">إدارة الحسابات</button>
+    </div>
+
+    <section class="section-card tab-panel" data-panel="pending">
+      <h2 class="section-title">طلبات تسجيل عيادات جديدة</h2>
       <p class="section-hint">راجع طلبات العيادات ووافق عليها أو ارفضها قبل ما تقدر تسجّل دخول</p>
       <div id="pending-clinics-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
-    <section class="section-card">
+    <section class="section-card tab-panel hidden" data-panel="recent">
       <h2 class="section-title">آخر التسجيلات</h2>
       <p class="section-hint">أحدث 5 حسابات انسجلت بالتطبيق</p>
       <div id="recent-users-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
-    <section class="section-card">
+    <section class="section-card tab-panel hidden" data-panel="accounts">
       <h2 class="section-title">إدارة الحسابات</h2>
       <p class="section-hint">إيقاف أو حذف أي حساب عيادة أو مريض</p>
       <div class="filter-tabs">

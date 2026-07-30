@@ -23,18 +23,24 @@
       <button class="btn-outline" id="logout-btn">تسجيل الخروج</button>
     </header>
 
-    <section class="section-card">
+    <div class="page-tabs">
+      <button type="button" class="active" data-tab="booking">احجز موعد جديد</button>
+      <button type="button" data-tab="upcoming">مواعيدي الحالية</button>
+      <button type="button" data-tab="past">مواعيدي السابقة</button>
+    </div>
+
+    <section class="section-card tab-panel" data-panel="booking">
       <h2 class="section-title">احجز موعد جديد</h2>
       <p class="section-hint">اختر العيادة، بعدين الطبيب، وبنعرض لك بس الأوقات المتاحة فعلياً</p>
       <div id="booking-steps" class="loading-state">جاري التحميل...</div>
     </section>
 
-    <section class="section-card">
+    <section class="section-card tab-panel hidden" data-panel="upcoming">
       <h2 class="section-title">مواعيدي الحالية</h2>
       <div id="upcoming-appts-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
-    <section class="section-card">
+    <section class="section-card tab-panel hidden" data-panel="past">
       <h2 class="section-title">مواعيدي السابقة</h2>
       <div id="past-appts-wrap" class="loading-state">جاري التحميل...</div>
     </section>

@@ -48,19 +48,27 @@
       </div>
     </div>
 
-    <section class="section-card">
+    <div class="page-tabs">
+      <button type="button" class="active" data-tab="requests">طلبات الحجز الجديدة</button>
+      <button type="button" data-tab="rejected">المواعيد المرفوضة</button>
+      <button type="button" data-tab="doctors">الأطباء</button>
+      <button type="button" data-tab="schedule">جدول الأسبوع</button>
+      <button type="button" data-tab="patients">بحث المرضى</button>
+    </div>
+
+    <section class="section-card tab-panel" data-panel="requests">
       <h2 class="section-title">طلبات الحجز الجديدة</h2>
       <p class="section-hint">اقبل الطلب عشان يُقفل الوقت تلقائياً، أو ارفضه ليبقى متاح لمريض ثاني</p>
       <div id="requests-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
-    <section class="section-card">
+    <section class="section-card tab-panel hidden" data-panel="rejected">
       <h2 class="section-title">المواعيد المرفوضة</h2>
       <p class="section-hint">تقدر تراجع قرارك وتقبلها، أو تعدّل موعدها، أو تحذفها نهائياً</p>
       <div id="rejected-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
-    <section class="section-card">
+    <section class="section-card tab-panel hidden" data-panel="doctors">
       <h2 class="section-title">الأطباء وأوقات العمل</h2>
       <p class="section-hint">أضف طبيب وحدد أوقات عمله، وهذي الأوقات هي اللي بتظهر للمريض عند الحجز</p>
 
@@ -79,13 +87,13 @@
       <div id="doctors-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
-    <section class="section-card">
+    <section class="section-card tab-panel hidden" data-panel="schedule">
       <h2 class="section-title">جدول هذا الأسبوع</h2>
       <p class="section-hint">المواعيد المؤكدة فقط (من الأحد إلى السبت)</p>
       <div id="schedule-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
-    <section class="section-card">
+    <section class="section-card tab-panel hidden" data-panel="patients">
       <h2 class="section-title">البحث عن المرضى</h2>
       <input type="text" id="patient-search" class="search-box" placeholder="اكتب اسم المريض...">
       <div id="patients-wrap" class="loading-state">جاري التحميل...</div>
