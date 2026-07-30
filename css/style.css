@@ -486,6 +486,7 @@ body.dashboard {
 .badge-rejected { background: #FBE9E7; color: var(--red-600); }
 
 .badge-cancelled { background: #EDEFF1; color: var(--gray-500); }
+.badge-no-show { background: #FFF1DE; color: #B36B00; }
 
 .badge-role { background: var(--blue-100); color: var(--blue-700); }
 
@@ -1355,4 +1356,22 @@ body.landing {
   .print-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .print-table th, .print-table td { border: 1px solid #999; padding: 8px; text-align: right; }
   .print-table th { background: #eee; }
+}
+
+/* ============================================
+   قسم الإحصائيات (Analytics)
+   ============================================ */
+.chart-block {
+  background: var(--white);
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.chart-block .chart-title {
+  font-weight: 900;
+  font-size: 14.5px;
+  color: var(--blue-900);
+  margin: 0 0 14px;
 }

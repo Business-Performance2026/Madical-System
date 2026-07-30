@@ -119,6 +119,7 @@ function setupBookingsListener() {
       renderBookingRequests();
       renderRejectedBookings();
       renderWeeklySchedule();
+      renderAnalytics();
     }, (err) => {
       console.error('bookings listener error:', err);
     });
@@ -714,9 +715,18 @@ function scheduleRowHtml(b, opts) {
         : '<span class="cell-sub">—</span>'}
     </td>
   `);
+
+  const isPastOrToday = b.date <= todayISO();
+
   cells.push(`
     <td>
       <div class="row-actions">
+        ${b.patientPhone
+          ? `<a class="btn-xs toggle" href="${buildReminderLink(b)}" target="_blank" rel="noopener" title="إرسال تذكير واتساب">🔔 تذكير</a>`
+          : ''}
+        ${isPastOrToday
+          ? `<button class="btn-xs reject" data-action="mark-no-show" data-id="${b.id}" title="تعليم لم يحضر">❌ لم يحضر</button>`
+          : ''}
         <button class="btn-xs toggle" data-action="edit-schedule" data-id="${b.id}">✏️</button>
         <button class="btn-xs delete" data-action="delete-schedule" data-id="${b.id}">🗑️</button>
       </div>
@@ -732,12 +742,45 @@ function bindScheduleRowEvents(wrap) {
   wrap.querySelectorAll('[data-action="delete-schedule"]').forEach((btn) => {
     btn.addEventListener('click', () => deleteBooking(btn.dataset.id));
   });
+  wrap.querySelectorAll('[data-action="mark-no-show"]').forEach((btn) => {
+    btn.addEventListener('click', () => markNoShow(btn.dataset.id));
+  });
   wrap.querySelectorAll('[data-action="cancel-booking-edit"]').forEach((btn) => {
     btn.addEventListener('click', cancelBookingEdit);
   });
   wrap.querySelectorAll('[data-action="save-booking-edit"]').forEach((btn) => {
     btn.addEventListener('click', () => saveBookingEdit(btn.dataset.id));
   });
+}
+
+// تعليم حجز مؤكد بأنه "لم يحضر" (منفصل عن الرفض، يفيد بتتبع المرضى المتكررين بالغياب)
+async function markNoShow(bookingId) {
+  const sure = confirm('تعليم هذا الموعد بـ "لم يحضر"؟');
+  if (!sure) return;
+
+  try {
+    await db.collection('bookings').doc(bookingId).update({ status: 'no_show' });
+  } catch (err) {
+    console.error('markNoShow error:', err);
+    alert('تعذر تسجيل الحالة، حاول مرة أخرى');
+  }
+}
+
+// رسالة تذكير واتساب منفصلة عن رسالة تأكيد الحجز الأصلية
+function buildReminderLink(booking) {
+  const message = [
+    `السلام عليكم ${booking.patientName}،`,
+    ``,
+    `تذكير بموعدكم غداً/اليوم بخصوص الحجز رقم ${bookingNumber(booking.id)}`,
+    `📅 التاريخ: ${booking.date}`,
+    `🕐 الوقت: ${booking.time}`,
+    ``,
+    `نتطلع لزيارتكم، ولأي تعديل أو إلغاء نحن بخدمتكم.`,
+    ``,
+    `مع تحيات إدارة ${clinicName}`,
+  ].join('\n');
+
+  return `https://wa.me/${sanitizePhone(booking.patientPhone)}?text=${encodeURIComponent(message)}`;
 }
 
 function getWeekDates() {
@@ -1103,6 +1146,198 @@ function staffStatusBadge(status) {
   const labels = { active: 'فعّال', disabled: 'موقوف' };
   const cls = { active: 'badge-active', disabled: 'badge-disabled' };
   return `<span class="badge ${cls[status] || ''}">${labels[status] || status}</span>`;
+}
+
+// ============================================
+// الإحصائيات (Analytics)
+// ============================================
+let doctorsChart = null;
+let hoursChart = null;
+let patientsChart = null;
+
+function renderAnalytics() {
+  const emptyEl = document.getElementById('analytics-empty');
+  const contentEl = document.getElementById('analytics-content');
+  if (!emptyEl || !contentEl) return;
+
+  if (cachedBookings.length === 0) {
+    emptyEl.classList.remove('hidden');
+    contentEl.classList.add('hidden');
+    return;
+  }
+  emptyEl.classList.add('hidden');
+  contentEl.classList.remove('hidden');
+
+  const total = cachedBookings.length;
+  const negativeCount = cachedBookings.filter((b) => ['rejected', 'cancelled', 'no_show'].includes(b.status)).length;
+  const cancelRate = total > 0 ? Math.round((negativeCount / total) * 100) : 0;
+
+  // أكثر طبيب مطلوب
+  const doctorCounts = {};
+  cachedBookings.forEach((b) => {
+    doctorCounts[b.doctorName] = (doctorCounts[b.doctorName] || 0) + 1;
+  });
+  const sortedDoctors = Object.entries(doctorCounts).sort((a, b) => b[1] - a[1]);
+
+  // أكثر الأوقات ازدحاماً (بالساعة)
+  const hourCounts = {};
+  cachedBookings.forEach((b) => {
+    const hour = b.time.split(':')[0];
+    hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+  });
+  const sortedHoursByCount = Object.entries(hourCounts).sort((a, b) => b[1] - a[1]);
+  const sortedHoursByTime = Object.entries(hourCounts).sort((a, b) => a[0].localeCompare(b[0]));
+
+  // مرضى جدد لكل شهر (آخر 6 أشهر) - حسب أول حجز لكل مريض
+  const firstBookingMsByPatient = {};
+  cachedBookings.forEach((b) => {
+    if (!b.createdAt) return;
+    const ms = b.createdAt.toMillis();
+    if (!firstBookingMsByPatient[b.patientId] || ms < firstBookingMsByPatient[b.patientId]) {
+      firstBookingMsByPatient[b.patientId] = ms;
+    }
+  });
+  const monthBuckets = buildLast6MonthBuckets();
+  Object.values(firstBookingMsByPatient).forEach((ms) => {
+    const d = new Date(ms);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (key in monthBuckets) monthBuckets[key] += 1;
+  });
+
+  document.getElementById('stat-total-bookings').textContent = total;
+  document.getElementById('stat-top-doctor').textContent = sortedDoctors[0] ? sortedDoctors[0][0] : '—';
+  document.getElementById('stat-top-hour').textContent = sortedHoursByCount[0] ? formatHourLabel(sortedHoursByCount[0][0]) : '—';
+  document.getElementById('stat-cancel-rate').textContent = `${cancelRate}%`;
+
+  if (typeof Chart !== 'undefined') {
+    drawDoctorsChart(sortedDoctors.slice(0, 6));
+    drawHoursChart(sortedHoursByTime);
+    drawPatientsChart(monthBuckets);
+  }
+}
+
+function drawDoctorsChart(entries) {
+  const canvas = document.getElementById('chart-doctors');
+  if (!canvas) return;
+  if (doctorsChart) doctorsChart.destroy();
+  doctorsChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: entries.map((e) => e[0]),
+      datasets: [{ label: 'عدد الحجوزات', data: entries.map((e) => e[1]), backgroundColor: '#158A7E', borderRadius: 6 }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+    },
+  });
+}
+
+function drawHoursChart(entries) {
+  const canvas = document.getElementById('chart-hours');
+  if (!canvas) return;
+  if (hoursChart) hoursChart.destroy();
+  hoursChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: entries.map((e) => formatHourLabel(e[0])),
+      datasets: [{ label: 'عدد الحجوزات', data: entries.map((e) => e[1]), backgroundColor: '#4ED9C4', borderRadius: 6 }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+    },
+  });
+}
+
+function drawPatientsChart(buckets) {
+  const canvas = document.getElementById('chart-patients-monthly');
+  if (!canvas) return;
+  if (patientsChart) patientsChart.destroy();
+  const keys = Object.keys(buckets);
+  patientsChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: keys.map(formatMonthLabel),
+      datasets: [{
+        label: 'مرضى جدد',
+        data: keys.map((k) => buckets[k]),
+        borderColor: '#0F2440',
+        backgroundColor: 'rgba(21,138,126,0.15)',
+        fill: true,
+        tension: 0.3,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+    },
+  });
+}
+
+function buildLast6MonthBuckets() {
+  const buckets = {};
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    buckets[key] = 0;
+  }
+  return buckets;
+}
+
+function formatHourLabel(hourStr) {
+  const h = parseInt(hourStr, 10);
+  const period = h < 12 ? 'ص' : 'م';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12} ${period}`;
+}
+
+function formatMonthLabel(key) {
+  const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  const m = parseInt(key.split('-')[1], 10);
+  return months[m - 1];
+}
+
+// ============================================
+// تصدير الحجوزات كملف CSV (يفتح مباشرة بـ Excel)
+// ============================================
+const exportCsvBtn = document.getElementById('export-csv-btn');
+if (exportCsvBtn) {
+  exportCsvBtn.addEventListener('click', exportBookingsCSV);
+}
+
+function exportBookingsCSV() {
+  const statusLabels = { pending: 'قيد الانتظار', accepted: 'مقبول', rejected: 'مرفوض', cancelled: 'ملغى', no_show: 'لم يحضر' };
+  const headers = ['رقم الحجز', 'المريض', 'الجوال', 'الطبيب', 'التاريخ', 'الوقت', 'الحالة'];
+
+  const rows = [...cachedBookings]
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
+    .map((b) => [
+      bookingNumber(b.id),
+      b.patientName,
+      b.patientPhone || '',
+      b.doctorName,
+      b.date,
+      b.time,
+      statusLabels[b.status] || b.status,
+    ]);
+
+  const csvContent = [headers, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  // نضيف BOM بالبداية عشان Excel يقرأ الحروف العربية صح
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `حجوزات-${clinicName}-${todayISO()}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 initPageTabs();

@@ -114,11 +114,11 @@ service cloud.firestore {
         && request.resource.data.time is string
         && request.resource.data.patientPhone is string;
 
-      // تعديل: العيادة أو أحد موظفيها يقدر يقبل/يرفض/يعدّل التاريخ والوقت واسم ورقم جوال المريض بهذا الحجز،
+      // تعديل: العيادة أو أحد موظفيها يقدر يقبل/يرفض/يعلّم لم يحضر/يعدّل التاريخ والوقت واسم ورقم جوال المريض بهذا الحجز،
       // والمريض صاحب الحجز يقدر يلغيه بس
       allow update: if (isClinicOrStaff(resource.data.clinicId)
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'date', 'time', 'patientName', 'patientPhone'])
-            && request.resource.data.status in ['pending', 'accepted', 'rejected'])
+            && request.resource.data.status in ['pending', 'accepted', 'rejected', 'no_show'])
         || (isActivePatient() && resource.data.patientId == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
             && resource.data.status in ['pending', 'accepted']

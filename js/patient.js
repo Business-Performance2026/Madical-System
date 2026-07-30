@@ -339,10 +339,10 @@ async function loadMyBookings() {
 
   const todayStr = todayISO();
   const upcoming = bookings
-    .filter((b) => b.status !== 'rejected' && b.status !== 'cancelled' && b.date >= todayStr)
+    .filter((b) => b.status !== 'rejected' && b.status !== 'cancelled' && b.status !== 'no_show' && b.date >= todayStr)
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
   const past = bookings
-    .filter((b) => b.status === 'rejected' || b.status === 'cancelled' || b.date < todayStr)
+    .filter((b) => b.status === 'rejected' || b.status === 'cancelled' || b.status === 'no_show' || b.date < todayStr)
     .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
 
   renderBookingsList('upcoming-appts-wrap', upcoming, 'ما فيه مواعيد قادمة حالياً', true);
@@ -422,8 +422,8 @@ function generateSlots(start, end) {
 }
 
 function bookingStatusBadge(status) {
-  const labels = { pending: 'قيد الانتظار', accepted: 'مقبول', rejected: 'مرفوض', cancelled: 'ملغى' };
-  const cls = { pending: 'badge-pending', accepted: 'badge-active', rejected: 'badge-rejected', cancelled: 'badge-cancelled' };
+  const labels = { pending: 'قيد الانتظار', accepted: 'مقبول', rejected: 'مرفوض', cancelled: 'ملغى', no_show: 'لم يحضر' };
+  const cls = { pending: 'badge-pending', accepted: 'badge-active', rejected: 'badge-rejected', cancelled: 'badge-cancelled', no_show: 'badge-no-show' };
   return `<span class="badge ${cls[status] || ''}">${labels[status] || status}</span>`;
 }
 
