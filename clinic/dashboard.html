@@ -89,7 +89,17 @@
 
     <section class="section-card tab-panel hidden" data-panel="schedule">
       <h2 class="section-title">جدول هذا الأسبوع</h2>
-      <p class="section-hint">المواعيد المؤكدة فقط (من الأحد إلى السبت)</p>
+      <div class="schedule-toolbar">
+        <p class="section-hint">المواعيد المؤكدة فقط (من الأحد إلى السبت)</p>
+        <div class="schedule-controls">
+          <select id="schedule-sort" class="schedule-sort-select">
+            <option value="date">ترتيب: التاريخ</option>
+            <option value="doctor">ترتيب: اسم الطبيب</option>
+            <option value="time">ترتيب: الوقت</option>
+          </select>
+          <button type="button" class="btn-xs toggle" id="print-week-btn">🖨️ طباعة الأسبوع (PDF)</button>
+        </div>
+      </div>
       <div id="schedule-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
@@ -102,6 +112,8 @@
   </div>
 
   <div id="toast-root"></div>
+
+  <div id="print-area"></div>
 
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>

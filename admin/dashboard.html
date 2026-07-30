@@ -44,6 +44,7 @@
 
     <div class="page-tabs">
       <button type="button" class="active" data-tab="pending">طلبات العيادات (<span id="pending-count">0</span>)</button>
+      <button type="button" data-tab="rejected-clinics">العيادات المرفوضة</button>
       <button type="button" data-tab="recent">آخر التسجيلات</button>
       <button type="button" data-tab="accounts">إدارة الحسابات</button>
     </div>
@@ -52,6 +53,12 @@
       <h2 class="section-title">طلبات تسجيل عيادات جديدة</h2>
       <p class="section-hint">راجع طلبات العيادات ووافق عليها أو ارفضها قبل ما تقدر تسجّل دخول</p>
       <div id="pending-clinics-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
+    <section class="section-card tab-panel hidden" data-panel="rejected-clinics">
+      <h2 class="section-title">العيادات المرفوضة</h2>
+      <p class="section-hint">تقدر تراجع قرارك وتقبل العيادة، أو تعدّل بياناتها، أو تحذفها نهائياً</p>
+      <div id="rejected-clinics-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="recent">

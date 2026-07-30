@@ -42,9 +42,9 @@ function setMode(newMode) {
   clearStatus();
 }
 
-// حقل رقم الجوال يظهر بس عند تسجيل حساب مريض جديد
+// حقل رقم الجوال يظهر عند تسجيل أي حساب جديد (مريض أو عيادة)
 function updatePhoneVisibility() {
-  const showPhone = mode === 'signup' && selectedRole === 'patient';
+  const showPhone = mode === 'signup';
   phoneField.classList.toggle('hidden', !showPhone);
 }
 
@@ -86,17 +86,14 @@ async function handleSignup(email, password) {
     return;
   }
 
-  let phone = '';
-  if (selectedRole === 'patient') {
-    phone = phoneInput.value.trim();
-    if (!phone) {
-      showStatus('فضلاً أدخل رقم الجوال', 'error');
-      return;
-    }
-    if (!/^[0-9+\s-]{8,15}$/.test(phone)) {
-      showStatus('صيغة رقم الجوال غير صحيحة', 'error');
-      return;
-    }
+  const phone = phoneInput.value.trim();
+  if (!phone) {
+    showStatus('فضلاً أدخل رقم الجوال (واتساب)', 'error');
+    return;
+  }
+  if (!/^[0-9+\s-]{8,15}$/.test(phone)) {
+    showStatus('صيغة رقم الجوال غير صحيحة', 'error');
+    return;
   }
 
   setLoading(true);
@@ -112,12 +109,9 @@ async function handleSignup(email, password) {
       email: email,
       role: selectedRole,
       status: initialStatus,
+      phone: phone,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     };
-
-    if (selectedRole === 'patient') {
-      userData.phone = phone;
-    }
 
     await db.collection('users').doc(uid).set(userData);
 

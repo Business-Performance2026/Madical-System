@@ -42,6 +42,7 @@ async function loadDashboard() {
 
   renderStats(allUsers, doctorsSnap.size, bookingsSnap.size);
   renderPendingClinics(allUsers);
+  renderRejectedClinics(allUsers);
   renderRecentUsers(allUsers);
   renderAllUsersTable(allUsers);
 }
@@ -60,17 +61,25 @@ function renderStats(allUsers, doctorsCount, bookingsCount) {
 }
 
 // ============================================
-// طلبات تسجيل العيادات المعلّقة
+// طلبات تسجيل العيادات (المعلّقة والمرفوضة)
 // ============================================
 function renderPendingClinics(allUsers) {
   const pending = allUsers.filter((u) => u.role === 'clinic' && u.status === 'pending');
-  const wrap = document.getElementById('pending-clinics-wrap');
-  const countLabel = document.getElementById('pending-count');
+  document.getElementById('pending-count').textContent = pending.length;
+  renderClinicStatusTable(pending, 'pending-clinics-wrap', 'لا توجد طلبات تسجيل عيادات بانتظار المراجعة حالياً');
+}
 
-  countLabel.textContent = pending.length;
+function renderRejectedClinics(allUsers) {
+  const rejected = allUsers.filter((u) => u.role === 'clinic' && u.status === 'rejected');
+  renderClinicStatusTable(rejected, 'rejected-clinics-wrap', 'لا توجد عيادات مرفوضة حالياً');
+}
 
-  if (pending.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">لا توجد طلبات تسجيل عيادات بانتظار المراجعة حالياً</p>';
+// جدول موحّد للعيادات (يُستخدم للمعلّقة والمرفوضة): قبول، رفض، تعديل، حذف
+function renderClinicStatusTable(clinics, wrapId, emptyText) {
+  const wrap = document.getElementById(wrapId);
+
+  if (clinics.length === 0) {
+    wrap.innerHTML = `<p class="empty-state">${emptyText}</p>`;
     return;
   }
 
@@ -81,38 +90,72 @@ function renderPendingClinics(allUsers) {
           <tr>
             <th>اسم العيادة</th>
             <th>البريد الإلكتروني</th>
+            <th>واتساب</th>
             <th>إجراء</th>
           </tr>
         </thead>
         <tbody>
-          ${pending.map((u) => `
-            <tr>
-              <td class="cell-name">${escapeHtml(u.name)}</td>
-              <td>${escapeHtml(u.email)}</td>
-              <td>
-                <div class="row-actions">
-                  <button class="btn-xs approve" data-action="approve" data-uid="${u.id}">قبول</button>
-                  <button class="btn-xs reject" data-action="reject" data-uid="${u.id}">رفض</button>
-                </div>
-              </td>
-            </tr>
-          `).join('')}
+          ${clinics.map((u) => (u.id === editingUid ? renderEditRow(u, 4) : renderClinicStatusRow(u))).join('')}
         </tbody>
       </table>
     </div>
   `;
 
-  wrap.querySelectorAll('[data-action="approve"]').forEach((btn) => {
+  wrap.querySelectorAll('[data-action="approve-clinic"]').forEach((btn) => {
     btn.addEventListener('click', () => setClinicStatus(btn.dataset.uid, 'active'));
   });
-  wrap.querySelectorAll('[data-action="reject"]').forEach((btn) => {
+  wrap.querySelectorAll('[data-action="reject-clinic"]').forEach((btn) => {
     btn.addEventListener('click', () => setClinicStatus(btn.dataset.uid, 'rejected'));
   });
+  wrap.querySelectorAll('[data-action="edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      editingUid = btn.dataset.uid;
+      rerenderFromCache();
+    });
+  });
+  wrap.querySelectorAll('[data-action="cancel-edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      editingUid = null;
+      rerenderFromCache();
+    });
+  });
+  wrap.querySelectorAll('[data-action="save-edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => saveUserEdit(btn.dataset.uid));
+  });
+  wrap.querySelectorAll('[data-action="delete"]').forEach((btn) => {
+    btn.addEventListener('click', () => deleteUser(btn.dataset.uid));
+  });
+}
+
+function renderClinicStatusRow(u) {
+  return `
+    <tr>
+      <td class="cell-name">${escapeHtml(u.name)}</td>
+      <td class="cell-sub">${escapeHtml(u.email)}</td>
+      <td class="cell-sub">${escapeHtml(u.phone || '—')}</td>
+      <td>
+        <div class="row-actions">
+          <button class="btn-xs approve" data-action="approve-clinic" data-uid="${u.id}">قبول</button>
+          <button class="btn-xs reject" data-action="reject-clinic" data-uid="${u.id}">رفض</button>
+          <button class="btn-xs toggle" data-action="edit" data-uid="${u.id}">✏️</button>
+          <button class="btn-xs delete" data-action="delete" data-uid="${u.id}">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `;
 }
 
 async function setClinicStatus(uid, status) {
   await db.collection('users').doc(uid).update({ status });
   loadDashboard();
+}
+
+// إعادة رسم كل الأقسام من البيانات المخزّنة مؤقتاً (بدون إعادة الجلب من Firestore) - تُستخدم عند تبديل وضع التعديل فقط
+function rerenderFromCache() {
+  renderPendingClinics(cachedUsers);
+  renderRejectedClinics(cachedUsers);
+  renderRecentUsers(cachedUsers);
+  drawUsersTable();
 }
 
 // ============================================
@@ -238,15 +281,15 @@ function renderUserRow(u) {
   `;
 }
 
-// صف التعديل: يفتح كل الحقول مع بعض (الاسم، البريد، ورقم الجوال للمريض)
-function renderEditRow(u) {
+// صف التعديل: يفتح كل الحقول مع بعض (الاسم، البريد، ورقم الجوال)
+function renderEditRow(u, colspan) {
   return `
     <tr>
-      <td colspan="4">
+      <td colspan="${colspan || 4}">
         <div class="mini-form">
           <input type="text" class="edit-name" placeholder="الاسم" value="${escapeHtml(u.name)}">
           <input type="email" class="edit-email" placeholder="البريد الإلكتروني" value="${escapeHtml(u.email)}">
-          ${u.role === 'patient' ? `<input type="tel" class="edit-phone" placeholder="رقم الجوال" value="${escapeHtml(u.phone || '')}">` : ''}
+          <input type="tel" class="edit-phone" placeholder="رقم واتساب" value="${escapeHtml(u.phone || '')}">
           <button type="button" class="btn-xs approve" data-action="save-edit" data-uid="${u.id}">💾 حفظ</button>
           <button type="button" class="btn-xs delete" data-action="cancel-edit" data-uid="${u.id}">إلغاء</button>
         </div>
@@ -259,13 +302,13 @@ function bindUserRowEvents(wrap) {
   wrap.querySelectorAll('[data-action="edit"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       editingUid = btn.dataset.uid;
-      drawUsersTable();
+      rerenderFromCache();
     });
   });
   wrap.querySelectorAll('[data-action="cancel-edit"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       editingUid = null;
-      drawUsersTable();
+      rerenderFromCache();
     });
   });
   wrap.querySelectorAll('[data-action="save-edit"]').forEach((btn) => {

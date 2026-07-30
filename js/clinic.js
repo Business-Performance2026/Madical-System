@@ -398,7 +398,10 @@ document.getElementById('add-doctor-form').addEventListener('submit', async (e) 
 
 // ============================================
 // عرض الأطباء + إدارة أوقات العمل + الحذف
+// (قائمة قابلة للطي بدل كروت، عشان توفر مساحة)
 // ============================================
+let expandedDoctorId = null;
+
 function renderDoctors() {
   const wrap = document.getElementById('doctors-wrap');
 
@@ -408,28 +411,49 @@ function renderDoctors() {
   }
 
   wrap.innerHTML = `
-    <div class="doctors-grid">
-      ${cachedDoctors.map((doc) => (doc.id === editingDoctorId ? renderDoctorEditCard(doc) : renderDoctorCard(doc))).join('')}
+    <div class="doctor-accordion">
+      ${cachedDoctors.map((doc) => renderDoctorAccordionItem(doc)).join('')}
     </div>
   `;
 
+  wrap.querySelectorAll('[data-action="toggle-doctor"]').forEach((el) => {
+    el.addEventListener('click', () => {
+      expandedDoctorId = expandedDoctorId === el.dataset.id ? null : el.dataset.id;
+      renderDoctors();
+    });
+  });
+  wrap.querySelectorAll('[data-action="print-doctor"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      printDoctorSchedule(btn.dataset.id);
+    });
+  });
   wrap.querySelectorAll('[data-action="edit-doctor"]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       editingDoctorId = btn.dataset.id;
+      expandedDoctorId = btn.dataset.id;
       renderDoctors();
     });
   });
   wrap.querySelectorAll('[data-action="cancel-doctor-edit"]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       editingDoctorId = null;
       renderDoctors();
     });
   });
   wrap.querySelectorAll('[data-action="save-doctor-edit"]').forEach((btn) => {
-    btn.addEventListener('click', () => saveDoctorEdit(btn.dataset.id));
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      saveDoctorEdit(btn.dataset.id);
+    });
   });
   wrap.querySelectorAll('[data-action="delete-doctor"]').forEach((btn) => {
-    btn.addEventListener('click', () => deleteDoctor(btn.dataset.id));
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteDoctor(btn.dataset.id);
+    });
   });
   wrap.querySelectorAll('[data-action="remove-hour"]').forEach((btn) => {
     btn.addEventListener('click', () => removeWorkingHour(btn.dataset.id, Number(btn.dataset.index)));
@@ -439,37 +463,35 @@ function renderDoctors() {
   });
 }
 
-function renderDoctorCard(doc) {
+function renderDoctorAccordionItem(doc) {
+  const isExpanded = doc.id === expandedDoctorId;
+  const isEditing = doc.id === editingDoctorId;
+
   return `
-    <div class="doctor-card">
-      <div class="doctor-head">
-        <div>
-          <p class="doctor-name">${escapeHtml(doc.name)}</p>
-          <p class="doctor-specialty">${escapeHtml(doc.specialty)}</p>
+    <div class="doctor-item ${isExpanded ? 'expanded' : ''}">
+      <div class="doctor-item-header" data-action="toggle-doctor" data-id="${doc.id}">
+        <div class="doctor-item-info">
+          <span class="doctor-item-name">${escapeHtml(doc.name)}</span>
+          <span class="doctor-item-specialty">${escapeHtml(doc.specialty)}</span>
         </div>
-        <div class="row-actions">
+        <div class="doctor-item-actions">
+          <button class="btn-xs toggle" data-action="print-doctor" data-id="${doc.id}" title="طباعة جدول الطبيب">🖨️</button>
           <button class="btn-xs toggle" data-action="edit-doctor" data-id="${doc.id}">✏️</button>
           <button class="btn-xs delete" data-action="delete-doctor" data-id="${doc.id}">🗑️</button>
+          <span class="doctor-item-arrow">${isExpanded ? '▲' : '▼'}</span>
         </div>
       </div>
-
-      ${renderDoctorHoursSection(doc)}
-    </div>
-  `;
-}
-
-// كرت التعديل: الاسم والتخصص مع بعض بنفس النموذج، وحفظ واحد للاثنين
-function renderDoctorEditCard(doc) {
-  return `
-    <div class="doctor-card">
-      <div class="mini-form" style="margin-bottom:14px;">
-        <input type="text" class="edit-doctor-name" placeholder="اسم الطبيب" value="${escapeHtml(doc.name)}">
-        <input type="text" class="edit-doctor-specialty" placeholder="التخصص" value="${escapeHtml(doc.specialty)}">
-        <button type="button" class="btn-xs approve" data-action="save-doctor-edit" data-id="${doc.id}">💾 حفظ</button>
-        <button type="button" class="btn-xs delete" data-action="cancel-doctor-edit" data-id="${doc.id}">إلغاء</button>
+      <div class="doctor-item-body ${isExpanded ? '' : 'hidden'}">
+        ${isEditing ? `
+          <div class="mini-form" style="margin-bottom:14px;">
+            <input type="text" class="edit-doctor-name" placeholder="اسم الطبيب" value="${escapeHtml(doc.name)}">
+            <input type="text" class="edit-doctor-specialty" placeholder="التخصص" value="${escapeHtml(doc.specialty)}">
+            <button type="button" class="btn-xs approve" data-action="save-doctor-edit" data-id="${doc.id}">💾 حفظ</button>
+            <button type="button" class="btn-xs delete" data-action="cancel-doctor-edit" data-id="${doc.id}">إلغاء</button>
+          </div>
+        ` : ''}
+        ${renderDoctorHoursSection(doc)}
       </div>
-
-      ${renderDoctorHoursSection(doc)}
     </div>
   `;
 }
@@ -499,7 +521,7 @@ function renderDoctorHoursSection(doc) {
 // حفظ اسم وتخصص الطبيب مع بعض
 // ملاحظة: ما يحدّث اسم الطبيب بالحجوزات القديمة المخزّنة مسبقاً (doctorName)، بس الجديدة بتاخذ الاسم المحدّث
 async function saveDoctorEdit(doctorId) {
-  const card = document.querySelector(`[data-action="save-doctor-edit"][data-id="${doctorId}"]`).closest('.doctor-card');
+  const card = document.querySelector(`[data-action="save-doctor-edit"][data-id="${doctorId}"]`).closest('.doctor-item');
   const name = card.querySelector('.edit-doctor-name').value.trim();
   const specialty = card.querySelector('.edit-doctor-specialty').value.trim();
 
@@ -556,70 +578,119 @@ async function removeWorkingHour(doctorId, index) {
 }
 
 // ============================================
-// الجدول الأسبوعي (المواعيد المقبولة فقط)
+// الجدول الأسبوعي (المواعيد المقبولة فقط) + فرز + طباعة
 // ============================================
+let scheduleSortMode = 'date';
+
+document.getElementById('schedule-sort').addEventListener('change', (e) => {
+  scheduleSortMode = e.target.value;
+  renderWeeklySchedule();
+});
+
+document.getElementById('print-week-btn').addEventListener('click', printWeekSchedule);
+
 function renderWeeklySchedule() {
   const wrap = document.getElementById('schedule-wrap');
   const weekDates = getWeekDates();
+  const weekIsoSet = new Set(weekDates.map((d) => d.iso));
 
-  const accepted = cachedBookings.filter((b) => b.status === 'accepted');
+  const accepted = cachedBookings.filter((b) => b.status === 'accepted' && weekIsoSet.has(b.date));
 
-  const hasAny = weekDates.some((d) => accepted.some((b) => b.date === d.iso));
-
-  if (!hasAny) {
+  if (accepted.length === 0) {
     wrap.innerHTML = '<p class="empty-state">لا توجد مواعيد مؤكدة هذا الأسبوع</p>';
     return;
   }
 
-  wrap.innerHTML = weekDates.map((d) => {
-    const dayBookings = accepted
-      .filter((b) => b.date === d.iso)
-      .sort((a, b) => a.time.localeCompare(b.time));
+  if (scheduleSortMode === 'doctor') {
+    wrap.innerHTML = renderScheduleGroupedByDoctor(accepted);
+  } else if (scheduleSortMode === 'time') {
+    wrap.innerHTML = renderScheduleFlatByTime(accepted);
+  } else {
+    wrap.innerHTML = renderScheduleGroupedByDate(accepted, weekDates);
+  }
 
+  bindScheduleRowEvents(wrap);
+}
+
+function renderScheduleGroupedByDate(accepted, weekDates) {
+  return weekDates.map((d) => {
+    const dayBookings = accepted.filter((b) => b.date === d.iso).sort((a, b) => a.time.localeCompare(b.time));
     if (dayBookings.length === 0) return '';
-
     return `
       <div class="schedule-day">
         <p class="schedule-day-title">${d.label} — ${d.iso}</p>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>الوقت</th>
-                <th>المريض</th>
-                <th>رقم الحجز</th>
-                <th>الطبيب</th>
-                <th>تواصل</th>
-                <th>إجراء</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${dayBookings.map((b) => (b.id === editingBookingId ? renderBookingEditRow(b, 6) : `
-                <tr>
-                  <td class="cell-sub">${b.time}</td>
-                  <td class="cell-name">${escapeHtml(b.patientName)}</td>
-                  <td class="cell-sub">${bookingNumber(b.id)}</td>
-                  <td>${escapeHtml(b.doctorName)}</td>
-                  <td>
-                    ${b.patientPhone
-                      ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">💬 واتساب</a>`
-                      : '<span class="cell-sub">—</span>'}
-                  </td>
-                  <td>
-                    <div class="row-actions">
-                      <button class="btn-xs toggle" data-action="edit-schedule" data-id="${b.id}">✏️</button>
-                      <button class="btn-xs delete" data-action="delete-schedule" data-id="${b.id}">🗑️</button>
-                    </div>
-                  </td>
-                </tr>
-              `)).join('')}
-            </tbody>
-          </table>
-        </div>
+        ${scheduleTableHtml(dayBookings, { showDate: false, showDoctor: true })}
       </div>
     `;
   }).join('');
+}
 
+function renderScheduleGroupedByDoctor(accepted) {
+  const doctorNames = [...new Set(accepted.map((b) => b.doctorName))].sort((a, b) => a.localeCompare(b, 'ar'));
+  return doctorNames.map((name) => {
+    const docBookings = accepted
+      .filter((b) => b.doctorName === name)
+      .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    return `
+      <div class="schedule-day">
+        <p class="schedule-day-title">👨‍⚕️ ${escapeHtml(name)}</p>
+        ${scheduleTableHtml(docBookings, { showDate: true, showDoctor: false })}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderScheduleFlatByTime(accepted) {
+  const sorted = [...accepted].sort((a, b) => a.time.localeCompare(b.time) || a.date.localeCompare(b.date));
+  return `<div class="schedule-day">${scheduleTableHtml(sorted, { showDate: true, showDoctor: true })}</div>`;
+}
+
+// جدول موحّد يبني الأعمدة حسب طريقة الفرز (يضيف/يحذف عمود التاريخ أو الطبيب)
+function scheduleTableHtml(bookings, opts) {
+  const colCount = 4 + (opts.showDate ? 1 : 0) + (opts.showDoctor ? 1 : 0);
+  const heads = ['الوقت'];
+  if (opts.showDate) heads.push('التاريخ');
+  heads.push('المريض', 'رقم الحجز');
+  if (opts.showDoctor) heads.push('الطبيب');
+  heads.push('تواصل', 'إجراء');
+
+  return `
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr>${heads.map((h) => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${bookings.map((b) => (b.id === editingBookingId ? renderBookingEditRow(b, colCount) : scheduleRowHtml(b, opts))).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function scheduleRowHtml(b, opts) {
+  const cells = [`<td class="cell-sub">${b.time}</td>`];
+  if (opts.showDate) cells.push(`<td class="cell-sub">${b.date}</td>`);
+  cells.push(`<td class="cell-name">${escapeHtml(b.patientName)}</td>`);
+  cells.push(`<td class="cell-sub">${bookingNumber(b.id)}</td>`);
+  if (opts.showDoctor) cells.push(`<td>${escapeHtml(b.doctorName)}</td>`);
+  cells.push(`
+    <td>
+      ${b.patientPhone
+        ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">💬 واتساب</a>`
+        : '<span class="cell-sub">—</span>'}
+    </td>
+  `);
+  cells.push(`
+    <td>
+      <div class="row-actions">
+        <button class="btn-xs toggle" data-action="edit-schedule" data-id="${b.id}">✏️</button>
+        <button class="btn-xs delete" data-action="delete-schedule" data-id="${b.id}">🗑️</button>
+      </div>
+    </td>
+  `);
+  return `<tr>${cells.join('')}</tr>`;
+}
+
+function bindScheduleRowEvents(wrap) {
   wrap.querySelectorAll('[data-action="edit-schedule"]').forEach((btn) => {
     btn.addEventListener('click', () => startBookingEdit(btn.dataset.id));
   });
@@ -644,6 +715,86 @@ function getWeekDates() {
     date.setDate(startOfWeek.getDate() + i);
     return { label: d.label, iso: date.toISOString().slice(0, 10) };
   });
+}
+
+// ============================================
+// طباعة / استخراج PDF (عن طريق نافذة طباعة المتصفح - اختر "حفظ كـ PDF")
+// ============================================
+function printDoctorSchedule(doctorId) {
+  const doctor = cachedDoctors.find((d) => d.id === doctorId);
+  if (!doctor) return;
+
+  const weekDates = getWeekDates();
+  const weekIsoSet = new Set(weekDates.map((d) => d.iso));
+  const bookings = cachedBookings
+    .filter((b) => b.status === 'accepted' && b.doctorId === doctorId && weekIsoSet.has(b.date))
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+  renderPrintArea({
+    title: `جدول د. ${doctor.name} — ${doctor.specialty}`,
+    subtitle: `عيادة ${clinicName} — الأسبوع من ${weekDates[0].iso} إلى ${weekDates[6].iso}`,
+    bookings,
+    showDoctor: false,
+  });
+
+  window.print();
+}
+
+function printWeekSchedule() {
+  const weekDates = getWeekDates();
+  const weekIsoSet = new Set(weekDates.map((d) => d.iso));
+  const bookings = cachedBookings
+    .filter((b) => b.status === 'accepted' && weekIsoSet.has(b.date))
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+  renderPrintArea({
+    title: 'الجدول الأسبوعي الكامل',
+    subtitle: `عيادة ${clinicName} — الأسبوع من ${weekDates[0].iso} إلى ${weekDates[6].iso}`,
+    bookings,
+    showDoctor: true,
+  });
+
+  window.print();
+}
+
+function renderPrintArea({ title, subtitle, bookings, showDoctor }) {
+  const area = document.getElementById('print-area');
+
+  if (bookings.length === 0) {
+    area.innerHTML = `
+      <h1>${escapeHtml(title)}</h1>
+      <p>${escapeHtml(subtitle)}</p>
+      <p>لا توجد مواعيد مؤكدة بهذا الأسبوع.</p>
+    `;
+    return;
+  }
+
+  area.innerHTML = `
+    <h1>${escapeHtml(title)}</h1>
+    <p>${escapeHtml(subtitle)}</p>
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>الوقت</th>
+          <th>المريض</th>
+          ${showDoctor ? '<th>الطبيب</th>' : ''}
+          <th>رقم الحجز</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${bookings.map((b) => `
+          <tr>
+            <td>${b.date}</td>
+            <td>${b.time}</td>
+            <td>${escapeHtml(b.patientName)}</td>
+            ${showDoctor ? `<td>${escapeHtml(b.doctorName)}</td>` : ''}
+            <td>${bookingNumber(b.id)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 // ============================================

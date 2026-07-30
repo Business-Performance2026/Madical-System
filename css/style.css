@@ -1220,3 +1220,132 @@ body.landing {
     padding: 12px;
   }
 }
+
+/* ============================================
+   قائمة الأطباء القابلة للطي (Accordion) - توفّر مساحة بدل الكروت
+   ============================================ */
+.doctor-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doctor-item {
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.doctor-item.expanded { border-color: var(--blue-500); }
+
+.doctor-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  cursor: pointer;
+  background: var(--white);
+  transition: background 0.2s;
+}
+
+.doctor-item-header:hover { background: var(--gray-50); }
+.doctor-item.expanded .doctor-item-header { background: var(--blue-100); }
+
+.doctor-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.doctor-item-name {
+  font-weight: 900;
+  color: var(--blue-900);
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doctor-item-specialty { font-size: 13px; color: var(--gray-500); }
+
+.doctor-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.doctor-item-arrow {
+  font-size: 10px;
+  color: var(--gray-500);
+  width: 14px;
+  text-align: center;
+}
+
+.doctor-item-body {
+  padding: 14px 16px;
+  border-top: 1px solid var(--gray-200);
+  background: var(--gray-50);
+}
+
+.doctor-item-body.hidden { display: none; }
+
+/* ============================================
+   شريط أدوات جدول الأسبوع (فرز + طباعة)
+   ============================================ */
+.schedule-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.schedule-toolbar .section-hint { margin: 0; }
+
+.schedule-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.schedule-sort-select {
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--blue-900);
+  padding: 8px 12px;
+  border: 2px solid var(--gray-200);
+  border-radius: 8px;
+  background: var(--white);
+  cursor: pointer;
+}
+
+/* ============================================
+   الطباعة / استخراج PDF
+   ============================================ */
+#print-area { display: none; }
+
+@media print {
+  body * { visibility: hidden; }
+  #print-area, #print-area * { visibility: visible; }
+  #print-area {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    padding: 24px;
+    direction: rtl;
+  }
+
+  #print-area h1 { font-size: 20px; color: #000; margin: 0 0 4px; }
+  #print-area p { font-size: 13px; color: #444; margin: 0 0 16px; }
+
+  .print-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .print-table th, .print-table td { border: 1px solid #999; padding: 8px; text-align: right; }
+  .print-table th { background: #eee; }
+}

@@ -41,7 +41,7 @@ service cloud.firestore {
 
       // إنشاء حساب جديد عند التسجيل: المستخدم ينشئ مستنده هو بس،
       // وما يقدر يسجل نفسه كـ admin، والحالة الأولية لازم تكون صحيحة
-      // المريض لازم يحط رقم جوال (نحتاجه لاحقاً عشان العيادة تتواصل معه)
+      // رقم الجوال (واتساب) إجباري لأي حساب جديد (مريض أو عيادة)
       allow create: if isSignedIn()
         && request.auth.uid == userId
         && request.resource.data.role in ['patient', 'clinic']
@@ -49,7 +49,7 @@ service cloud.firestore {
              (request.resource.data.role == 'clinic' ? 'pending' : 'active')
         && request.resource.data.name is string
         && request.resource.data.email is string
-        && (request.resource.data.role != 'patient' || request.resource.data.phone is string);
+        && request.resource.data.phone is string;
 
       // تعديل: الأدمن يقدر يعدل أي حساب (موافقة عيادة / إيقاف / تفعيل)
       // المستخدم العادي يقدر يعدل بياناته (مثل الاسم) لكن ما يقدر يغيّر role أو status لحاله
@@ -95,10 +95,10 @@ service cloud.firestore {
         && request.resource.data.time is string
         && request.resource.data.patientPhone is string;
 
-      // تعديل: العيادة صاحبة الحجز تقدر تقبل/ترفض/تعدّل التاريخ والوقت (إعادة جدولة)،
+      // تعديل: العيادة صاحبة الحجز تقدر تقبل/ترفض/تعدّل التاريخ والوقت واسم ورقم جوال المريض بهذا الحجز،
       // والمريض صاحب الحجز يقدر يلغيه بس
       allow update: if (isActiveClinic(resource.data.clinicId)
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'date', 'time'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'date', 'time', 'patientName', 'patientPhone'])
             && request.resource.data.status in ['pending', 'accepted', 'rejected'])
         || (isActivePatient() && resource.data.patientId == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
