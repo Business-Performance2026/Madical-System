@@ -434,6 +434,8 @@ body.dashboard {
 .badge-disabled,
 .badge-rejected { background: #FBE9E7; color: var(--red-600); }
 
+.badge-cancelled { background: #EDEFF1; color: var(--gray-500); }
+
 .badge-role { background: var(--blue-100); color: var(--blue-700); }
 
 /* أزرار صغيرة داخل الجدول */
@@ -699,3 +701,196 @@ body.dashboard {
 
 .appt-card .appt-main { font-weight: 700; color: var(--gray-800); }
 .appt-card .appt-sub { font-size: 13.5px; color: var(--gray-500); margin-top: 2px; }
+
+.appt-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+
+/* ============================================
+   الشاشة الرئيسية العامة (قبل تسجيل الدخول)
+   ============================================ */
+.back-home-link {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: var(--blue-700);
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.back-home-link:hover { text-decoration: underline; }
+
+body.landing {
+  display: block;
+  padding: 0;
+  align-items: initial;
+  justify-content: initial;
+  background: var(--white);
+}
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 18px 20px;
+}
+
+.landing-nav .nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-nav .nav-brand .brand-mark {
+  width: 40px;
+  height: 40px;
+  box-shadow: none;
+  background: var(--blue-100);
+}
+
+.landing-nav .nav-brand svg { width: 24px; height: auto; }
+.landing-nav .nav-brand span { font-weight: 900; font-size: 18px; color: var(--blue-900); }
+
+.landing-nav .btn-primary { width: auto; padding: 11px 22px; font-size: 15px; }
+
+.hero {
+  background: linear-gradient(180deg, var(--blue-100) 0%, var(--white) 100%);
+  padding: 40px 20px 56px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--blue-900);
+  max-width: 560px;
+  margin: 0 auto 12px;
+  line-height: 1.4;
+}
+
+.hero p {
+  font-size: 17px;
+  color: var(--gray-500);
+  max-width: 480px;
+  margin: 0 auto 26px;
+}
+
+.hero-search {
+  display: flex;
+  gap: 8px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.hero-search input {
+  flex: 1;
+  padding: 15px 18px;
+  font-family: inherit;
+  font-size: 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+
+.hero-search input:focus { outline: none; border-color: var(--blue-700); }
+
+.hero-search button {
+  padding: 15px 24px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  background: var(--blue-700);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.hero-search button:hover { background: var(--blue-900); }
+
+.landing-section {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 44px 20px;
+}
+
+.landing-section h2 {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--blue-900);
+  margin: 0 0 6px;
+}
+
+.landing-section .section-hint { margin-bottom: 20px; }
+
+.specialty-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.specialty-chip {
+  display: block;
+  text-align: center;
+  padding: 20px 10px;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--gray-800);
+  font-weight: 700;
+  font-size: 14.5px;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.specialty-chip:hover { background: var(--blue-100); transform: translateY(-2px); }
+.specialty-chip .specialty-icon { font-size: 28px; display: block; margin-bottom: 8px; }
+
+.clinics-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.clinic-preview-card {
+  padding: 18px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  display: block;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.clinic-preview-card:hover { border-color: var(--blue-500); background: var(--blue-100); }
+.clinic-preview-card .cp-name { font-weight: 900; color: var(--blue-900); font-size: 16px; margin: 0 0 4px; }
+.clinic-preview-card .cp-sub { font-size: 13.5px; color: var(--gray-500); margin: 0; }
+
+.cta-banner {
+  background: var(--blue-700);
+  border-radius: var(--radius-lg);
+  padding: 40px 24px;
+  text-align: center;
+  max-width: 1080px;
+  margin: 0 auto 44px;
+}
+
+.cta-banner h2 { color: var(--white); margin-bottom: 10px; }
+.cta-banner p { color: var(--blue-100); margin-bottom: 22px; font-size: 15.5px; }
+
+.cta-banner .btn-primary {
+  width: auto;
+  padding: 15px 34px;
+  background: var(--white);
+  color: var(--blue-700);
+  display: inline-block;
+  text-decoration: none;
+}
+
+.cta-banner .btn-primary:hover { background: var(--blue-100); }
+
+.landing-footer {
+  text-align: center;
+  padding: 24px 20px 40px;
+  color: var(--gray-500);
+  font-size: 13.5px;
+}

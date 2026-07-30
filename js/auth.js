@@ -167,7 +167,7 @@ function redirectByRole(role) {
     admin: 'admin/dashboard.html',
   };
   setTimeout(() => {
-    window.location.href = destinations[role] || 'index.html';
+    window.location.href = destinations[role] || 'login.html';
   }, 700);
 }
 

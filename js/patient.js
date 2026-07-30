@@ -18,7 +18,7 @@ const SLOT_MINUTES = 30; // مدة كل موعد
 
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
-    window.location.href = '../index.html';
+    window.location.href = '../login.html';
     return;
   }
 
@@ -26,7 +26,7 @@ auth.onAuthStateChanged(async (user) => {
 
   if (!userDoc.exists || userDoc.data().role !== 'patient' || userDoc.data().status !== 'active') {
     await auth.signOut();
-    window.location.href = '../index.html';
+    window.location.href = '../login.html';
     return;
   }
 
@@ -40,7 +40,7 @@ auth.onAuthStateChanged(async (user) => {
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
   await auth.signOut();
-  window.location.href = '../index.html';
+  window.location.href = '../login.html';
 });
 
 // ============================================
@@ -288,17 +288,17 @@ async function loadMyBookings() {
 
   const todayStr = todayISO();
   const upcoming = bookings
-    .filter((b) => b.status !== 'rejected' && b.date >= todayStr)
+    .filter((b) => b.status !== 'rejected' && b.status !== 'cancelled' && b.date >= todayStr)
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
   const past = bookings
-    .filter((b) => b.status === 'rejected' || b.date < todayStr)
+    .filter((b) => b.status === 'rejected' || b.status === 'cancelled' || b.date < todayStr)
     .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
 
-  renderBookingsList('upcoming-appts-wrap', upcoming, 'ما فيه مواعيد قادمة حالياً');
-  renderBookingsList('past-appts-wrap', past, 'ما فيه مواعيد سابقة');
+  renderBookingsList('upcoming-appts-wrap', upcoming, 'ما فيه مواعيد قادمة حالياً', true);
+  renderBookingsList('past-appts-wrap', past, 'ما فيه مواعيد سابقة', false);
 }
 
-function renderBookingsList(elementId, bookings, emptyText) {
+function renderBookingsList(elementId, bookings, emptyText, allowCancel) {
   const wrap = document.getElementById(elementId);
 
   if (bookings.length === 0) {
@@ -312,9 +312,31 @@ function renderBookingsList(elementId, bookings, emptyText) {
         <p class="appt-main">د. ${escapeHtml(b.doctorName)}</p>
         <p class="appt-sub">${b.date} — ${b.time}</p>
       </div>
-      ${bookingStatusBadge(b.status)}
+      <div class="appt-actions">
+        ${bookingStatusBadge(b.status)}
+        ${allowCancel && (b.status === 'pending' || b.status === 'accepted')
+          ? `<button type="button" class="btn-xs delete" data-action="cancel" data-id="${b.id}">إلغاء الحجز</button>`
+          : ''}
+      </div>
     </div>
   `).join('');
+
+  wrap.querySelectorAll('[data-action="cancel"]').forEach((btn) => {
+    btn.addEventListener('click', () => cancelBooking(btn.dataset.id));
+  });
+}
+
+async function cancelBooking(bookingId) {
+  const sure = confirm('متأكد إنك تبي تلغي هذا الحجز؟');
+  if (!sure) return;
+
+  try {
+    await db.collection('bookings').doc(bookingId).update({ status: 'cancelled' });
+    loadMyBookings();
+  } catch (err) {
+    console.error('cancelBooking error:', err);
+    alert('تعذر إلغاء الحجز، حاول مرة أخرى');
+  }
 }
 
 // ============================================
@@ -337,8 +359,8 @@ function generateSlots(start, end) {
 }
 
 function bookingStatusBadge(status) {
-  const labels = { pending: 'قيد الانتظار', accepted: 'مقبول', rejected: 'مرفوض' };
-  const cls = { pending: 'badge-pending', accepted: 'badge-active', rejected: 'badge-rejected' };
+  const labels = { pending: 'قيد الانتظار', accepted: 'مقبول', rejected: 'مرفوض', cancelled: 'ملغى' };
+  const cls = { pending: 'badge-pending', accepted: 'badge-active', rejected: 'badge-rejected', cancelled: 'badge-cancelled' };
   return `<span class="badge ${cls[status] || ''}">${labels[status] || status}</span>`;
 }
 

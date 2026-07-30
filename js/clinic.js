@@ -15,7 +15,7 @@ const DAYS = [
 
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
-    window.location.href = '../index.html';
+    window.location.href = '../login.html';
     return;
   }
 
@@ -23,7 +23,7 @@ auth.onAuthStateChanged(async (user) => {
 
   if (!userDoc.exists || userDoc.data().role !== 'clinic' || userDoc.data().status !== 'active') {
     await auth.signOut();
-    window.location.href = '../index.html';
+    window.location.href = '../login.html';
     return;
   }
 
@@ -35,7 +35,7 @@ auth.onAuthStateChanged(async (user) => {
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
   await auth.signOut();
-  window.location.href = '../index.html';
+  window.location.href = '../login.html';
 });
 
 // ============================================

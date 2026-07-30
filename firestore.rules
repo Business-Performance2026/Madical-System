@@ -33,8 +33,11 @@ service cloud.firestore {
     // users
     // ============================================
     match /users/{userId} {
-      // المستخدم يقرأ بياناته هو، والأدمن يقرأ بيانات الجميع
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      // المستخدم يقرأ بياناته هو، الأدمن يقرأ بيانات الجميع،
+      // وأي زائر (حتى بدون تسجيل دخول) يقدر يقرأ بيانات العيادات الفعّالة بس
+      // (تظهر بالشاشة الرئيسية العامة - اسم وبريد العيادة يصير معلومة عامة، وهذا مقصود لأنها حساب منشأة)
+      allow read: if (resource.data.role == 'clinic' && resource.data.status == 'active')
+        || (isSignedIn() && (request.auth.uid == userId || isAdmin()));
 
       // إنشاء حساب جديد عند التسجيل: المستخدم ينشئ مستنده هو بس،
       // وما يقدر يسجل نفسه كـ admin، والحالة الأولية لازم تكون صحيحة
@@ -89,11 +92,14 @@ service cloud.firestore {
         && request.resource.data.date is string
         && request.resource.data.time is string;
 
-      // تعديل: العيادة صاحبة الحجز بس تقدر تغيّر حقل status (قبول أو رفض)،
-      // وما تقدر تلمس أي حقل ثاني بنفس الطلب
-      allow update: if isActiveClinic(resource.data.clinicId)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-        && request.resource.data.status in ['accepted', 'rejected'];
+      // تعديل: العيادة صاحبة الحجز تقدر تقبل/ترفض، والمريض صاحب الحجز يقدر يلغيه
+      allow update: if (isActiveClinic(resource.data.clinicId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+            && request.resource.data.status in ['accepted', 'rejected'])
+        || (isActivePatient() && resource.data.patientId == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+            && resource.data.status in ['pending', 'accepted']
+            && request.resource.data.status == 'cancelled');
 
       // حذف حجز: الأدمن بس (ما فيه ميزة حذف بالتطبيق حالياً)
       allow delete: if isAdmin();

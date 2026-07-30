@@ -3,65 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>عيادتي | تسجيل الدخول</title>
+  <title>عيادتي | احجز موعدك الطبي بسهولة</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="landing">
 
-  <div class="brand">
-    <div class="brand-mark">
-      <!-- إشارة نبض بسيطة كعنصر تعريفي للتطبيق -->
-      <svg width="44" height="28" viewBox="0 0 140 40">
-        <path class="pulse-line" d="M0 20 H35 L45 5 L58 35 L70 20 H140" />
-      </svg>
+  <nav class="landing-nav">
+    <div class="nav-brand">
+      <div class="brand-mark">
+        <svg width="24" height="15" viewBox="0 0 140 40">
+          <path class="pulse-line" d="M0 20 H35 L45 5 L58 35 L70 20 H140" />
+        </svg>
+      </div>
+      <span>عيادتي</span>
     </div>
-    <p class="brand-title">عيادتي</p>
-    <p class="brand-subtitle">احجز موعدك بسهولة وأمان</p>
+    <a href="login.html" class="btn-primary">تسجيل الدخول</a>
+  </nav>
+
+  <header class="hero">
+    <h1>احجز موعدك الطبي بثواني، من غير اتصال ولا انتظار</h1>
+    <p>دوّر على عيادتك المفضّلة، اختر الطبيب والوقت المناسب لك، وتابع حالة حجزك أول بأول.</p>
+    <form id="hero-search-form" class="hero-search">
+      <input type="text" placeholder="دوّر على تخصص أو اسم عيادة...">
+      <button type="submit">ابحث</button>
+    </form>
+  </header>
+
+  <section class="landing-section">
+    <h2>تصفح حسب التخصص</h2>
+    <p class="section-hint">اختر التخصص اللي تحتاجه وابدأ رحلة الحجز</p>
+    <div class="specialty-grid">
+      <a href="login.html" class="specialty-chip"><span class="specialty-icon">🦷</span>أسنان</a>
+      <a href="login.html" class="specialty-chip"><span class="specialty-icon">🧴</span>جلدية</a>
+      <a href="login.html" class="specialty-chip"><span class="specialty-icon">🧸</span>أطفال</a>
+      <a href="login.html" class="specialty-chip"><span class="specialty-icon">🩺</span>باطنية</a>
+      <a href="login.html" class="specialty-chip"><span class="specialty-icon">👁️</span>عيون</a>
+      <a href="login.html" class="specialty-chip"><span class="specialty-icon">🦴</span>عظام</a>
+    </div>
+  </section>
+
+  <section class="landing-section">
+    <h2>أحدث العيادات المنضمّة</h2>
+    <p class="section-hint">عيادات مفعّلة وجاهزة تستقبل حجوزاتك</p>
+    <div id="latest-clinics-wrap" class="loading-state">جاري التحميل...</div>
+  </section>
+
+  <div class="cta-banner">
+    <h2>جاهز تحجز موعدك؟</h2>
+    <p>سجّل حساب مجاني كمريض، أو سجّل عيادتك عشان تستقبل حجوزات جديدة</p>
+    <a href="login.html" class="btn-primary">ابدأ الآن</a>
   </div>
 
-  <main class="auth-card">
-    <div class="mode-switch">
-      <button type="button" id="tab-login" class="active">تسجيل الدخول</button>
-      <button type="button" id="tab-signup">إنشاء حساب</button>
-    </div>
-
-    <form id="auth-form" novalidate>
-      <div class="field hidden" id="field-name">
-        <label for="name">الاسم الكامل</label>
-        <input type="text" id="name" autocomplete="name" placeholder="مثال: أحمد محمد">
-      </div>
-
-      <div class="field hidden" id="field-role">
-        <label>نوع الحساب</label>
-        <div class="role-select">
-          <div class="role-option selected" data-role="patient">
-            <span class="role-icon">🧑</span>
-            مريض
-          </div>
-          <div class="role-option" data-role="clinic">
-            <span class="role-icon">🏥</span>
-            عيادة
-          </div>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="email">البريد الإلكتروني</label>
-        <input type="email" id="email" autocomplete="email" required placeholder="example@email.com">
-      </div>
-
-      <div class="field">
-        <label for="password">كلمة المرور</label>
-        <input type="password" id="password" autocomplete="current-password" required minlength="6" placeholder="6 أحرف على الأقل">
-      </div>
-
-      <button type="submit" class="btn-primary" id="submit-btn">تسجيل الدخول</button>
-
-      <p class="status-msg" id="status-msg" role="status" aria-live="polite"></p>
-    </form>
-  </main>
-
-  <footer class="disclaimer">تسجيل حسابات العيادات يتطلب موافقة الإدارة قبل التفعيل</footer>
+  <footer class="landing-footer">© عيادتي — نظام حجز مواعيد العيادات</footer>
 
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -69,6 +62,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script src="js/firebase-config.js"></script>
-  <script src="js/auth.js"></script>
+  <script src="js/landing.js"></script>
 </body>
 </html>
