@@ -133,7 +133,7 @@ function renderDirectory() {
     hintEl.textContent = `${results.length} عيادة مطابقة`;
   } else {
     titleEl.textContent = 'كل العيادات';
-    hintEl.textContent = 'تصفح مجاني بالكامل — تسجيل الدخول يلزم بس وقت الحجز الفعلي';
+    hintEl.textContent = '';
   }
 
   const wrap = document.getElementById('clinics-directory-wrap');
