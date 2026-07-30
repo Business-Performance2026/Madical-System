@@ -1,0 +1,102 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // دوال مساعدة
+    // ============================================
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // بيانات المستخدم الحالي من مجموعة users (يكلف قراءة وحدة إضافية)
+    function myData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && myData().role == 'admin' && myData().status == 'active';
+    }
+
+    function isActiveClinic(clinicUid) {
+      return isSignedIn() && request.auth.uid == clinicUid
+        && myData().role == 'clinic' && myData().status == 'active';
+    }
+
+    function isActivePatient() {
+      return isSignedIn() && myData().role == 'patient' && myData().status == 'active';
+    }
+
+    // ============================================
+    // users
+    // ============================================
+    match /users/{userId} {
+      // المستخدم يقرأ بياناته هو، والأدمن يقرأ بيانات الجميع
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+
+      // إنشاء حساب جديد عند التسجيل: المستخدم ينشئ مستنده هو بس،
+      // وما يقدر يسجل نفسه كـ admin، والحالة الأولية لازم تكون صحيحة
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.role in ['patient', 'clinic']
+        && request.resource.data.status ==
+             (request.resource.data.role == 'clinic' ? 'pending' : 'active')
+        && request.resource.data.name is string
+        && request.resource.data.email is string;
+
+      // تعديل: الأدمن يقدر يعدل أي حساب (موافقة عيادة / إيقاف / تفعيل)
+      // المستخدم العادي يقدر يعدل بياناته (مثل الاسم) لكن ما يقدر يغيّر role أو status لحاله
+      allow update: if isAdmin()
+        || (isSignedIn() && request.auth.uid == userId
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.status == resource.data.status);
+
+      // حذف حساب: الأدمن بس
+      allow delete: if isAdmin();
+    }
+
+    // ============================================
+    // doctors
+    // ============================================
+    match /doctors/{doctorId} {
+      // أي مستخدم مسجّل دخول يقدر يشوف الأطباء (يحتاجها المريض عند تصفح العيادات)
+      allow read: if isSignedIn();
+
+      // إنشاء طبيب: العيادة صاحبة الحساب بس، ولازم تكون فعّالة
+      allow create: if isActiveClinic(request.resource.data.clinicId);
+
+      // تعديل/حذف: العيادة المالكة لهذا الطبيب بس
+      allow update, delete: if isActiveClinic(resource.data.clinicId);
+    }
+
+    // ============================================
+    // bookings
+    // ============================================
+    match /bookings/{bookingId} {
+      // المريض يشوف حجوزاته، العيادة تشوف حجوزاتها، الأدمن يشوف الكل
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.patientId == request.auth.uid)
+        || (isSignedIn() && resource.data.clinicId == request.auth.uid);
+
+      // إنشاء حجز جديد: مريض فعّال، مربوط بحسابه هو، وحالته الأولية pending دايماً
+      allow create: if isActivePatient()
+        && request.resource.data.patientId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.clinicId is string
+        && request.resource.data.doctorId is string
+        && request.resource.data.date is string
+        && request.resource.data.time is string;
+
+      // تعديل: العيادة صاحبة الحجز بس تقدر تغيّر حقل status (قبول أو رفض)،
+      // وما تقدر تلمس أي حقل ثاني بنفس الطلب
+      allow update: if isActiveClinic(resource.data.clinicId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['accepted', 'rejected'];
+
+      // حذف حجز: الأدمن بس (ما فيه ميزة حذف بالتطبيق حالياً)
+      allow delete: if isAdmin();
+    }
+  }
+}
