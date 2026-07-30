@@ -126,7 +126,20 @@ function renderStats() {
   document.getElementById('stat-upcoming').textContent = upcomingCount;
   document.getElementById('stat-pending').textContent = pendingCount;
   document.getElementById('stat-patients').textContent = uniquePatients;
+
+  updateNotifBadge(pendingCount);
 }
+
+// شارة الجرس: تعرض عدد الطلبات "قيد الانتظار" فقط، وتختفي إذا وصل الصفر
+function updateNotifBadge(pendingCount) {
+  const badge = document.getElementById('notif-badge');
+  badge.textContent = pendingCount;
+  badge.classList.toggle('hidden', pendingCount === 0);
+}
+
+document.getElementById('notif-bell').addEventListener('click', () => {
+  document.getElementById('requests-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 
 // ============================================
 // طلبات الحجز (قيد الانتظار)
