@@ -190,29 +190,107 @@ function renderDoctorsStep() {
 // ============================================
 // الخطوة 3: اختيار التاريخ والوقت المتاح
 // ============================================
+let currentCalendarMonth = null; // أول يوم بالشهر المعروض حالياً بالتقويم
+
 function renderDateStep() {
   const wrap = document.getElementById('booking-steps');
-  const todayStr = todayISO();
-  const maxDate = addDaysISO(todayStr, 30);
+
+  const today = new Date();
+  currentCalendarMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
   wrap.innerHTML = `
     <span class="step-hint">الخطوة 3 من 3: اختر الموعد — د. ${escapeHtml(selectedDoctor.name)}</span>
     <button type="button" class="btn-outline" id="back-to-doctors" style="margin-bottom:16px;">‹ رجوع لاختيار الطبيب</button>
-    <div class="field">
-      <label for="booking-date">اختر اليوم</label>
-      <input type="date" id="booking-date" class="date-input" min="${todayStr}" max="${maxDate}">
+
+    <div class="calendar-legend">
+      <span class="legend-item"><span class="legend-dot legend-available"></span>يوجد دوام</span>
+      <span class="legend-item"><span class="legend-dot legend-unavailable"></span>ما يوجد دوام</span>
     </div>
+
+    <div class="booking-calendar" id="booking-calendar"></div>
+
     <div id="slots-wrap"></div>
     <div id="confirm-wrap"></div>
   `;
 
   document.getElementById('back-to-doctors').addEventListener('click', renderDoctorsStep);
-  document.getElementById('booking-date').addEventListener('change', async (e) => {
-    selectedDate = e.target.value;
-    selectedTime = '';
-    document.getElementById('confirm-wrap').innerHTML = '';
-    await renderAvailableSlots();
+  renderCalendarGrid();
+}
+
+// يتحقق هل عند الطبيب دوام بتاريخ معيّن (تاريخ محدد فعلياً، أو يوم أسبوع متكرر بالأنظمة القديمة)
+function isDateAvailable(dateISO) {
+  const dayKey = DAYS[new Date(dateISO + 'T00:00:00').getDay()].key;
+  return (selectedDoctor.workingHours || []).some((h) => h.date === dateISO || (!h.date && h.day === dayKey));
+}
+
+function renderCalendarGrid() {
+  const cal = document.getElementById('booking-calendar');
+  const todayStr = todayISO();
+  const year = currentCalendarMonth.getFullYear();
+  const month = currentCalendarMonth.getMonth();
+
+  const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  const firstOfMonth = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startOffset = firstOfMonth.getDay(); // 0 = الأحد
+
+  const isCurrentMonth = year === new Date().getFullYear() && month === new Date().getMonth();
+  const maxMonthsAhead = 3;
+  const monthsFromNow = (year - new Date().getFullYear()) * 12 + (month - new Date().getMonth());
+
+  let cellsHtml = '';
+  for (let i = 0; i < startOffset; i++) {
+    cellsHtml += '<span class="calendar-cell calendar-cell-empty"></span>';
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateObj = new Date(year, month, d);
+    const dateISO = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const isPast = dateISO < todayStr;
+    const available = !isPast && isDateAvailable(dateISO);
+    const isSelected = dateISO === selectedDate;
+    const isToday = dateISO === todayStr;
+
+    const classes = ['calendar-cell'];
+    if (isPast) classes.push('calendar-cell-past');
+    else if (available) classes.push('calendar-cell-available');
+    else classes.push('calendar-cell-unavailable');
+    if (isSelected) classes.push('calendar-cell-selected');
+    if (isToday) classes.push('calendar-cell-today');
+
+    cellsHtml += `<button type="button" class="${classes.join(' ')}" ${(!available || isPast) ? 'disabled' : ''} data-date="${dateISO}">${d}</button>`;
+  }
+
+  cal.innerHTML = `
+    <div class="calendar-header">
+      <button type="button" class="calendar-nav" id="cal-prev" ${isCurrentMonth ? 'disabled' : ''}>›</button>
+      <span class="calendar-month-label">${monthNames[month]} ${year}</span>
+      <button type="button" class="calendar-nav" id="cal-next" ${monthsFromNow >= maxMonthsAhead ? 'disabled' : ''}>‹</button>
+    </div>
+    <div class="calendar-weekdays">
+      ${DAYS.map((d) => `<span>${d.label.slice(0, 3)}</span>`).join('')}
+    </div>
+    <div class="calendar-grid">${cellsHtml}</div>
+  `;
+
+  document.getElementById('cal-prev').addEventListener('click', () => changeCalendarMonth(-1));
+  document.getElementById('cal-next').addEventListener('click', () => changeCalendarMonth(1));
+
+  cal.querySelectorAll('.calendar-cell-available').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      selectedDate = btn.dataset.date;
+      selectedTime = '';
+      document.getElementById('confirm-wrap').innerHTML = '';
+      cal.querySelectorAll('.calendar-cell').forEach((c) => c.classList.remove('calendar-cell-selected'));
+      btn.classList.add('calendar-cell-selected');
+      await renderAvailableSlots();
+    });
   });
+}
+
+function changeCalendarMonth(delta) {
+  currentCalendarMonth = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + delta, 1);
+  renderCalendarGrid();
 }
 
 async function renderAvailableSlots() {
