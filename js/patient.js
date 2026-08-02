@@ -37,7 +37,7 @@ auth.onAuthStateChanged(async (user) => {
   document.getElementById('patient-name').textContent = patientName;
 
   loadClinics();
-  loadMyBookings();
+  loadMyBookings().then(promptPendingRatingOnce);
 });
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
@@ -565,7 +565,23 @@ async function startReschedule(bookingId) {
 // ============================================
 // تقييم الطبيب بعد الزيارة (نجوم + تعليق)
 // ============================================
-function openRatingModal(bookingId) {
+// يعرض تذكير تقييم تلقائي مرة وحدة بكل جلسة دخول، لو فيه زيارة مكتملة ما اتقيّمت بعد
+let hasShownRatingPrompt = false;
+function promptPendingRatingOnce() {
+  if (hasShownRatingPrompt) return;
+
+  const todayStr = todayISO();
+  const unrated = cachedMyBookings
+    .filter((b) => b.status === 'accepted' && b.date < todayStr && !myReviews[b.id])
+    .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time)); // الأحدث أول
+
+  if (unrated.length === 0) return;
+
+  hasShownRatingPrompt = true;
+  openRatingModal(unrated[0].id, true);
+}
+
+function openRatingModal(bookingId, isAutoPrompt) {
   const booking = cachedMyBookings.find((b) => b.id === bookingId);
   if (!booking) return;
 
@@ -579,7 +595,11 @@ function openRatingModal(bookingId) {
     </div>
     <textarea id="rating-comment" class="rating-textarea" placeholder="تعليقك (اختياري)..." rows="3"></textarea>
     <button type="button" class="btn-primary" id="submit-rating-btn">إرسال التقييم</button>
+    ${isAutoPrompt ? '<button type="button" class="btn-outline" id="later-rating-btn" style="margin-top:10px;">لاحقاً</button>' : ''}
   `);
+
+  const laterBtn = document.getElementById('later-rating-btn');
+  if (laterBtn) laterBtn.addEventListener('click', closeModal);
 
   const starButtons = document.querySelectorAll('.star-btn');
   starButtons.forEach((btn) => {
