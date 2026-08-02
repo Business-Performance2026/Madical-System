@@ -53,6 +53,7 @@
       <button type="button" data-tab="rejected">المواعيد المرفوضة</button>
       <button type="button" data-tab="doctors">الأطباء</button>
       <button type="button" data-tab="schedule">جدول الأسبوع</button>
+      <button type="button" data-tab="upcoming24h">المواعيد القادمة خلال 24 ساعة</button>
       <button type="button" data-tab="patients">بحث المرضى</button>
       <button type="button" data-tab="staff">الموظفين</button>
       <button type="button" data-tab="analytics">الإحصائيات</button>
@@ -113,6 +114,12 @@
       </div>
 
       <div id="schedule-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
+    <section class="section-card tab-panel hidden" data-panel="upcoming24h">
+      <h2 class="section-title">المواعيد القادمة خلال 24 ساعة</h2>
+      <p class="section-hint">مواعيد اليوم وبكرة (كل مريض له موعد بكرة يظهر هنا من اليوم) — أرسل تذكير قبل ما ينسى المريض موعده</p>
+      <div id="upcoming24h-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="patients">

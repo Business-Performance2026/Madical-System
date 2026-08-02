@@ -119,6 +119,7 @@ function setupBookingsListener() {
       renderBookingRequests();
       renderRejectedBookings();
       renderWeeklySchedule();
+      renderUpcoming24h();
       renderAnalytics();
     }, (err) => {
       console.error('bookings listener error:', err);
@@ -369,6 +370,7 @@ async function saveBookingEdit(bookingId) {
     renderBookingRequests();
     renderRejectedBookings();
     renderWeeklySchedule();
+    renderUpcoming24h();
   } catch (err) {
     console.error('saveBookingEdit error:', err);
     alert('تعذر حفظ التعديلات، حاول مرة أخرى');
@@ -380,6 +382,7 @@ function startBookingEdit(bookingId) {
   renderBookingRequests();
   renderRejectedBookings();
   renderWeeklySchedule();
+  renderUpcoming24h();
 }
 
 function cancelBookingEdit() {
@@ -387,6 +390,7 @@ function cancelBookingEdit() {
   renderBookingRequests();
   renderRejectedBookings();
   renderWeeklySchedule();
+  renderUpcoming24h();
 }
 
 // حذف حجز نهائياً - لو كان مقبول، نحرر قفل الوقت أيضاً
@@ -622,14 +626,17 @@ let lastScheduleBookings = [];
 document.getElementById('filter-doctor-select').addEventListener('change', (e) => {
   scheduleFilters.doctorId = e.target.value;
   renderWeeklySchedule();
+  renderUpcoming24h();
 });
 document.getElementById('filter-date-input').addEventListener('change', (e) => {
   scheduleFilters.date = e.target.value;
   renderWeeklySchedule();
+  renderUpcoming24h();
 });
 document.getElementById('filter-time-input').addEventListener('change', (e) => {
   scheduleFilters.time = e.target.value;
   renderWeeklySchedule();
+  renderUpcoming24h();
 });
 document.getElementById('clear-schedule-filters').addEventListener('click', () => {
   scheduleFilters = { doctorId: '', date: '', time: '' };
@@ -637,6 +644,7 @@ document.getElementById('clear-schedule-filters').addEventListener('click', () =
   document.getElementById('filter-date-input').value = '';
   document.getElementById('filter-time-input').value = '';
   renderWeeklySchedule();
+  renderUpcoming24h();
 });
 document.getElementById('print-week-btn').addEventListener('click', printCurrentSchedule);
 
@@ -679,6 +687,34 @@ function renderWeeklySchedule() {
   const showDoctor = !scheduleFilters.doctorId;
   wrap.innerHTML = scheduleTableHtml(accepted, { showDate: true, showDoctor });
   bindScheduleRowEvents(wrap);
+}
+
+// المواعيد القادمة خلال 24 ساعة: اليوم + بكرة مع بعض
+// (يعني موعد تاريخه بكرة يظهر هنا من اليوم، عشان العيادة ترسل تذكير مبكر)
+function renderUpcoming24h() {
+  const wrap = document.getElementById('upcoming24h-wrap');
+  if (!wrap) return;
+
+  const todayStr = todayISO();
+  const tomorrowStr = addDaysISO(todayStr, 1);
+
+  const upcoming = cachedBookings
+    .filter((b) => b.status === 'accepted' && (b.date === todayStr || b.date === tomorrowStr))
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+  if (upcoming.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">ما فيه مواعيد خلال الـ24 ساعة الجاية</p>';
+    return;
+  }
+
+  wrap.innerHTML = scheduleTableHtml(upcoming, { showDate: true, showDoctor: true });
+  bindScheduleRowEvents(wrap);
+}
+
+function addDaysISO(iso, days) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
 }
 
 // جدول موحّد يبني الأعمدة حسب طريقة العرض (يضيف/يحذف عمود الطبيب)
