@@ -511,6 +511,38 @@ function renderDoctors() {
   wrap.querySelectorAll('[data-action="submit-bulk"]').forEach((btn) => {
     btn.addEventListener('click', () => submitBulkHours(btn.dataset.id));
   });
+  wrap.querySelectorAll('[data-action="disable-day"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      disableDoctorDay(btn.dataset.id);
+    });
+  });
+}
+
+// يحذف كل أوقات عمل الطبيب المسجّلة بتاريخ محدد دفعة وحدة (إجازة/يوم عطلة)
+async function disableDoctorDay(doctorId) {
+  const row = document.querySelector(`[data-disable-day-for="${doctorId}"]`);
+  const dateVal = row.querySelector('.disable-day-date').value;
+
+  if (!dateVal) {
+    alert('اختر تاريخ اليوم اللي تبي تعطّله أول');
+    return;
+  }
+
+  const doctor = cachedDoctors.find((d) => d.id === doctorId);
+  const existing = doctor.workingHours || [];
+  const remaining = existing.filter((h) => h.date !== dateVal);
+
+  if (remaining.length === existing.length) {
+    alert('ما فيه أوقات عمل مسجّلة لهذا الطبيب بهذا التاريخ أصلاً');
+    return;
+  }
+
+  const sure = confirm(`تعطيل كل أوقات الطبيب المسجّلة بتاريخ ${dateVal}؟`);
+  if (!sure) return;
+
+  await db.collection('doctors').doc(doctorId).update({ workingHours: remaining });
+  loadDashboard();
 }
 
 // يضيف أوقات عمل لعدة تواريخ دفعة وحدة (نطاق تاريخ + أيام أسبوع مختارة)
@@ -627,6 +659,11 @@ function renderDoctorHoursSection(doc) {
       <input type="time" class="hour-end" value="14:00">
       <button type="button" class="btn-xs toggle" data-action="add-hour" data-id="${doc.id}">إضافة وقت</button>
       <button type="button" class="btn-xs approve" data-action="toggle-bulk" data-id="${doc.id}">📅 إضافة بالجملة</button>
+    </div>
+
+    <div class="disable-day-row" data-disable-day-for="${doc.id}">
+      <input type="date" class="disable-day-date">
+      <button type="button" class="btn-xs delete" data-action="disable-day" data-id="${doc.id}">🏖️ تعطيل هذا اليوم</button>
     </div>
 
     <div class="bulk-hours-form hidden" data-bulk-for="${doc.id}">

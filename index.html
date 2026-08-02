@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="html-root">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>موعد | دليل العيادات واحجز موعدك الطبي</title>
+  <title id="page-title">موعد | دليل العيادات واحجز موعدك الطبي</title>
   <!-- إعدادات تطبيق الجوال (Add to Home Screen) -->
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
@@ -25,15 +25,18 @@
       </div>
       <span>موعد</span>
     </div>
-    <a href="login.html" class="btn-primary">تسجيل الدخول</a>
+    <div class="nav-actions">
+      <button type="button" id="lang-toggle-btn" class="lang-toggle-btn">English</button>
+      <a href="login.html" class="btn-primary" data-i18n="nav_login">تسجيل الدخول</a>
+    </div>
   </nav>
 
   <header class="hero-compact">
-    <h1>دليل العيادات — دوّر واحجز بثواني</h1>
-    <p>ابحث باسم العيادة أو التخصص، وشوف الأطباء والأوقات المتاحة فوراً</p>
+    <h1 data-i18n="hero_title">دليل العيادات — دوّر واحجز بثواني</h1>
+    <p data-i18n="hero_sub">ابحث باسم العيادة أو التخصص، وشوف الأطباء والأوقات المتاحة فوراً</p>
     <form id="hero-search-form" class="hero-search">
-      <input type="text" id="hero-search-input" placeholder="دوّر على تخصص أو اسم عيادة...">
-      <button type="submit">ابحث</button>
+      <input type="text" id="hero-search-input" data-i18n-placeholder="hero_search_placeholder" placeholder="دوّر على تخصص أو اسم عيادة...">
+      <button type="submit" data-i18n="hero_search_btn">ابحث</button>
     </form>
     <p class="hero-stats-line" id="hero-stats-line"></p>
   </header>
@@ -41,43 +44,43 @@
   <main class="directory-section">
     <div class="specialty-filter-bar" id="specialty-filter-bar">
       <button type="button" class="specialty-pill active" data-specialty="">
-        <span class="pill-icon">🏥</span>الكل
+        <span class="pill-icon">🏥</span><span data-i18n="spec_all">الكل</span>
       </button>
       <button type="button" class="specialty-pill" data-specialty="أسنان">
-        <span class="pill-icon">🦷</span>أسنان<span class="pill-count" data-count-for="أسنان"></span>
+        <span class="pill-icon">🦷</span><span data-i18n="spec_dental">أسنان</span><span class="pill-count" data-count-for="أسنان"></span>
       </button>
       <button type="button" class="specialty-pill" data-specialty="جلدية">
-        <span class="pill-icon">🧴</span>جلدية<span class="pill-count" data-count-for="جلدية"></span>
+        <span class="pill-icon">🧴</span><span data-i18n="spec_derma">جلدية</span><span class="pill-count" data-count-for="جلدية"></span>
       </button>
       <button type="button" class="specialty-pill" data-specialty="أطفال">
-        <span class="pill-icon">🧸</span>أطفال<span class="pill-count" data-count-for="أطفال"></span>
+        <span class="pill-icon">🧸</span><span data-i18n="spec_peds">أطفال</span><span class="pill-count" data-count-for="أطفال"></span>
       </button>
       <button type="button" class="specialty-pill" data-specialty="باطنية">
-        <span class="pill-icon">🩺</span>باطنية<span class="pill-count" data-count-for="باطنية"></span>
+        <span class="pill-icon">🩺</span><span data-i18n="spec_internal">باطنية</span><span class="pill-count" data-count-for="باطنية"></span>
       </button>
       <button type="button" class="specialty-pill" data-specialty="عيون">
-        <span class="pill-icon">👁️</span>عيون<span class="pill-count" data-count-for="عيون"></span>
+        <span class="pill-icon">👁️</span><span data-i18n="spec_eye">عيون</span><span class="pill-count" data-count-for="عيون"></span>
       </button>
       <button type="button" class="specialty-pill" data-specialty="عظام">
-        <span class="pill-icon">🦴</span>عظام<span class="pill-count" data-count-for="عظام"></span>
+        <span class="pill-icon">🦴</span><span data-i18n="spec_ortho">عظام</span><span class="pill-count" data-count-for="عظام"></span>
       </button>
     </div>
 
     <div class="directory-header">
-      <h2 id="directory-title">كل العيادات</h2>
+      <h2 id="directory-title" data-i18n="directory_all">كل العيادات</h2>
       <p class="section-hint" id="directory-hint"></p>
     </div>
 
-    <div id="clinics-directory-wrap" class="loading-state">جاري تحميل العيادات...</div>
+    <div id="clinics-directory-wrap" class="loading-state" data-i18n="loading_clinics">جاري تحميل العيادات...</div>
   </main>
 
   <div class="cta-banner">
-    <h2>جاهز تحجز موعدك؟</h2>
-    <p>سجّل حساب مجاني كمريض، أو سجّل عيادتك عشان تستقبل حجوزات جديدة</p>
-    <a href="login.html" class="btn-primary">ابدأ الآن</a>
+    <h2 data-i18n="cta_title">جاهز تحجز موعدك؟</h2>
+    <p data-i18n="cta_sub">سجّل حساب مجاني كمريض، أو سجّل عيادتك عشان تستقبل حجوزات جديدة</p>
+    <a href="login.html" class="btn-primary" data-i18n="cta_btn">ابدأ الآن</a>
   </div>
 
-  <footer class="landing-footer">© موعد — نظام حجز مواعيد العيادات</footer>
+  <footer class="landing-footer" data-i18n="footer_text">© موعد — نظام حجز مواعيد العيادات</footer>
 
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>

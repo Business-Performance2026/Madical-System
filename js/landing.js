@@ -1,4 +1,101 @@
 // ============================================
+// دعم اللغتين (عربي/إنجليزي)
+// ============================================
+const translations = {
+  ar: {
+    nav_login: 'تسجيل الدخول',
+    hero_title: 'دليل العيادات — دوّر واحجز بثواني',
+    hero_sub: 'ابحث باسم العيادة أو التخصص، وشوف الأطباء والأوقات المتاحة فوراً',
+    hero_search_placeholder: 'دوّر على تخصص أو اسم عيادة...',
+    hero_search_btn: 'ابحث',
+    spec_all: 'الكل',
+    spec_dental: 'أسنان',
+    spec_derma: 'جلدية',
+    spec_peds: 'أطفال',
+    spec_internal: 'باطنية',
+    spec_eye: 'عيون',
+    spec_ortho: 'عظام',
+    directory_all: 'كل العيادات',
+    loading_clinics: 'جاري تحميل العيادات...',
+    cta_title: 'جاهز تحجز موعدك؟',
+    cta_sub: 'سجّل حساب مجاني كمريض، أو سجّل عيادتك عشان تستقبل حجوزات جديدة',
+    cta_btn: 'ابدأ الآن',
+    footer_text: '© موعد — نظام حجز مواعيد العيادات',
+    stats_line: (clinics, doctors, specs) => `${clinics} عيادة مسجّلة • ${doctors} طبيب • ${specs} تخصص متوفر`,
+    search_results: (parts) => `نتائج البحث: ${parts.join(' • ')}`,
+    matching_count: (n) => `${n} عيادة مطابقة`,
+    no_match: 'ما فيه عيادات مطابقة، جرب تخصص أو كلمة بحث ثانية',
+    load_error: 'تعذر تحميل العيادات حالياً',
+    doctor_count: (n) => `${n} ${n === 1 ? 'طبيب' : 'أطباء'}`,
+    no_specialties: 'ما تم إضافة تخصصات بعد',
+    book_now: 'احجز الآن ←',
+    lang_toggle: 'English',
+  },
+  en: {
+    nav_login: 'Login',
+    hero_title: 'Clinic Directory — Search & Book in Seconds',
+    hero_sub: 'Search by clinic name or specialty, and see available doctors and times instantly',
+    hero_search_placeholder: 'Search by specialty or clinic name...',
+    hero_search_btn: 'Search',
+    spec_all: 'All',
+    spec_dental: 'Dental',
+    spec_derma: 'Dermatology',
+    spec_peds: 'Pediatrics',
+    spec_internal: 'Internal Medicine',
+    spec_eye: 'Ophthalmology',
+    spec_ortho: 'Orthopedics',
+    directory_all: 'All Clinics',
+    loading_clinics: 'Loading clinics...',
+    cta_title: 'Ready to book your appointment?',
+    cta_sub: 'Create a free patient account, or register your clinic to start receiving bookings',
+    cta_btn: 'Get Started',
+    footer_text: '© Mawid — Clinic Appointment Booking System',
+    stats_line: (clinics, doctors, specs) => `${clinics} registered clinics • ${doctors} doctors • ${specs} specialties available`,
+    search_results: (parts) => `Search results: ${parts.join(' • ')}`,
+    matching_count: (n) => `${n} matching clinics`,
+    no_match: 'No matching clinics, try a different specialty or search term',
+    load_error: 'Could not load clinics right now',
+    doctor_count: (n) => `${n} ${n === 1 ? 'doctor' : 'doctors'}`,
+    no_specialties: 'No specialties added yet',
+    book_now: '→ Book Now',
+    lang_toggle: 'العربية',
+  },
+};
+
+let currentLang = localStorage.getItem('mawid_lang') || 'ar';
+
+function t(key, ...args) {
+  const entry = translations[currentLang][key];
+  return typeof entry === 'function' ? entry(...args) : entry;
+}
+
+function applyLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('mawid_lang', lang);
+
+  document.getElementById('html-root').setAttribute('lang', lang);
+  document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+  document.getElementById('lang-toggle-btn').textContent = t('lang_toggle');
+
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.dataset.i18n;
+    if (translations[lang][key]) el.textContent = translations[lang][key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    const key = el.dataset.i18nPlaceholder;
+    if (translations[lang][key]) el.placeholder = translations[lang][key];
+  });
+
+  // نعيد رسم المحتوى الحي (يعتمد على بيانات من قاعدة البيانات) بنفس اللغة الجديدة
+  renderStatsLine();
+  renderDirectory();
+}
+
+document.getElementById('lang-toggle-btn').addEventListener('click', () => {
+  applyLanguage(currentLang === 'ar' ? 'en' : 'ar');
+});
+
+// ============================================
 // تحميل العيادات الفعّالة والأطباء (قراءة عامة، بدون تسجيل دخول)
 // ============================================
 let allClinics = [];
@@ -9,6 +106,8 @@ let searchQuery = '';
 const SPECIALTIES = ['أسنان', 'جلدية', 'أطفال', 'باطنية', 'عيون', 'عظام'];
 
 async function initLanding() {
+  applyLanguage(currentLang);
+
   try {
     const clinicsSnap = await db.collection('users')
       .where('role', '==', 'clinic')
@@ -30,14 +129,14 @@ async function initLanding() {
   } catch (err) {
     console.error('initLanding error:', err);
     document.getElementById('clinics-directory-wrap').innerHTML =
-      '<p class="empty-state">تعذر تحميل العيادات حالياً</p>';
+      `<p class="empty-state">${t('load_error')}</p>`;
   }
 }
 
 function renderStatsLine() {
   const specialtiesCount = new Set(allDoctors.map((d) => d.specialty).filter(Boolean)).size;
   document.getElementById('hero-stats-line').textContent =
-    `${allClinics.length} عيادة مسجّلة • ${allDoctors.length} طبيب • ${specialtiesCount} تخصص متوفر`;
+    t('stats_line', allClinics.length, allDoctors.length, specialtiesCount);
 }
 
 // عدد العيادات لكل تخصص، يظهر بجانب كل تبويب تخصص
@@ -129,17 +228,17 @@ function renderDirectory() {
     const parts = [];
     if (searchQuery) parts.push(`"${searchQuery}"`);
     if (activeSpecialty) parts.push(activeSpecialty);
-    titleEl.textContent = `نتائج البحث: ${parts.join(' • ')}`;
-    hintEl.textContent = `${results.length} عيادة مطابقة`;
+    titleEl.textContent = t('search_results', parts);
+    hintEl.textContent = t('matching_count', results.length);
   } else {
-    titleEl.textContent = 'كل العيادات';
+    titleEl.textContent = t('directory_all');
     hintEl.textContent = '';
   }
 
   const wrap = document.getElementById('clinics-directory-wrap');
 
   if (results.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">ما فيه عيادات مطابقة، جرب تخصص أو كلمة بحث ثانية</p>';
+    wrap.innerHTML = `<p class="empty-state">${t('no_match')}</p>`;
     return;
   }
 
@@ -160,15 +259,15 @@ function renderClinicCard(c) {
         <div class="clinic-avatar" style="background:${avatarColor(c.name)}">${escapeHtml(initials(c.name))}</div>
         <div>
           <p class="cp-name">${escapeHtml(c.name)}</p>
-          <p class="cp-doctor-count">${doctors.length} ${doctors.length === 1 ? 'طبيب' : 'أطباء'}</p>
+          <p class="cp-doctor-count">${t('doctor_count', doctors.length)}</p>
         </div>
       </div>
       <div class="clinic-card-tags">
         ${specialties.length > 0
           ? specialties.slice(0, 4).map((s) => `<span class="specialty-tag">${escapeHtml(s)}</span>`).join('')
-          : '<span class="specialty-tag specialty-tag-muted">ما تم إضافة تخصصات بعد</span>'}
+          : `<span class="specialty-tag specialty-tag-muted">${t('no_specialties')}</span>`}
       </div>
-      <span class="clinic-card-cta">احجز الآن ←</span>
+      <span class="clinic-card-cta">${t('book_now')}</span>
     </a>
   `;
 }
