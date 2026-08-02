@@ -951,27 +951,6 @@ body.landing {
 
 .landing-nav .btn-primary { width: auto; padding: 11px 22px; font-size: 15px; }
 
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.lang-toggle-btn {
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  background: transparent;
-  color: var(--white);
-  font-family: inherit;
-  font-weight: 700;
-  font-size: 13px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-}
-
-.lang-toggle-btn:hover { border-color: var(--gold-glow); background: rgba(255, 255, 255, 0.08); }
-
 /* ============================================
    هيرو مضغوط (البحث هو محور الصفحة، مو الكلام التسويقي)
    ============================================ */

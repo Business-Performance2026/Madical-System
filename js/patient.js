@@ -264,7 +264,6 @@ function renderCalendarGrid() {
   }
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const dateObj = new Date(year, month, d);
     const dateISO = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const isPast = dateISO < todayStr;
     const available = !isPast && isDateAvailable(dateISO);
@@ -429,7 +428,6 @@ function closeModal() {
 // مواعيدي
 // ============================================
 let cachedMyBookings = [];
-
 let myReviews = {}; // { bookingId: { rating, comment } }
 
 async function loadMyBookings() {
