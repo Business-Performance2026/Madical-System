@@ -1609,13 +1609,13 @@ body.landing {
 }
 
 .calendar-cell-available {
-  background: #E5F5EC;
-  color: var(--green-600);
+  background: var(--green-600);
+  color: var(--white);
   cursor: pointer;
   transition: transform 0.15s, background 0.2s;
 }
 
-.calendar-cell-available:hover { background: var(--green-600); color: var(--white); transform: scale(1.08); }
+.calendar-cell-available:hover { background: #227A54; transform: scale(1.08); }
 
 .calendar-cell-selected,
 .calendar-cell-selected:hover {
