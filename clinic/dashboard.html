@@ -67,6 +67,7 @@
       <button type="button" data-tab="patients">بحث المرضى</button>
       <button type="button" data-tab="staff">الموظفين</button>
       <button type="button" data-tab="analytics">الإحصائيات</button>
+      <button type="button" data-tab="settings">إعدادات العيادة</button>
     </div>
 
     <section class="section-card tab-panel" data-panel="requests">
@@ -206,6 +207,20 @@
       </div>
     </section>
 
+    <section class="section-card tab-panel hidden" data-panel="settings">
+      <h2 class="section-title">إعدادات العيادة</h2>
+      <p class="section-hint">شعار العيادة يظهر بالشاشة الرئيسية العامة وبكل مكان يذكر عيادتك بالتطبيق</p>
+
+      <div class="clinic-logo-preview-wrap">
+        <div class="clinic-logo-preview" id="clinic-logo-preview"></div>
+        <div class="mini-form" style="flex:1;">
+          <input type="file" accept="image/*" id="clinic-logo-input">
+          <button type="button" class="btn-primary" id="upload-logo-btn" style="width:auto; padding:11px 22px;">رفع الشعار</button>
+        </div>
+      </div>
+      <p class="cell-sub" style="margin-top:8px;">حد أقصى 3 ميجابايت — يفضّل صورة مربعة</p>
+    </section>
+
   </div>
 
   <div id="toast-root"></div>
@@ -216,6 +231,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
   <!-- Chart.js لرسم الإحصائيات -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>

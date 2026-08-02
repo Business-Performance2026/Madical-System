@@ -18,3 +18,5 @@ firebase.initializeApp(firebaseConfig);
 // نصدّر مرجعين نستخدمهما بباقي الملفات
 const auth = firebase.auth();
 const db = firebase.firestore();
+// storage يُستخدم بس بالصفحات اللي تحتاجه (لوحة العيادة) بعد تحميل SDK المناسب
+const storage = firebase.apps.length && firebase.storage ? firebase.storage() : null;

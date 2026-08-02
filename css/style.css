@@ -1103,6 +1103,107 @@ body.landing {
   margin: 0 0 8px;
 }
 
+/* ============================================
+   أقسام التمرير الأفقي (الأطباء والعيادات) بالشاشة الرئيسية
+   ============================================ */
+.carousel-block { margin-bottom: 30px; }
+
+.carousel-title {
+  display: inline-block;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--white);
+  background: var(--blue-900);
+  padding: 7px 16px;
+  border-radius: 10px;
+  margin: 0 0 14px;
+}
+
+/* "العيادات" أصغر شوي حسب الطلب */
+.carousel-title-sm {
+  font-size: 14px;
+  padding: 5px 13px;
+}
+
+.carousel-track {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 4px 2px 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.carousel-track::-webkit-scrollbar { height: 6px; }
+.carousel-track::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 999px; }
+
+.doctor-card-mini,
+.clinic-card-mini {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  width: 148px;
+  background: var(--white);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 14px 10px;
+  text-align: center;
+  text-decoration: none;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.doctor-card-mini:hover,
+.clinic-card-mini:hover {
+  border-color: var(--blue-500);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card);
+}
+
+.doctor-photo-circle,
+.clinic-logo-circle {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: 900;
+  font-size: 22px;
+}
+
+.clinic-logo-circle { border-radius: 16px; }
+
+.dc-name, .cc-name {
+  font-weight: 900;
+  font-size: 13.5px;
+  color: var(--blue-900);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dc-specialty, .cc-sub {
+  font-size: 12px;
+  color: var(--blue-700);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dc-clinic {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .directory-header .section-hint { margin: 0; color: #B9CBDA; }
 
 .clinics-directory-grid {
@@ -1357,6 +1458,28 @@ body.landing {
 .doctor-item.expanded .doctor-item-header { background: var(--blue-100); }
 
 .doctor-item-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.doctor-item-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.doctor-item-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1730,4 +1853,31 @@ body.landing {
   border: 2px solid var(--gray-200);
   border-radius: 8px;
   background: var(--gray-50);
+}
+
+/* ============================================
+   شعار العيادة (تبويب إعدادات العيادة)
+   ============================================ */
+.clinic-logo-preview-wrap {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.clinic-logo-preview {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  background-color: var(--gray-200);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: 900;
+  font-size: 26px;
+  border: 2px solid var(--gray-200);
 }

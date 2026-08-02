@@ -53,12 +53,16 @@ auth.onAuthStateChanged(async (user) => {
     staffIndicator.classList.remove('hidden');
   }
 
-  // قسم "الموظفين" يظهر بس لصاحب الحساب الأساسي، مو للموظفين أنفسهم
+  // قسم "الموظفين" و"إعدادات العيادة" يظهرون بس لصاحب الحساب الأساسي، مو للموظفين أنفسهم
   const staffTabBtn = document.querySelector('.page-tabs button[data-tab="staff"]');
   const staffPanel = document.querySelector('.tab-panel[data-panel="staff"]');
+  const settingsTabBtn = document.querySelector('.page-tabs button[data-tab="settings"]');
+  const settingsPanel = document.querySelector('.tab-panel[data-panel="settings"]');
   if (!isPrimaryOwner) {
     if (staffTabBtn) staffTabBtn.remove();
     if (staffPanel) staffPanel.remove();
+    if (settingsTabBtn) settingsTabBtn.remove();
+    if (settingsPanel) settingsPanel.remove();
   }
 
   loadDashboard();
@@ -82,7 +86,10 @@ let previousPendingIds = new Set();
 async function loadDashboard() {
   await loadDoctorsOnly();
   setupBookingsListener();
-  if (isPrimaryOwner) loadStaffList();
+  if (isPrimaryOwner) {
+    loadStaffList();
+    loadClinicLogo();
+  }
 }
 
 async function loadDoctorsOnly() {
@@ -611,12 +618,19 @@ function renderDoctorAccordionItem(doc) {
   const isExpanded = doc.id === expandedDoctorId;
   const isEditing = doc.id === editingDoctorId;
 
+  const avatarStyle = doc.photoUrl
+    ? `background-image:url('${doc.photoUrl}')`
+    : `background:${stringToColor(doc.name)}`;
+
   return `
     <div class="doctor-item ${isExpanded ? 'expanded' : ''}">
       <div class="doctor-item-header" data-action="toggle-doctor" data-id="${doc.id}">
         <div class="doctor-item-info">
-          <span class="doctor-item-name">${escapeHtml(doc.name)}</span>
-          <span class="doctor-item-specialty">${escapeHtml(doc.specialty)}</span>
+          <span class="doctor-item-avatar" style="${avatarStyle}">${doc.photoUrl ? '' : escapeHtml((doc.name || '؟').trim().slice(0, 1))}</span>
+          <div class="doctor-item-text">
+            <span class="doctor-item-name">${escapeHtml(doc.name)}</span>
+            <span class="doctor-item-specialty">${escapeHtml(doc.specialty)}</span>
+          </div>
         </div>
         <div class="doctor-item-actions">
           <button class="btn-xs toggle" data-action="print-doctor" data-id="${doc.id}" title="طباعة جدول الطبيب">🖨️</button>
@@ -627,12 +641,16 @@ function renderDoctorAccordionItem(doc) {
       </div>
       <div class="doctor-item-body ${isExpanded ? '' : 'hidden'}">
         ${isEditing ? `
-          <div class="mini-form" style="margin-bottom:14px;">
+          <div class="mini-form" style="margin-bottom:14px; align-items:center;">
             <input type="text" class="edit-doctor-name" placeholder="اسم الطبيب" value="${escapeHtml(doc.name)}">
             <input type="text" class="edit-doctor-specialty" placeholder="التخصص" value="${escapeHtml(doc.specialty)}">
+          </div>
+          <div class="mini-form" style="margin-bottom:14px;">
+            <input type="file" accept="image/*" class="edit-doctor-photo" data-id="${doc.id}">
             <button type="button" class="btn-xs approve" data-action="save-doctor-edit" data-id="${doc.id}">💾 حفظ</button>
             <button type="button" class="btn-xs delete" data-action="cancel-doctor-edit" data-id="${doc.id}">إلغاء</button>
           </div>
+          <p class="cell-sub" style="margin:-6px 0 14px;">رفع صورة جديدة اختياري — حد أقصى 3 ميجابايت</p>
         ` : ''}
         ${renderDoctorHoursSection(doc)}
       </div>
@@ -694,25 +712,53 @@ function renderDoctorHoursSection(doc) {
   `;
 }
 
-// حفظ اسم وتخصص الطبيب مع بعض
+// حفظ اسم وتخصص الطبيب (وصورته لو رفعت جديدة) مع بعض
 // ملاحظة: ما يحدّث اسم الطبيب بالحجوزات القديمة المخزّنة مسبقاً (doctorName)، بس الجديدة بتاخذ الاسم المحدّث
 async function saveDoctorEdit(doctorId) {
   const card = document.querySelector(`[data-action="save-doctor-edit"][data-id="${doctorId}"]`).closest('.doctor-item');
   const name = card.querySelector('.edit-doctor-name').value.trim();
   const specialty = card.querySelector('.edit-doctor-specialty').value.trim();
+  const fileInput = card.querySelector('.edit-doctor-photo');
+  const file = fileInput && fileInput.files[0];
 
   if (!name || !specialty) {
     alert('اسم الطبيب والتخصص إجباريين');
     return;
   }
 
+  if (file) {
+    if (!file.type.startsWith('image/')) {
+      alert('الملف لازم يكون صورة');
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      alert('حجم الصورة كبير، الحد الأقصى 3 ميجابايت');
+      return;
+    }
+  }
+
+  const saveBtn = card.querySelector('[data-action="save-doctor-edit"]');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'جاري الحفظ...';
+
   try {
-    await db.collection('doctors').doc(doctorId).update({ name, specialty });
+    const updates = { name, specialty };
+
+    if (file) {
+      const storagePath = `doctors/${doctorId}_${Date.now()}.jpg`;
+      const ref = storage.ref(storagePath);
+      await ref.put(file);
+      updates.photoUrl = await ref.getDownloadURL();
+    }
+
+    await db.collection('doctors').doc(doctorId).update(updates);
     editingDoctorId = null;
     loadDashboard();
   } catch (err) {
     console.error('saveDoctorEdit error:', err);
     alert('تعذر حفظ التعديلات، حاول مرة أخرى');
+    saveBtn.disabled = false;
+    saveBtn.textContent = '💾 حفظ';
   }
 }
 
@@ -1152,6 +1198,13 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+const AVATAR_COLORS = ['#158A7E', '#0F2440', '#1C6B93', '#2E9E6D', '#4A7A9E', '#0E7A72'];
+function stringToColor(name) {
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 function escapeHtml(str) {
   if (!str) return '';
   return str
@@ -1510,6 +1563,77 @@ function exportBookingsCSV() {
   link.download = `حجوزات-${clinicName}-${todayISO()}.csv`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+// ============================================
+// شعار العيادة
+// ============================================
+async function loadClinicLogo() {
+  const preview = document.getElementById('clinic-logo-preview');
+  if (!preview) return;
+
+  try {
+    const doc = await db.collection('users').doc(activeClinicUid).get();
+    const logoUrl = doc.exists ? doc.data().logoUrl : null;
+    renderLogoPreview(logoUrl);
+  } catch (err) {
+    console.error('loadClinicLogo error:', err);
+  }
+}
+
+function renderLogoPreview(logoUrl) {
+  const preview = document.getElementById('clinic-logo-preview');
+  if (logoUrl) {
+    preview.style.backgroundImage = `url('${logoUrl}')`;
+    preview.textContent = '';
+  } else {
+    preview.style.backgroundImage = 'none';
+    preview.style.background = stringToColor(clinicName);
+    preview.textContent = (clinicName || '؟').trim().slice(0, 1);
+  }
+}
+
+const uploadLogoBtn = document.getElementById('upload-logo-btn');
+if (uploadLogoBtn) {
+  uploadLogoBtn.addEventListener('click', async () => {
+    const fileInput = document.getElementById('clinic-logo-input');
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert('اختر صورة أول');
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      alert('الملف لازم يكون صورة');
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      alert('حجم الصورة كبير، الحد الأقصى 3 ميجابايت');
+      return;
+    }
+
+    uploadLogoBtn.disabled = true;
+    uploadLogoBtn.textContent = 'جاري الرفع...';
+
+    try {
+      const storagePath = `clinics/${activeClinicUid}_${Date.now()}.jpg`;
+      const ref = storage.ref(storagePath);
+      await ref.put(file);
+      const logoUrl = await ref.getDownloadURL();
+
+      await db.collection('users').doc(activeClinicUid).update({ logoUrl });
+
+      renderLogoPreview(logoUrl);
+      fileInput.value = '';
+      alert('تم رفع الشعار بنجاح');
+    } catch (err) {
+      console.error('upload logo error:', err);
+      alert('تعذر رفع الشعار، حاول مرة أخرى');
+    } finally {
+      uploadLogoBtn.disabled = false;
+      uploadLogoBtn.textContent = 'رفع الشعار';
+    }
+  });
 }
 
 initPageTabs();

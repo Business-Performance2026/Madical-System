@@ -1,0 +1,36 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // صور الأطباء
+    match /doctors/{fileName} {
+      allow read: if true;
+
+      // الرفع للعيادة صاحبة الطبيب أو أحد موظفيها بس
+      allow write: if request.auth != null
+        && (
+          firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'clinic'
+          || firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'staff'
+        )
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.status == 'active'
+        && request.resource.size < 3 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // شعارات العيادات
+    match /clinics/{fileName} {
+      allow read: if true;
+
+      // الرفع للعيادة صاحبة الحساب أو أحد موظفيها بس
+      allow write: if request.auth != null
+        && (
+          firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'clinic'
+          || firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'staff'
+        )
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.status == 'active'
+        && request.resource.size < 3 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

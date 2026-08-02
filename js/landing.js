@@ -29,8 +29,9 @@ async function initLanding() {
     renderDirectory();
   } catch (err) {
     console.error('initLanding error:', err);
-    document.getElementById('clinics-directory-wrap').innerHTML =
-      '<p class="empty-state">تعذر تحميل العيادات حالياً</p>';
+    const errorMsg = '<p class="empty-state">تعذر تحميل البيانات حالياً</p>';
+    document.getElementById('doctors-carousel-wrap').innerHTML = errorMsg;
+    document.getElementById('clinics-carousel-wrap').innerHTML = errorMsg;
   }
 }
 
@@ -120,7 +121,9 @@ function getFilteredClinics() {
 }
 
 function renderDirectory() {
-  const results = getFilteredClinics();
+  const filteredClinics = getFilteredClinics();
+  const filteredClinicIds = new Set(filteredClinics.map((c) => c.id));
+  const filteredDoctors = allDoctors.filter((d) => filteredClinicIds.has(d.clinicId));
 
   const titleEl = document.getElementById('directory-title');
   const hintEl = document.getElementById('directory-hint');
@@ -130,45 +133,71 @@ function renderDirectory() {
     if (searchQuery) parts.push(`"${searchQuery}"`);
     if (activeSpecialty) parts.push(activeSpecialty);
     titleEl.textContent = `نتائج البحث: ${parts.join(' • ')}`;
-    hintEl.textContent = `${results.length} عيادة مطابقة`;
+    hintEl.textContent = `${filteredDoctors.length} طبيب • ${filteredClinics.length} عيادة`;
   } else {
-    titleEl.textContent = 'كل العيادات';
+    titleEl.textContent = 'تصفح العيادات والأطباء';
     hintEl.textContent = '';
   }
 
-  const wrap = document.getElementById('clinics-directory-wrap');
+  renderDoctorsCarousel(filteredDoctors);
+  renderClinicsCarousel(filteredClinics);
+}
 
-  if (results.length === 0) {
+function renderDoctorsCarousel(doctors) {
+  const wrap = document.getElementById('doctors-carousel-wrap');
+
+  if (doctors.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">ما فيه أطباء مطابقين</p>';
+    return;
+  }
+
+  wrap.innerHTML = `<div class="carousel-track">${doctors.map((d) => renderDoctorMiniCard(d)).join('')}</div>`;
+}
+
+function renderDoctorMiniCard(d) {
+  const clinic = allClinics.find((c) => c.id === d.clinicId);
+  const clinicName = clinic ? clinic.name : '';
+  const avatarStyle = d.photoUrl
+    ? `background-image:url('${d.photoUrl}')`
+    : `background:${avatarColor(d.name)}`;
+
+  return `
+    <a href="login.html" class="doctor-card-mini">
+      <div class="doctor-photo-circle" style="${avatarStyle}">${d.photoUrl ? '' : escapeHtml(initials(d.name))}</div>
+      <p class="dc-name">${escapeHtml(d.name)}</p>
+      <p class="dc-specialty">${escapeHtml(d.specialty || '')}</p>
+      <p class="dc-clinic">${escapeHtml(clinicName)}</p>
+    </a>
+  `;
+}
+
+function renderClinicsCarousel(clinics) {
+  const wrap = document.getElementById('clinics-carousel-wrap');
+
+  if (clinics.length === 0) {
     wrap.innerHTML = '<p class="empty-state">ما فيه عيادات مطابقة، جرب تخصص أو كلمة بحث ثانية</p>';
     return;
   }
 
-  wrap.innerHTML = `
-    <div class="clinics-directory-grid">
-      ${results.map((c) => renderClinicCard(c)).join('')}
-    </div>
-  `;
+  wrap.innerHTML = `<div class="carousel-track">${clinics.map((c) => renderClinicMiniCard(c)).join('')}</div>`;
 }
 
-function renderClinicCard(c) {
+function renderClinicMiniCard(c) {
   const doctors = allDoctors.filter((d) => d.clinicId === c.id);
   const specialties = [...new Set(doctors.map((d) => d.specialty).filter(Boolean))];
+  const subText = specialties.length
+    ? specialties.slice(0, 2).join('، ')
+    : `${doctors.length} ${doctors.length === 1 ? 'طبيب' : 'أطباء'}`;
+
+  const logoStyle = c.logoUrl
+    ? `background-image:url('${c.logoUrl}')`
+    : `background:${avatarColor(c.name)}`;
 
   return `
-    <a href="login.html" class="clinic-directory-card">
-      <div class="clinic-card-top">
-        <div class="clinic-avatar" style="background:${avatarColor(c.name)}">${escapeHtml(initials(c.name))}</div>
-        <div>
-          <p class="cp-name">${escapeHtml(c.name)}</p>
-          <p class="cp-doctor-count">${doctors.length} ${doctors.length === 1 ? 'طبيب' : 'أطباء'}</p>
-        </div>
-      </div>
-      <div class="clinic-card-tags">
-        ${specialties.length > 0
-          ? specialties.slice(0, 4).map((s) => `<span class="specialty-tag">${escapeHtml(s)}</span>`).join('')
-          : '<span class="specialty-tag specialty-tag-muted">ما تم إضافة تخصصات بعد</span>'}
-      </div>
-      <span class="clinic-card-cta">احجز الآن ←</span>
+    <a href="login.html" class="clinic-card-mini">
+      <div class="clinic-logo-circle" style="${logoStyle}">${c.logoUrl ? '' : escapeHtml(initials(c.name))}</div>
+      <p class="cc-name">${escapeHtml(c.name)}</p>
+      <p class="cc-sub">${escapeHtml(subText)}</p>
     </a>
   `;
 }
