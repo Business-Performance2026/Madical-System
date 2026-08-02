@@ -144,5 +144,33 @@ service cloud.firestore {
       // (نسمح بشكل عام لأي مستخدم فعّال لأن هذا المستند ما فيه بيانات حساسة أصلاً)
       allow delete: if isSignedIn();
     }
+
+    // ============================================
+    // reviews
+    // تقييم المريض للطبيب بعد الزيارة - معرّف المستند نفسه = bookingId (يمنع تكرار التقييم لنفس الحجز)
+    // ============================================
+    match /reviews/{bookingId} {
+      // قراءة عامة (حتى بدون تسجيل دخول) - يفيد بعرض تقييم الطبيب/العيادة بالشاشة الرئيسية
+      allow read: if true;
+
+      // إنشاء تقييم: مريض فعّال، على حجزه هو بس، وكان الحجز مقبول فعلاً (يعني زار العيادة)
+      allow create: if isActivePatient()
+        && request.resource.data.patientId == request.auth.uid
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.doctorId is string
+        && request.resource.data.clinicId is string
+        && get(/databases/$(database)/documents/bookings/$(bookingId)).data.patientId == request.auth.uid
+        && get(/databases/$(database)/documents/bookings/$(bookingId)).data.status == 'accepted';
+
+      // تعديل: المريض صاحب التقييم يقدر يعدّل نجومه/تعليقه بس
+      allow update: if isActivePatient() && resource.data.patientId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'comment'])
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5;
+
+      // حذف: الأدمن بس (لإزالة تقييم مسيء مثلاً)
+      allow delete: if isAdmin();
+    }
   }
 }

@@ -58,6 +58,7 @@
       <button type="button" data-tab="staff">الموظفين</button>
       <button type="button" data-tab="recent">آخر التسجيلات</button>
       <button type="button" data-tab="accounts">إدارة الحسابات</button>
+      <button type="button" data-tab="platform-stats">الإحصائيات الشاملة</button>
     </div>
 
     <section class="section-card tab-panel" data-panel="pending">
@@ -95,12 +96,53 @@
       <div id="all-users-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
+    <section class="section-card tab-panel hidden" data-panel="platform-stats">
+      <h2 class="section-title">الإحصائيات الشاملة</h2>
+      <p class="section-hint">نظرة عامة على المنصة كلها (كل العيادات مع بعض)</p>
+
+      <div class="stats-grid" style="margin-bottom:22px;">
+        <div class="stat-card">
+          <span class="stat-number" id="platform-stat-clinics">—</span>
+          <span class="stat-label">عيادات فعّالة</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="platform-stat-doctors">—</span>
+          <span class="stat-label">إجمالي الأطباء</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="platform-stat-patients">—</span>
+          <span class="stat-label">إجمالي المرضى</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="platform-stat-bookings">—</span>
+          <span class="stat-label">إجمالي الحجوزات</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="platform-stat-cancel-rate">—</span>
+          <span class="stat-label">نسبة الإلغاء/الرفض/الغياب</span>
+        </div>
+      </div>
+
+      <div class="chart-block">
+        <p class="chart-title">تسجيلات جديدة شهرياً (عيادات + مرضى، آخر 6 أشهر)</p>
+        <canvas id="chart-platform-registrations" height="200"></canvas>
+      </div>
+
+      <div class="chart-block">
+        <p class="chart-title">أكثر 5 عيادات نشاطاً (حسب عدد الحجوزات)</p>
+        <canvas id="chart-platform-top-clinics" height="200"></canvas>
+      </div>
+    </section>
+
   </div>
 
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <!-- Chart.js لرسم الإحصائيات -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 
   <script src="../js/firebase-config.js"></script>
   <script src="../js/admin.js"></script>

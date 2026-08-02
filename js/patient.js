@@ -50,6 +50,7 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 // ============================================
 let allClinics = [];
 let clinicDoctors = [];
+let doctorRatingsMap = {};
 let clinicSpecialtiesMap = {};
 let selectedClinic = null;
 let selectedDoctor = null;
@@ -144,8 +145,20 @@ async function goToDoctorsStep() {
   const wrap = document.getElementById('booking-steps');
   wrap.innerHTML = '<p class="loading-state">جاري تحميل الأطباء...</p>';
 
-  const snap = await db.collection('doctors').where('clinicId', '==', selectedClinic.id).get();
-  clinicDoctors = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const [doctorsSnap, reviewsSnap] = await Promise.all([
+    db.collection('doctors').where('clinicId', '==', selectedClinic.id).get(),
+    db.collection('reviews').where('clinicId', '==', selectedClinic.id).get(),
+  ]);
+
+  clinicDoctors = doctorsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  doctorRatingsMap = {};
+  reviewsSnap.docs.forEach((doc) => {
+    const r = doc.data();
+    if (!doctorRatingsMap[r.doctorId]) doctorRatingsMap[r.doctorId] = { sum: 0, count: 0 };
+    doctorRatingsMap[r.doctorId].sum += r.rating;
+    doctorRatingsMap[r.doctorId].count += 1;
+  });
 
   renderDoctorsStep();
 }
@@ -167,15 +180,22 @@ function renderDoctorsStep() {
     return;
   }
 
-  listEl.innerHTML = clinicDoctors.map((d) => `
+  listEl.innerHTML = clinicDoctors.map((d) => {
+    const ratingInfo = doctorRatingsMap[d.id];
+    const ratingText = ratingInfo
+      ? `⭐ ${(ratingInfo.sum / ratingInfo.count).toFixed(1)} (${ratingInfo.count} تقييم)`
+      : 'ما فيه تقييمات بعد';
+
+    return `
     <div class="choice-card" data-id="${d.id}">
       <div>
         <p class="choice-title">${escapeHtml(d.name)}</p>
-        <p class="choice-sub">${escapeHtml(d.specialty)}</p>
+        <p class="choice-sub">${escapeHtml(d.specialty)} • ${ratingText}</p>
       </div>
       <span class="choice-arrow">‹</span>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   listEl.querySelectorAll('.choice-card').forEach((card) => {
     card.addEventListener('click', () => {
@@ -410,10 +430,19 @@ function closeModal() {
 // ============================================
 let cachedMyBookings = [];
 
+let myReviews = {}; // { bookingId: { rating, comment } }
+
 async function loadMyBookings() {
-  const snap = await db.collection('bookings').where('patientId', '==', currentUid).get();
-  const bookings = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const [bookingsSnap, reviewsSnap] = await Promise.all([
+    db.collection('bookings').where('patientId', '==', currentUid).get(),
+    db.collection('reviews').where('patientId', '==', currentUid).get(),
+  ]);
+
+  const bookings = bookingsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   cachedMyBookings = bookings;
+
+  myReviews = {};
+  reviewsSnap.docs.forEach((doc) => { myReviews[doc.id] = doc.data(); });
 
   const todayStr = todayISO();
   const upcoming = bookings
@@ -427,7 +456,7 @@ async function loadMyBookings() {
   renderBookingsList('past-appts-wrap', past, 'ما فيه مواعيد سابقة', false);
 }
 
-function renderBookingsList(elementId, bookings, emptyText, allowCancel) {
+function renderBookingsList(elementId, bookings, emptyText, isUpcoming) {
   const wrap = document.getElementById(elementId);
 
   if (bookings.length === 0) {
@@ -435,24 +464,44 @@ function renderBookingsList(elementId, bookings, emptyText, allowCancel) {
     return;
   }
 
-  wrap.innerHTML = bookings.map((b) => `
+  wrap.innerHTML = bookings.map((b) => {
+    const myReview = myReviews[b.id];
+    const canRate = !isUpcoming && b.status === 'accepted' && !myReview;
+
+    return `
     <div class="appt-card">
       <div>
         <p class="appt-main">د. ${escapeHtml(b.doctorName)}</p>
         <p class="appt-sub">${b.date} — ${b.time} • رقم الحجز: ${bookingNumber(b.id)}</p>
+        ${myReview ? `<p class="appt-sub">${starsDisplay(myReview.rating)} ${myReview.comment ? '— ' + escapeHtml(myReview.comment) : ''}</p>` : ''}
       </div>
       <div class="appt-actions">
         ${bookingStatusBadge(b.status)}
-        ${allowCancel && (b.status === 'pending' || b.status === 'accepted')
-          ? `<button type="button" class="btn-xs delete" data-action="cancel" data-id="${b.id}">إلغاء الحجز</button>`
+        ${isUpcoming && (b.status === 'pending' || b.status === 'accepted')
+          ? `
+            <button type="button" class="btn-xs toggle" data-action="reschedule" data-id="${b.id}">🔁 إعادة جدولة</button>
+            <button type="button" class="btn-xs delete" data-action="cancel" data-id="${b.id}">إلغاء الحجز</button>
+          `
           : ''}
+        ${canRate ? `<button type="button" class="btn-xs approve" data-action="rate" data-id="${b.id}">⭐ قيّم زيارتك</button>` : ''}
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   wrap.querySelectorAll('[data-action="cancel"]').forEach((btn) => {
     btn.addEventListener('click', () => cancelBooking(btn.dataset.id));
   });
+  wrap.querySelectorAll('[data-action="reschedule"]').forEach((btn) => {
+    btn.addEventListener('click', () => startReschedule(btn.dataset.id));
+  });
+  wrap.querySelectorAll('[data-action="rate"]').forEach((btn) => {
+    btn.addEventListener('click', () => openRatingModal(btn.dataset.id));
+  });
+}
+
+function starsDisplay(rating) {
+  return '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
 }
 
 async function cancelBooking(bookingId) {
@@ -474,6 +523,105 @@ async function cancelBooking(bookingId) {
     console.error('cancelBooking error:', err);
     alert('تعذر إلغاء الحجز، حاول مرة أخرى');
   }
+}
+
+// ============================================
+// إعادة جدولة الموعد: نلغي الحجز الحالي ونوديه مباشرة لخطوة اختيار وقت جديد لنفس الطبيب
+// ============================================
+async function startReschedule(bookingId) {
+  const booking = cachedMyBookings.find((b) => b.id === bookingId);
+  if (!booking) return;
+
+  const sure = confirm('بنلغي هذا الموعد ونوديك تختار وقت جديد لنفس الطبيب. تكمل؟');
+  if (!sure) return;
+
+  try {
+    await db.collection('bookings').doc(bookingId).update({ status: 'cancelled' });
+    if (booking.status === 'accepted') {
+      await db.collection('lockedSlots').doc(buildLockId(booking.doctorId, booking.date, booking.time)).delete();
+    }
+
+    const doctorDoc = await db.collection('doctors').doc(booking.doctorId).get();
+    if (!doctorDoc.exists) {
+      alert('تعذر جلب بيانات الطبيب، جرب تحجز من جديد يدوياً');
+      loadMyBookings();
+      return;
+    }
+
+    selectedClinic = allClinics.find((c) => c.id === booking.clinicId) || { id: booking.clinicId, name: '' };
+    selectedDoctor = { id: doctorDoc.id, ...doctorDoc.data() };
+    selectedDate = '';
+    selectedTime = '';
+
+    switchToTab('booking');
+    renderDateStep();
+    loadMyBookings();
+  } catch (err) {
+    console.error('startReschedule error:', err);
+    alert('تعذر بدء إعادة الجدولة، حاول مرة أخرى');
+  }
+}
+
+// ============================================
+// تقييم الطبيب بعد الزيارة (نجوم + تعليق)
+// ============================================
+function openRatingModal(bookingId) {
+  const booking = cachedMyBookings.find((b) => b.id === bookingId);
+  if (!booking) return;
+
+  let selectedStars = 0;
+
+  showModal(`
+    <h3>⭐ قيّم زيارتك</h3>
+    <p class="cell-sub">مع د. ${escapeHtml(booking.doctorName)} — ${booking.date}</p>
+    <div class="star-picker" id="star-picker">
+      ${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="star-btn" data-star="${n}">☆</button>`).join('')}
+    </div>
+    <textarea id="rating-comment" class="rating-textarea" placeholder="تعليقك (اختياري)..." rows="3"></textarea>
+    <button type="button" class="btn-primary" id="submit-rating-btn">إرسال التقييم</button>
+  `);
+
+  const starButtons = document.querySelectorAll('.star-btn');
+  starButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedStars = Number(btn.dataset.star);
+      starButtons.forEach((b) => {
+        b.textContent = Number(b.dataset.star) <= selectedStars ? '⭐' : '☆';
+      });
+    });
+  });
+
+  document.getElementById('submit-rating-btn').addEventListener('click', async () => {
+    if (selectedStars < 1) {
+      alert('اختر تقييم من 1 إلى 5 نجوم');
+      return;
+    }
+
+    const comment = document.getElementById('rating-comment').value.trim();
+    const submitBtn = document.getElementById('submit-rating-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'جاري الإرسال...';
+
+    try {
+      await db.collection('reviews').doc(bookingId).set({
+        bookingId,
+        doctorId: booking.doctorId,
+        clinicId: booking.clinicId,
+        patientId: currentUid,
+        rating: selectedStars,
+        comment,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+
+      closeModal();
+      loadMyBookings();
+    } catch (err) {
+      console.error('submitRating error:', err);
+      alert('تعذر إرسال التقييم، حاول مرة أخرى');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'إرسال التقييم';
+    }
+  });
 }
 
 function buildLockId(doctorId, date, time) {

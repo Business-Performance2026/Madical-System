@@ -39,6 +39,8 @@ async function loadDashboard() {
   ]);
 
   const allUsers = usersSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const allDoctors = doctorsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const allBookings = bookingsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   renderStats(allUsers, doctorsSnap.size, bookingsSnap.size);
   renderPendingClinics(allUsers);
@@ -46,6 +48,7 @@ async function loadDashboard() {
   renderStaffList(allUsers);
   renderRecentUsers(allUsers);
   renderAllUsersTable(allUsers);
+  renderPlatformStats(allUsers, allDoctors, allBookings);
 }
 
 // ============================================
@@ -516,6 +519,116 @@ function initPageTabs() {
 function switchToTab(tabName) {
   const btn = document.querySelector(`.page-tabs button[data-tab="${tabName}"]`);
   if (btn) btn.click();
+}
+
+// ============================================
+// الإحصائيات الشاملة (مستوى المنصة كلها)
+// ============================================
+let platformRegChart = null;
+let platformClinicsChart = null;
+
+function renderPlatformStats(allUsers, allDoctors, allBookings) {
+  const clinicsEl = document.getElementById('platform-stat-clinics');
+  if (!clinicsEl) return; // التبويب لسا ما انفتح
+
+  const activeClinics = allUsers.filter((u) => u.role === 'clinic' && u.status === 'active');
+  const patients = allUsers.filter((u) => u.role === 'patient');
+
+  const negativeCount = allBookings.filter((b) => ['rejected', 'cancelled', 'no_show'].includes(b.status)).length;
+  const cancelRate = allBookings.length > 0 ? Math.round((negativeCount / allBookings.length) * 100) : 0;
+
+  document.getElementById('platform-stat-clinics').textContent = activeClinics.length;
+  document.getElementById('platform-stat-doctors').textContent = allDoctors.length;
+  document.getElementById('platform-stat-patients').textContent = patients.length;
+  document.getElementById('platform-stat-bookings').textContent = allBookings.length;
+  document.getElementById('platform-stat-cancel-rate').textContent = `${cancelRate}%`;
+
+  if (typeof Chart === 'undefined') return;
+
+  // تسجيلات جديدة شهرياً (عيادات + مرضى) - آخر 6 أشهر
+  const monthBuckets = buildLast6MonthBuckets();
+  const clinicBuckets = { ...monthBuckets };
+  const patientBuckets = { ...monthBuckets };
+
+  allUsers.forEach((u) => {
+    if (!u.createdAt || (u.role !== 'clinic' && u.role !== 'patient')) return;
+    const d = u.createdAt.toDate();
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (!(key in monthBuckets)) return;
+    if (u.role === 'clinic') clinicBuckets[key] += 1;
+    if (u.role === 'patient') patientBuckets[key] += 1;
+  });
+
+  const monthKeys = Object.keys(monthBuckets);
+  const monthLabels = monthKeys.map(formatMonthLabelShort);
+
+  const regCanvas = document.getElementById('chart-platform-registrations');
+  if (regCanvas) {
+    if (platformRegChart) platformRegChart.destroy();
+    platformRegChart = new Chart(regCanvas, {
+      type: 'bar',
+      data: {
+        labels: monthLabels,
+        datasets: [
+          { label: 'عيادات', data: monthKeys.map((k) => clinicBuckets[k]), backgroundColor: '#D19F00', borderRadius: 6 },
+          { label: 'مرضى', data: monthKeys.map((k) => patientBuckets[k]), backgroundColor: '#0E5478', borderRadius: 6 },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: true, position: 'bottom' } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+      },
+    });
+  }
+
+  // أكثر 5 عيادات نشاطاً حسب عدد الحجوزات
+  const bookingCountByClinic = {};
+  allBookings.forEach((b) => {
+    bookingCountByClinic[b.clinicId] = (bookingCountByClinic[b.clinicId] || 0) + 1;
+  });
+
+  const topClinics = Object.entries(bookingCountByClinic)
+    .map(([clinicId, count]) => {
+      const clinic = allUsers.find((u) => u.id === clinicId);
+      return { name: clinic ? clinic.name : 'عيادة محذوفة', count };
+    })
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  const clinicsCanvas = document.getElementById('chart-platform-top-clinics');
+  if (clinicsCanvas) {
+    if (platformClinicsChart) platformClinicsChart.destroy();
+    platformClinicsChart = new Chart(clinicsCanvas, {
+      type: 'bar',
+      data: {
+        labels: topClinics.map((c) => c.name),
+        datasets: [{ label: 'عدد الحجوزات', data: topClinics.map((c) => c.count), backgroundColor: '#158A7E', borderRadius: 6 }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+      },
+    });
+  }
+}
+
+function buildLast6MonthBuckets() {
+  const buckets = {};
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    buckets[key] = 0;
+  }
+  return buckets;
+}
+
+function formatMonthLabelShort(key) {
+  const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  const m = parseInt(key.split('-')[1], 10);
+  return months[m - 1];
 }
 
 initPageTabs();

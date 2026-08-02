@@ -501,6 +501,78 @@ function renderDoctors() {
   wrap.querySelectorAll('[data-action="add-hour"]').forEach((btn) => {
     btn.addEventListener('click', () => addWorkingHour(btn.dataset.id));
   });
+  wrap.querySelectorAll('[data-action="toggle-bulk"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const form = wrap.querySelector(`[data-bulk-for="${btn.dataset.id}"]`);
+      if (form) form.classList.toggle('hidden');
+    });
+  });
+  wrap.querySelectorAll('[data-action="submit-bulk"]').forEach((btn) => {
+    btn.addEventListener('click', () => submitBulkHours(btn.dataset.id));
+  });
+}
+
+// يضيف أوقات عمل لعدة تواريخ دفعة وحدة (نطاق تاريخ + أيام أسبوع مختارة)
+async function submitBulkHours(doctorId) {
+  const form = document.querySelector(`[data-bulk-for="${doctorId}"]`);
+  const fromDate = form.querySelector('.bulk-from-date').value;
+  const toDate = form.querySelector('.bulk-to-date').value;
+  const start = form.querySelector('.bulk-start').value;
+  const end = form.querySelector('.bulk-end').value;
+  const selectedWeekdays = [...form.querySelectorAll('.bulk-weekday:checked')].map((cb) => cb.value);
+
+  if (!fromDate || !toDate || fromDate > toDate) {
+    alert('تأكد إن "من تاريخ" قبل "إلى تاريخ"');
+    return;
+  }
+  if (selectedWeekdays.length === 0) {
+    alert('اختر يوم أسبوع وحد على الأقل');
+    return;
+  }
+  if (!start || !end || start >= end) {
+    alert('تأكد إن وقت البداية قبل وقت النهاية');
+    return;
+  }
+
+  const rangeDays = (new Date(toDate) - new Date(fromDate)) / (1000 * 60 * 60 * 24);
+  if (rangeDays > 180) {
+    alert('النطاق طويل جداً، اختر مدة أقصاها 6 أشهر بمرة وحدة');
+    return;
+  }
+
+  const doctor = cachedDoctors.find((d) => d.id === doctorId);
+  const existing = doctor.workingHours || [];
+  const existingKeys = new Set(existing.map((h) => `${h.date}_${h.start}_${h.end}`));
+  const newEntries = [];
+
+  let cursor = new Date(fromDate + 'T00:00:00');
+  const endDate = new Date(toDate + 'T00:00:00');
+  while (cursor <= endDate) {
+    const dayKey = DAYS[cursor.getDay()].key;
+    if (selectedWeekdays.includes(dayKey)) {
+      const dateISO = cursor.toISOString().slice(0, 10);
+      const entryKey = `${dateISO}_${start}_${end}`;
+      if (!existingKeys.has(entryKey)) {
+        newEntries.push({ date: dateISO, start, end });
+        existingKeys.add(entryKey);
+      }
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  if (newEntries.length === 0) {
+    alert('ما فيه تواريخ جديدة تُضاف (كلها موجودة مسبقاً أو ما فيه يوم مطابق بالنطاق)');
+    return;
+  }
+
+  const sure = confirm(`بتُضاف ${newEntries.length} تاريخ جديد لهذا الطبيب. تأكيد؟`);
+  if (!sure) return;
+
+  await db.collection('doctors').doc(doctorId).update({
+    workingHours: [...existing, ...newEntries],
+  });
+  loadDashboard();
 }
 
 function renderDoctorAccordionItem(doc) {
@@ -554,6 +626,33 @@ function renderDoctorHoursSection(doc) {
       <input type="time" class="hour-start" value="09:00">
       <input type="time" class="hour-end" value="14:00">
       <button type="button" class="btn-xs toggle" data-action="add-hour" data-id="${doc.id}">إضافة وقت</button>
+      <button type="button" class="btn-xs approve" data-action="toggle-bulk" data-id="${doc.id}">📅 إضافة بالجملة</button>
+    </div>
+
+    <div class="bulk-hours-form hidden" data-bulk-for="${doc.id}">
+      <p class="bulk-hours-title">إضافة أوقات لعدة تواريخ دفعة وحدة</p>
+      <div class="mini-form">
+        <div class="field">
+          <label>من تاريخ</label>
+          <input type="date" class="bulk-from-date">
+        </div>
+        <div class="field">
+          <label>إلى تاريخ</label>
+          <input type="date" class="bulk-to-date">
+        </div>
+      </div>
+      <div class="bulk-weekdays">
+        ${DAYS.map((d) => `
+          <label class="bulk-weekday-label">
+            <input type="checkbox" class="bulk-weekday" value="${d.key}"> ${d.label}
+          </label>
+        `).join('')}
+      </div>
+      <div class="mini-form">
+        <input type="time" class="bulk-start" value="09:00">
+        <input type="time" class="bulk-end" value="14:00">
+        <button type="button" class="btn-xs approve" data-action="submit-bulk" data-id="${doc.id}">إضافة كل التواريخ المطابقة</button>
+      </div>
     </div>
   `;
 }

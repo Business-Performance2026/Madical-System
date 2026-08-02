@@ -1640,3 +1640,75 @@ body.landing {
   .calendar-cell { font-size: 12.5px; }
   .calendar-nav { width: 30px; height: 30px; font-size: 14px; }
 }
+
+/* ============================================
+   نموذج إضافة أوقات عمل بالجملة
+   ============================================ */
+.bulk-hours-form {
+  margin-top: 12px;
+  padding: 14px;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+}
+
+.bulk-hours-title {
+  font-weight: 900;
+  font-size: 13px;
+  color: var(--blue-900);
+  margin: 0 0 10px;
+}
+
+.bulk-weekdays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.bulk-weekday-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gray-800);
+  cursor: pointer;
+}
+
+.bulk-weekday-label input { cursor: pointer; }
+
+/* ============================================
+   منتقي النجوم للتقييم
+   ============================================ */
+.star-picker {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 16px 0;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 32px;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s;
+  line-height: 1;
+}
+
+.star-btn:hover { transform: scale(1.15); }
+
+.rating-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+  resize: vertical;
+  margin-bottom: 14px;
+}
+
+.rating-textarea:focus { outline: none; border-color: var(--blue-700); background: var(--white); }
