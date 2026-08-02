@@ -1147,15 +1147,22 @@ body.landing {
   border-radius: var(--radius-lg);
   padding: 14px 10px;
   text-align: center;
-  text-decoration: none;
   transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
 }
+
+.doctor-card-mini { text-decoration: none; }
 
 .doctor-card-mini:hover,
 .clinic-card-mini:hover {
   border-color: var(--blue-500);
   transform: translateY(-3px);
   box-shadow: var(--shadow-card);
+}
+
+.clinic-card-mini-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }
 
 .doctor-photo-circle,
@@ -1194,6 +1201,35 @@ body.landing {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* الموقع/العنوان يظهر بخط صغير جداً تحت كل عيادة */
+.cc-address {
+  font-size: 10.5px;
+  color: var(--gray-500);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cc-links {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--gray-200);
+}
+
+.cc-link-icon {
+  font-size: 15px;
+  text-decoration: none;
+  line-height: 1;
+  opacity: 0.85;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.cc-link-icon:hover { opacity: 1; transform: scale(1.15); }
 
 .dc-clinic {
   font-size: 11px;

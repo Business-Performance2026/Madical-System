@@ -1574,8 +1574,19 @@ async function loadClinicLogo() {
 
   try {
     const doc = await db.collection('users').doc(activeClinicUid).get();
-    const logoUrl = doc.exists ? doc.data().logoUrl : null;
-    renderLogoPreview(logoUrl);
+    const data = doc.exists ? doc.data() : {};
+
+    renderLogoPreview(data.logoUrl);
+
+    const whatsappInput = document.getElementById('clinic-whatsapp');
+    const addressInput = document.getElementById('clinic-address');
+    const websiteInput = document.getElementById('clinic-website');
+    const instagramInput = document.getElementById('clinic-instagram');
+
+    if (whatsappInput) whatsappInput.value = data.whatsapp || '';
+    if (addressInput) addressInput.value = data.address || '';
+    if (websiteInput) websiteInput.value = data.website || '';
+    if (instagramInput) instagramInput.value = data.instagram || '';
   } catch (err) {
     console.error('loadClinicLogo error:', err);
   }
@@ -1632,6 +1643,33 @@ if (uploadLogoBtn) {
     } finally {
       uploadLogoBtn.disabled = false;
       uploadLogoBtn.textContent = 'رفع الشعار';
+    }
+  });
+}
+
+const clinicInfoForm = document.getElementById('clinic-info-form');
+if (clinicInfoForm) {
+  clinicInfoForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const whatsapp = document.getElementById('clinic-whatsapp').value.trim();
+    const address = document.getElementById('clinic-address').value.trim();
+    const website = document.getElementById('clinic-website').value.trim();
+    const instagram = document.getElementById('clinic-instagram').value.trim();
+
+    const saveBtn = document.getElementById('save-clinic-info-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'جاري الحفظ...';
+
+    try {
+      await db.collection('users').doc(activeClinicUid).update({ whatsapp, address, website, instagram });
+      alert('تم حفظ بيانات العيادة بنجاح');
+    } catch (err) {
+      console.error('save clinic info error:', err);
+      alert('تعذر حفظ البيانات، حاول مرة أخرى');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'حفظ البيانات';
     }
   });
 }

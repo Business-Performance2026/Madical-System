@@ -209,7 +209,7 @@
 
     <section class="section-card tab-panel hidden" data-panel="settings">
       <h2 class="section-title">إعدادات العيادة</h2>
-      <p class="section-hint">شعار العيادة يظهر بالشاشة الرئيسية العامة وبكل مكان يذكر عيادتك بالتطبيق</p>
+      <p class="section-hint">شعار العيادة وبيانات التواصل تظهر بالشاشة الرئيسية العامة وبكل مكان يذكر عيادتك بالتطبيق</p>
 
       <div class="clinic-logo-preview-wrap">
         <div class="clinic-logo-preview" id="clinic-logo-preview"></div>
@@ -218,7 +218,27 @@
           <button type="button" class="btn-primary" id="upload-logo-btn" style="width:auto; padding:11px 22px;">رفع الشعار</button>
         </div>
       </div>
-      <p class="cell-sub" style="margin-top:8px;">حد أقصى 3 ميجابايت — يفضّل صورة مربعة</p>
+      <p class="cell-sub" style="margin-top:8px; margin-bottom:24px;">حد أقصى 3 ميجابايت — يفضّل صورة مربعة</p>
+
+      <form id="clinic-info-form">
+        <div class="field">
+          <label for="clinic-whatsapp">رقم واتساب العيادة</label>
+          <input type="tel" id="clinic-whatsapp" placeholder="9665xxxxxxxx">
+        </div>
+        <div class="field">
+          <label for="clinic-address">الموقع / العنوان</label>
+          <input type="text" id="clinic-address" placeholder="مثال: مسقط، الخوض">
+        </div>
+        <div class="field">
+          <label for="clinic-website">الموقع الإلكتروني</label>
+          <input type="url" id="clinic-website" placeholder="https://...">
+        </div>
+        <div class="field">
+          <label for="clinic-instagram">حساب انستقرام</label>
+          <input type="text" id="clinic-instagram" placeholder="@اسم_الحساب أو رابط كامل">
+        </div>
+        <button type="submit" class="btn-primary" id="save-clinic-info-btn" style="width:auto; padding:12px 28px;">حفظ البيانات</button>
+      </form>
     </section>
 
   </div>

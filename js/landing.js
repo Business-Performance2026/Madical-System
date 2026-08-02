@@ -193,13 +193,38 @@ function renderClinicMiniCard(c) {
     ? `background-image:url('${c.logoUrl}')`
     : `background:${avatarColor(c.name)}`;
 
+  const linksHtml = [
+    c.whatsapp ? `<a class="cc-link-icon" href="https://wa.me/${sanitizePhone(c.whatsapp)}" target="_blank" rel="noopener" title="واتساب">💬</a>` : '',
+    c.website ? `<a class="cc-link-icon" href="${escapeHtml(normalizeUrl(c.website))}" target="_blank" rel="noopener" title="الموقع الإلكتروني">🌐</a>` : '',
+    c.instagram ? `<a class="cc-link-icon" href="${escapeHtml(instagramUrl(c.instagram))}" target="_blank" rel="noopener" title="انستقرام">📷</a>` : '',
+  ].join('');
+
   return `
-    <a href="login.html" class="clinic-card-mini">
-      <div class="clinic-logo-circle" style="${logoStyle}">${c.logoUrl ? '' : escapeHtml(initials(c.name))}</div>
-      <p class="cc-name">${escapeHtml(c.name)}</p>
-      <p class="cc-sub">${escapeHtml(subText)}</p>
-    </a>
+    <div class="clinic-card-mini">
+      <a href="login.html" class="clinic-card-mini-link">
+        <div class="clinic-logo-circle" style="${logoStyle}">${c.logoUrl ? '' : escapeHtml(initials(c.name))}</div>
+        <p class="cc-name">${escapeHtml(c.name)}</p>
+        <p class="cc-sub">${escapeHtml(subText)}</p>
+        ${c.address ? `<p class="cc-address">${escapeHtml(c.address)}</p>` : ''}
+      </a>
+      ${linksHtml ? `<div class="cc-links">${linksHtml}</div>` : ''}
+    </div>
   `;
+}
+
+function sanitizePhone(phone) {
+  return (phone || '').replace(/[^0-9]/g, '');
+}
+
+function normalizeUrl(url) {
+  if (!url) return '#';
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
+function instagramUrl(handle) {
+  if (!handle) return '#';
+  if (/^https?:\/\//i.test(handle)) return handle;
+  return `https://instagram.com/${handle.replace(/^@/, '')}`;
 }
 
 // ============================================
