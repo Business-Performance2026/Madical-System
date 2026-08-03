@@ -308,19 +308,18 @@ function instagramUrl(handle) {
 }
 
 // ============================================
-// أزرار تمرير الأسهم (توضيح إضافي بجانب السحب باللمس)
+// أيقونة البحث: تظهر/تخفي مربع البحث عند الضغط
 // ============================================
-document.querySelectorAll('.carousel-arrow-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const track = document.querySelector(`#${btn.dataset.target} .carousel-track`);
-    if (!track) return;
-
-    const amount = 320;
-    // الصفحة RTL، فالتمرير للأمام (زر ‹) يحتاج قيمة سالبة، وللخلف (زر ›) قيمة موجبة
-    const delta = btn.dataset.dir === 'next' ? -amount : amount;
-    track.scrollBy({ left: delta, behavior: 'smooth' });
+const searchToggleBtn = document.getElementById('search-toggle-btn');
+const navSearchWrap = document.getElementById('nav-search-wrap');
+if (searchToggleBtn && navSearchWrap) {
+  searchToggleBtn.addEventListener('click', () => {
+    navSearchWrap.classList.toggle('hidden');
+    if (!navSearchWrap.classList.contains('hidden')) {
+      document.getElementById('hero-search-input').focus();
+    }
   });
-});
+}
 
 // ============================================
 // أدوات مساعدة
