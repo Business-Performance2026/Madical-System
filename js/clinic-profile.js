@@ -190,4 +190,13 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+// زر الرجوع: يرجع لنفس الصفحة اللي جاء منها المستخدم لو فيه سجل تصفّح، وإلا يرجعه للرئيسية
+document.getElementById('back-btn').addEventListener('click', () => {
+  if (document.referrer && document.referrer.includes(window.location.host)) {
+    history.back();
+  } else {
+    window.location.href = 'index.html';
+  }
+});
+
 initClinicProfile();

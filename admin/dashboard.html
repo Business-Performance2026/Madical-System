@@ -61,6 +61,7 @@
       <button type="button" data-tab="accounts">إدارة الحسابات</button>
       <button type="button" data-tab="platform-stats">الإحصائيات الشاملة</button>
       <button type="button" data-tab="ads">إعلانات الرئيسية</button>
+      <button type="button" data-tab="specialties">تخصصات الرئيسية</button>
     </div>
 
     <section class="section-card tab-panel" data-panel="pending">
@@ -161,6 +162,25 @@
       </div>
 
       <div id="ads-list-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
+    <section class="section-card tab-panel hidden" data-panel="specialties">
+      <h2 class="section-title">تخصصات الشاشة الرئيسية</h2>
+      <p class="section-hint">هذي التخصصات تظهر كأيقونات دائرية أعلى الشاشة الرئيسية للتصفح والفلترة — رتّبها بالأسهم زي ما تحب تظهر</p>
+
+      <form id="add-specialty-form" class="inline-form">
+        <div class="field">
+          <label for="new-specialty-name">اسم التخصص</label>
+          <input type="text" id="new-specialty-name" placeholder="مثال: نساء وولادة" required>
+        </div>
+        <div class="field">
+          <label for="new-specialty-icon">الأيقونة (إيموجي)</label>
+          <input type="text" id="new-specialty-icon" placeholder="🤰" maxlength="4" required>
+        </div>
+        <button type="submit" class="btn-primary">إضافة تخصص</button>
+      </form>
+
+      <div id="specialties-list-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
   </div>

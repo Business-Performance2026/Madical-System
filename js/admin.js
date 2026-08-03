@@ -47,6 +47,7 @@ async function loadDashboard() {
   renderRejectedClinics(allUsers);
   renderStaffList(allUsers);
   loadAds();
+  loadSpecialties();
   renderRecentUsers(allUsers);
   renderAllUsersTable(allUsers);
   renderPlatformStats(allUsers, allDoctors, allBookings);
@@ -766,6 +767,175 @@ async function deleteAd(adId, storagePath) {
   } catch (err) {
     console.error('deleteAd error:', err);
     alert('تعذر حذف الإعلان، حاول مرة أخرى');
+  }
+}
+
+// ============================================
+// تخصصات الشاشة الرئيسية
+// ============================================
+let cachedSpecialties = [];
+
+const addSpecialtyForm = document.getElementById('add-specialty-form');
+if (addSpecialtyForm) {
+  addSpecialtyForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('new-specialty-name').value.trim();
+    const icon = document.getElementById('new-specialty-icon').value.trim();
+
+    if (!name || !icon) {
+      alert('فضلاً عبّي الاسم والأيقونة');
+      return;
+    }
+
+    const submitBtn = addSpecialtyForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'جاري الإضافة...';
+
+    try {
+      const maxOrder = cachedSpecialties.reduce((max, s) => Math.max(max, s.order || 0), 0);
+      await db.collection('specialties').add({
+        name,
+        icon,
+        order: maxOrder + 1,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      addSpecialtyForm.reset();
+      loadSpecialties();
+    } catch (err) {
+      console.error('add specialty error:', err);
+      alert('تعذر إضافة التخصص، حاول مرة أخرى');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'إضافة تخصص';
+    }
+  });
+}
+
+async function loadSpecialties() {
+  const wrap = document.getElementById('specialties-list-wrap');
+  if (!wrap) return;
+
+  try {
+    const snap = await db.collection('specialties').get();
+    cachedSpecialties = snap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+    renderSpecialtiesList();
+  } catch (err) {
+    console.error('loadSpecialties error:', err);
+    wrap.innerHTML = '<p class="empty-state">تعذر تحميل التخصصات</p>';
+  }
+}
+
+function renderSpecialtiesList() {
+  const wrap = document.getElementById('specialties-list-wrap');
+
+  if (cachedSpecialties.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">ما فيه تخصصات مضافة بعد — الشاشة الرئيسية بتعرض "الكل" بس لين تضيف تخصص</p>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الترتيب</th>
+            <th>الأيقونة</th>
+            <th>الاسم</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${cachedSpecialties.map((s, i) => `
+            <tr>
+              <td>
+                <button class="btn-xs toggle" data-action="move-specialty-up" data-id="${s.id}" ${i === 0 ? 'disabled' : ''}>▲</button>
+                <button class="btn-xs toggle" data-action="move-specialty-down" data-id="${s.id}" ${i === cachedSpecialties.length - 1 ? 'disabled' : ''}>▼</button>
+              </td>
+              <td style="font-size:20px;">${escapeHtml(s.icon)}</td>
+              <td class="cell-name">${escapeHtml(s.name)}</td>
+              <td>
+                <button class="btn-xs toggle" data-action="edit-specialty" data-id="${s.id}">✏️</button>
+                <button class="btn-xs delete" data-action="delete-specialty" data-id="${s.id}">🗑️</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  wrap.querySelectorAll('[data-action="move-specialty-up"]').forEach((btn) => {
+    btn.addEventListener('click', () => moveSpecialty(btn.dataset.id, -1));
+  });
+  wrap.querySelectorAll('[data-action="move-specialty-down"]').forEach((btn) => {
+    btn.addEventListener('click', () => moveSpecialty(btn.dataset.id, 1));
+  });
+  wrap.querySelectorAll('[data-action="delete-specialty"]').forEach((btn) => {
+    btn.addEventListener('click', () => deleteSpecialty(btn.dataset.id));
+  });
+  wrap.querySelectorAll('[data-action="edit-specialty"]').forEach((btn) => {
+    btn.addEventListener('click', () => editSpecialty(btn.dataset.id));
+  });
+}
+
+// يبدّل ترتيب تخصصين متجاورين (تبديل قيم order بينهم)
+async function moveSpecialty(specId, direction) {
+  const index = cachedSpecialties.findIndex((s) => s.id === specId);
+  const swapIndex = index + direction;
+  if (swapIndex < 0 || swapIndex >= cachedSpecialties.length) return;
+
+  const a = cachedSpecialties[index];
+  const b = cachedSpecialties[swapIndex];
+  const aOrder = a.order || 0;
+  const bOrder = b.order || 0;
+
+  try {
+    await Promise.all([
+      db.collection('specialties').doc(a.id).update({ order: bOrder }),
+      db.collection('specialties').doc(b.id).update({ order: aOrder }),
+    ]);
+    loadSpecialties();
+  } catch (err) {
+    console.error('moveSpecialty error:', err);
+    alert('تعذر تغيير الترتيب، حاول مرة أخرى');
+  }
+}
+
+function editSpecialty(specId) {
+  const spec = cachedSpecialties.find((s) => s.id === specId);
+  if (!spec) return;
+
+  const newName = prompt('اسم التخصص:', spec.name);
+  if (newName === null) return;
+  const newIcon = prompt('الأيقونة (إيموجي):', spec.icon);
+  if (newIcon === null) return;
+
+  if (!newName.trim() || !newIcon.trim()) {
+    alert('الاسم والأيقونة إجباريين');
+    return;
+  }
+
+  db.collection('specialties').doc(specId).update({ name: newName.trim(), icon: newIcon.trim() })
+    .then(loadSpecialties)
+    .catch((err) => {
+      console.error('editSpecialty error:', err);
+      alert('تعذر حفظ التعديل، حاول مرة أخرى');
+    });
+}
+
+async function deleteSpecialty(specId) {
+  const sure = confirm('حذف هذا التخصص من الشاشة الرئيسية؟');
+  if (!sure) return;
+
+  try {
+    await db.collection('specialties').doc(specId).delete();
+    loadSpecialties();
+  } catch (err) {
+    console.error('deleteSpecialty error:', err);
+    alert('تعذر الحذف، حاول مرة أخرى');
   }
 }
 

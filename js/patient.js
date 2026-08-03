@@ -532,20 +532,73 @@ function closeModal() {
 // ============================================
 let cachedMyBookings = [];
 let myReviews = {}; // { bookingId: { rating, comment } }
+let unsubscribeMyBookings = null;
+let isInitialMyBookingsLoad = true;
+let previousStatusMap = {}; // { bookingId: status } - يفيد باكتشاف تغيّر الحالة
 
-async function loadMyBookings() {
-  const [bookingsSnap, reviewsSnap] = await Promise.all([
-    db.collection('bookings').where('patientId', '==', currentUid).get(),
-    db.collection('reviews').where('patientId', '==', currentUid).get(),
-  ]);
+function loadMyBookings() {
+  return new Promise((resolve) => {
+    (async () => {
+      try {
+        const reviewsSnap = await db.collection('reviews').where('patientId', '==', currentUid).get();
+        myReviews = {};
+        reviewsSnap.docs.forEach((doc) => { myReviews[doc.id] = doc.data(); });
+      } catch (err) {
+        console.error('loadMyReviews error:', err);
+      }
 
-  const bookings = bookingsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  cachedMyBookings = bookings;
+      if (unsubscribeMyBookings) { resolve(); return; }
 
-  myReviews = {};
-  reviewsSnap.docs.forEach((doc) => { myReviews[doc.id] = doc.data(); });
+      unsubscribeMyBookings = db.collection('bookings').where('patientId', '==', currentUid)
+        .onSnapshot((snap) => {
+          const newBookings = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-  rerenderBookingsListsFromCache();
+          if (!isInitialMyBookingsLoad) {
+            newBookings.forEach((b) => {
+              const prevStatus = previousStatusMap[b.id];
+              if (prevStatus && prevStatus !== b.status) {
+                showBookingStatusToast(b);
+              }
+            });
+          }
+
+          previousStatusMap = {};
+          newBookings.forEach((b) => { previousStatusMap[b.id] = b.status; });
+
+          cachedMyBookings = newBookings;
+          rerenderBookingsListsFromCache();
+
+          if (isInitialMyBookingsLoad) {
+            isInitialMyBookingsLoad = false;
+            resolve();
+          }
+        }, (err) => {
+          console.error('myBookings listener error:', err);
+          resolve();
+        });
+    })();
+  });
+}
+
+// ============================================
+// تنبيه منبثق (Toast) لتغيّر حالة الحجز (قبول/رفض/إلخ)
+// ============================================
+function showBookingStatusToast(booking) {
+  const root = document.getElementById('toast-root');
+  if (!root) return;
+
+  const el = document.createElement('div');
+  el.className = 'toast-notification';
+  el.innerHTML = `
+    <p class="toast-title">🔔 ${t('booking_status_changed_title')}</p>
+    <p class="toast-body">${escapeHtml(booking.doctorName)} — ${booking.date}<br>${bookingStatusBadge(booking.status)}</p>
+  `;
+  el.addEventListener('click', () => {
+    switchToTab(booking.status === 'pending' || booking.status === 'accepted' ? 'upcoming' : 'past');
+    el.remove();
+  });
+  root.appendChild(el);
+  setTimeout(() => el.remove(), 8000);
 }
 
 // يعيد رسم قائمتي "الحالية" و"السابقة" من البيانات المحفوظة بالذاكرة بدون إعادة تحميل (يفيد عند تبديل اللغة)

@@ -96,7 +96,7 @@ let showAllClinics = false;
 let showAllDoctors = false;
 const CAROUSEL_CAP = 10;
 
-const SPECIALTIES = ['أسنان', 'جلدية', 'أطفال', 'باطنية', 'عيون', 'عظام'];
+let SPECIALTIES = []; // تُحمَّل ديناميكياً من مجموعة specialties بقاعدة البيانات
 
 async function initLanding() {
   applyLanguage(currentLang);
@@ -116,6 +116,7 @@ async function initLanding() {
       .map((doc) => ({ id: doc.id, ...doc.data() }))
       .filter((d) => clinicIds.has(d.clinicId));
 
+    await loadSpecialtiesBar();
     renderSpecialtyCounts();
     renderDirectory();
   } catch (err) {
@@ -126,6 +127,38 @@ async function initLanding() {
   }
 
   loadAdsCarousel();
+}
+
+// يجيب التخصصات من لوحة الأدمن ويبني أزرارها بعد زر "الكل" الثابت
+async function loadSpecialtiesBar() {
+  try {
+    const snap = await db.collection('specialties').get();
+    const specialties = snap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    SPECIALTIES = specialties.map((s) => s.name);
+
+    const bar = document.getElementById('specialty-filter-bar');
+    // نحذف كل شي عدا زر "الكل" الأول، ونبني الباقي من جديد
+    bar.querySelectorAll('.specialty-pill:not([data-specialty=""])').forEach((el) => el.remove());
+
+    specialties.forEach((s) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'specialty-pill';
+      btn.dataset.specialty = s.name;
+      btn.innerHTML = `
+        <span class="pill-circle">${escapeHtml(s.icon)}</span>
+        <span class="pill-label">${escapeHtml(s.name)}<span class="pill-count" data-count-for="${escapeHtml(s.name)}"></span></span>
+      `;
+      bar.appendChild(btn);
+    });
+
+    bindSpecialtyPillClicks();
+  } catch (err) {
+    console.error('loadSpecialtiesBar error:', err);
+  }
 }
 
 // ============================================
@@ -261,14 +294,16 @@ heroSearchInput.addEventListener('input', () => {
   }, 200);
 });
 
-document.querySelectorAll('.specialty-pill').forEach((pill) => {
-  pill.addEventListener('click', () => {
-    activeSpecialty = pill.dataset.specialty;
-    document.querySelectorAll('.specialty-pill').forEach((p) => p.classList.remove('active'));
-    pill.classList.add('active');
-    renderDirectory();
+function bindSpecialtyPillClicks() {
+  document.querySelectorAll('.specialty-pill').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      activeSpecialty = pill.dataset.specialty;
+      document.querySelectorAll('.specialty-pill').forEach((p) => p.classList.remove('active'));
+      pill.classList.add('active');
+      renderDirectory();
+    });
   });
-});
+}
 
 function getFilteredClinics() {
   const normalizedQuery = normalizeArabic(searchQuery);
