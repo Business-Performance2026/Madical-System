@@ -2245,22 +2245,22 @@ body.landing {
 
 .guest-toggle-btn:hover { text-decoration: underline; }
 
-.forgot-password-btn {
+.forgot-password-link {
   display: block;
   width: 100%;
-  margin: -4px 0 14px;
-  padding: 4px;
+  margin: -6px 0 16px;
+  padding: 0;
   background: none;
   border: none;
-  color: var(--gray-500);
+  color: var(--blue-700);
   font-family: inherit;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: 13px;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
 }
 
-.forgot-password-btn:hover { color: var(--blue-700); text-decoration: underline; }
+.forgot-password-link:hover { text-decoration: underline; }
 
 /* ============================================
    شريط تنبيه حساب الضيف (لوحة المريض)

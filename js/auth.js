@@ -23,46 +23,39 @@ const submitBtn = document.getElementById('submit-btn');
 const statusMsg = document.getElementById('status-msg');
 const form = document.getElementById('auth-form');
 
-let mode = 'login';       // 'login' أو 'signup' أو 'guest' أو 'forgot'
+let mode = 'login';       // 'login' أو 'signup' أو 'guest'
 let selectedRole = 'patient'; // 'patient' أو 'clinic'
 
 // ============================================
-// التبديل بين "تسجيل الدخول" و"إنشاء حساب" و"ضيف" و"نسيت كلمة المرور"
+// التبديل بين "تسجيل الدخول" و"إنشاء حساب" و"ضيف"
 // ============================================
 tabLogin.addEventListener('click', () => setMode('login'));
 tabSignup.addEventListener('click', () => setMode('signup'));
 guestToggleBtn.addEventListener('click', () => setMode(mode === 'guest' ? 'login' : 'guest'));
-forgotPasswordBtn.addEventListener('click', () => setMode(mode === 'forgot' ? 'login' : 'forgot'));
 
 function setMode(newMode) {
   mode = newMode;
   const isSignup = mode === 'signup';
   const isGuest = mode === 'guest';
-  const isForgot = mode === 'forgot';
 
-  modeSwitchWrap.classList.toggle('hidden', isGuest || isForgot);
-  guestToggleBtn.classList.toggle('hidden', isForgot);
+  modeSwitchWrap.classList.toggle('hidden', isGuest);
   forgotPasswordBtn.classList.toggle('hidden', isSignup || isGuest);
 
-  tabLogin.classList.toggle('active', !isSignup && !isGuest && !isForgot);
+  tabLogin.classList.toggle('active', !isSignup && !isGuest);
   tabSignup.classList.toggle('active', isSignup);
 
   nameField.classList.toggle('hidden', !isSignup && !isGuest);
   roleSelectWrap.classList.toggle('hidden', !isSignup);
   emailField.classList.toggle('hidden', isGuest);
-  passwordField.classList.toggle('hidden', isGuest || isForgot);
+  passwordField.classList.toggle('hidden', isGuest);
   updatePhoneVisibility();
 
   if (isGuest) {
     submitBtn.textContent = t('submit_guest');
     guestToggleBtn.textContent = t('guest_toggle_hide');
-  } else if (isForgot) {
-    submitBtn.textContent = t('send_reset_link');
-    forgotPasswordBtn.textContent = t('forgot_password_back');
   } else {
     submitBtn.textContent = isSignup ? t('submit_signup') : t('submit_login');
     guestToggleBtn.textContent = t('guest_toggle_show');
-    forgotPasswordBtn.textContent = t('forgot_password_show');
   }
 
   clearStatus();
@@ -84,19 +77,86 @@ roleOptions.forEach((option) => {
   });
 });
 
-// لو المستخدم بدّل اللغة، نحدّث نص الأزرار بنفس الوضع الحالي
+// لو المستخدم بدّل اللغة ونحن بوضع "ضيف"، نحدّث نص الأزرار بنفس الوضع الحالي
 function onLanguageChanged() {
   if (mode === 'guest') {
     submitBtn.textContent = t('submit_guest');
     guestToggleBtn.textContent = t('guest_toggle_hide');
-  } else if (mode === 'forgot') {
-    submitBtn.textContent = t('send_reset_link');
-    forgotPasswordBtn.textContent = t('forgot_password_back');
   } else {
     submitBtn.textContent = mode === 'signup' ? t('submit_signup') : t('submit_login');
     guestToggleBtn.textContent = t('guest_toggle_show');
-    forgotPasswordBtn.textContent = t('forgot_password_show');
   }
+}
+
+// ============================================
+// نافذة منبثقة (Modal) عامة
+// ============================================
+function showModal(html) {
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `<div class="modal-overlay" id="modal-overlay"><div class="modal-box">${html}</div></div>`;
+  document.getElementById('modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-overlay') closeModal();
+  });
+}
+
+function closeModal() {
+  document.getElementById('modal-root').innerHTML = '';
+}
+
+// ============================================
+// نسيت كلمة المرور: بوب أب مستقل يطلب البريد بس
+// ============================================
+forgotPasswordBtn.addEventListener('click', () => {
+  showModal(`
+    <h3>${t('forgot_password_title')}</h3>
+    <p class="cell-sub">${t('forgot_password_hint')}</p>
+    <div class="field">
+      <label for="reset-email">${t('label_email')}</label>
+      <input type="email" id="reset-email" placeholder="example@email.com" value="${escapeHtml(emailInput.value.trim())}">
+    </div>
+    <button type="button" class="btn-primary" id="submit-reset-btn">${t('send_reset_link')}</button>
+    <p class="status-msg" id="reset-status-msg"></p>
+  `);
+
+  document.getElementById('submit-reset-btn').addEventListener('click', handleForgotPassword);
+  document.getElementById('reset-email').focus();
+});
+
+async function handleForgotPassword() {
+  const email = document.getElementById('reset-email').value.trim();
+  const btn = document.getElementById('submit-reset-btn');
+  const resetStatus = document.getElementById('reset-status-msg');
+
+  if (!email) {
+    resetStatus.textContent = t('err_enter_email');
+    resetStatus.className = 'status-msg error';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = t('sending');
+
+  try {
+    await auth.sendPasswordResetEmail(email);
+    resetStatus.textContent = t('reset_link_sent');
+    resetStatus.className = 'status-msg success';
+    btn.textContent = t('send_reset_link');
+    btn.disabled = false;
+  } catch (err) {
+    resetStatus.textContent = translateError(err);
+    resetStatus.className = 'status-msg error';
+    btn.textContent = t('send_reset_link');
+    btn.disabled = false;
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // ============================================
@@ -111,11 +171,6 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
-  if (mode === 'forgot') {
-    await handleForgotPassword();
-    return;
-  }
-
   const email = emailInput.value.trim();
   const password = passwordInput.value;
 
@@ -125,27 +180,6 @@ form.addEventListener('submit', async (e) => {
     await handleLogin(email, password);
   }
 });
-
-// ============================================
-// نسيان كلمة المرور: إرسال رابط إعادة تعيين للبريد المدخل
-// ============================================
-async function handleForgotPassword() {
-  const email = emailInput.value.trim();
-
-  if (!email) {
-    showStatus(t('err_enter_email'), 'error');
-    return;
-  }
-
-  setLoading(true);
-  try {
-    await auth.sendPasswordResetEmail(email);
-    showStatus(t('reset_link_sent'), 'success');
-  } catch (err) {
-    showStatus(translateError(err), 'error');
-  }
-  setLoading(false);
-}
 
 // ============================================
 // حجز كضيف (بدون بريد إلكتروني ولا كلمة مرور) - حساب مؤقت عبر Firebase Anonymous Auth
