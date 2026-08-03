@@ -6,6 +6,9 @@ let activeClinicUid = null; // uid العيادة الأساسية اللي تن
 let clinicName = '';        // اسم العيادة نفسها (يُستخدم برسائل الواتساب والطباعة)
 let isPrimaryOwner = false; // true لو صاحب حساب العيادة الأصلي، false لو موظف تابع
 
+// أيقونة واتساب الحقيقية (SVG) بلونها الرسمي
+const WHATSAPP_ICON_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" style="vertical-align:-2px;"><path fill="#25D366" d="M17.6 6.32A7.85 7.85 0 0 0 12.05 4a7.94 7.94 0 0 0-6.9 11.9L4 20l4.2-1.1a7.9 7.9 0 0 0 3.83 1h.02a7.94 7.94 0 0 0 5.55-13.58zM12.05 18.5a6.6 6.6 0 0 1-3.36-.92l-.24-.14-2.5.66.67-2.44-.16-.25a6.6 6.6 0 1 1 12.24-3.51 6.56 6.56 0 0 1-6.65 6.6zm3.6-4.93c-.2-.1-1.17-.58-1.35-.64s-.31-.1-.44.1-.51.64-.62.77-.23.15-.42.05a5.4 5.4 0 0 1-1.6-.98 5.98 5.98 0 0 1-1.1-1.37c-.12-.2 0-.3.09-.4s.2-.23.3-.35.13-.2.2-.33.03-.25 0-.35-.44-1.06-.6-1.45c-.16-.38-.32-.33-.44-.33h-.38a.72.72 0 0 0-.52.24 2.2 2.2 0 0 0-.68 1.63c0 .96.7 1.9.8 2.03s1.37 2.1 3.33 2.94c.47.2.83.32 1.11.41.47.15.9.13 1.24.08.38-.06 1.17-.48 1.34-.94s.17-.86.12-.94-.18-.13-.38-.23z"/></svg>';
+
 const DAYS = [
   { key: 'sunday', label: 'الأحد' },
   { key: 'monday', label: 'الاثنين' },
@@ -256,7 +259,7 @@ function renderBookingRow(b) {
       <td class="cell-sub">${b.time}</td>
       <td>
         ${b.patientPhone
-          ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">${t('whatsapp_btn')}</a>`
+          ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">${WHATSAPP_ICON_SVG} ${t('whatsapp_btn')}</a>`
           : '<span class="cell-sub">—</span>'}
       </td>
       <td>
@@ -984,7 +987,7 @@ function scheduleRowHtml(b, opts) {
   cells.push(`
     <td>
       ${b.patientPhone
-        ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">${t('whatsapp_btn')}</a>`
+        ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">${WHATSAPP_ICON_SVG} ${t('whatsapp_btn')}</a>`
         : '<span class="cell-sub">—</span>'}
     </td>
   `);
