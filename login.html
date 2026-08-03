@@ -18,70 +18,75 @@
 </head>
 <body>
 
+  <button type="button" id="lang-toggle-btn" class="lang-toggle-btn lang-toggle-floating" aria-label="English">
+    <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm6.93 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8 8 0 0 1 18.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14a7.9 7.9 0 0 1 0-4h3.38a16.6 16.6 0 0 0 0 4zm.81 2h2.95A15.7 15.7 0 0 0 9.4 19.56 8 8 0 0 1 5.07 16zm2.95-8H5.07a8 8 0 0 1 4.33-3.56A15.7 15.7 0 0 0 8.02 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66a14.6 14.6 0 0 1 0-4h4.68a14.6 14.6 0 0 1 0 4zm.28 5.56A15.7 15.7 0 0 0 15.98 16h2.95a8 8 0 0 1-4.31 3.56zM16.36 14a16.6 16.6 0 0 0 0-4h3.38a7.9 7.9 0 0 1 0 4z"/></svg>
+  </button>
+
   <a href="index.html" class="brand" style="text-decoration:none;">
     <div class="brand-mark">
       <img src="assets/logo.jpg" alt="موعد" class="brand-logo-img">
     </div>
     <p class="brand-title">موعد</p>
-    <p class="brand-subtitle">احجز موعدك بسهولة وأمان</p>
+    <p class="brand-subtitle" data-i18n="brand_subtitle">احجز موعدك بسهولة وأمان</p>
   </a>
 
   <main class="auth-card">
     <div class="mode-switch">
-      <button type="button" id="tab-login" class="active">تسجيل الدخول</button>
-      <button type="button" id="tab-signup">إنشاء حساب</button>
+      <button type="button" id="tab-login" class="active" data-i18n="tab_login">تسجيل الدخول</button>
+      <button type="button" id="tab-signup" data-i18n="tab_signup">إنشاء حساب</button>
     </div>
 
     <form id="auth-form" novalidate>
       <div class="field hidden" id="field-name">
-        <label for="name">الاسم الكامل</label>
-        <input type="text" id="name" autocomplete="name" placeholder="مثال: أحمد محمد">
+        <label for="name" data-i18n="label_name">الاسم الكامل</label>
+        <input type="text" id="name" autocomplete="name" data-i18n-placeholder="placeholder_name" placeholder="مثال: أحمد محمد">
       </div>
 
       <div class="field hidden" id="field-role">
-        <label>نوع الحساب</label>
+        <label data-i18n="label_account_type">نوع الحساب</label>
         <div class="role-select">
           <div class="role-option selected" data-role="patient">
             <span class="role-icon">🧑</span>
-            مريض
+            <span data-i18n="role_patient">مريض</span>
           </div>
           <div class="role-option" data-role="clinic">
             <span class="role-icon">🏥</span>
-            عيادة
+            <span data-i18n="role_clinic">عيادة</span>
           </div>
         </div>
       </div>
 
       <div class="field hidden" id="field-phone">
-        <label for="phone">رقم الجوال (واتساب)</label>
+        <label for="phone" data-i18n="label_phone">رقم الجوال (واتساب)</label>
         <input type="tel" id="phone" autocomplete="tel" placeholder="9665xxxxxxxx">
       </div>
 
       <div class="field" id="field-email">
-        <label for="email">البريد الإلكتروني</label>
+        <label for="email" data-i18n="label_email">البريد الإلكتروني</label>
         <input type="email" id="email" autocomplete="email" placeholder="example@email.com">
       </div>
 
       <div class="field" id="field-password">
-        <label for="password">كلمة المرور</label>
-        <input type="password" id="password" autocomplete="current-password" minlength="6" placeholder="6 أحرف على الأقل">
+        <label for="password" data-i18n="label_password">كلمة المرور</label>
+        <input type="password" id="password" autocomplete="current-password" minlength="6" data-i18n-placeholder="placeholder_password" placeholder="6 أحرف على الأقل">
       </div>
 
-      <button type="submit" class="btn-primary" id="submit-btn">تسجيل الدخول</button>
+      <button type="submit" class="btn-primary" id="submit-btn" data-i18n="submit_login">تسجيل الدخول</button>
 
       <p class="status-msg" id="status-msg" role="status" aria-live="polite"></p>
 
-      <button type="button" id="guest-toggle-btn" class="guest-toggle-btn">أو احجز كضيف بدون تسجيل ←</button>
+      <button type="button" id="guest-toggle-btn" class="guest-toggle-btn" data-i18n="guest_toggle_show">أو احجز كضيف بدون تسجيل ←</button>
     </form>
   </main>
 
-  <footer class="disclaimer">تسجيل حسابات العيادات يتطلب موافقة الإدارة قبل التفعيل</footer>
+  <footer class="disclaimer" data-i18n="footer_disclaimer">تسجيل حسابات العيادات يتطلب موافقة الإدارة قبل التفعيل</footer>
 
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
+  <script src="js/i18n.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/auth.js"></script>
 </body>

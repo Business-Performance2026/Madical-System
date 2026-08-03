@@ -941,7 +941,7 @@ body.landing {
   gap: 12px;
 }
 
-.nav-bottom-row { justify-content: flex-start; gap: 10px; }
+.nav-bottom-row { justify-content: space-between; gap: 10px; }
 
 .lang-toggle-btn {
   width: 30px;
@@ -959,6 +959,13 @@ body.landing {
 }
 
 .lang-toggle-btn:hover { opacity: 1; transform: scale(1.1) rotate(15deg); }
+
+.lang-toggle-floating {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+}
 
 .nav-search {
   flex: 1;

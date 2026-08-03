@@ -49,11 +49,11 @@ function setMode(newMode) {
   updatePhoneVisibility();
 
   if (isGuest) {
-    submitBtn.textContent = 'متابعة كضيف والحجز الآن';
-    guestToggleBtn.textContent = '← رجوع لتسجيل الدخول';
+    submitBtn.textContent = t('submit_guest');
+    guestToggleBtn.textContent = t('guest_toggle_hide');
   } else {
-    submitBtn.textContent = isSignup ? 'إنشاء الحساب' : 'تسجيل الدخول';
-    guestToggleBtn.textContent = 'أو احجز كضيف بدون تسجيل ←';
+    submitBtn.textContent = isSignup ? t('submit_signup') : t('submit_login');
+    guestToggleBtn.textContent = t('guest_toggle_show');
   }
 
   clearStatus();
@@ -74,6 +74,17 @@ roleOptions.forEach((option) => {
     updatePhoneVisibility();
   });
 });
+
+// لو المستخدم بدّل اللغة ونحن بوضع "ضيف"، نحدّث نص الأزرار بنفس الوضع الحالي
+function onLanguageChanged() {
+  if (mode === 'guest') {
+    submitBtn.textContent = t('submit_guest');
+    guestToggleBtn.textContent = t('guest_toggle_hide');
+  } else {
+    submitBtn.textContent = mode === 'signup' ? t('submit_signup') : t('submit_login');
+    guestToggleBtn.textContent = t('guest_toggle_show');
+  }
+}
 
 // ============================================
 // إرسال النموذج
@@ -103,17 +114,17 @@ form.addEventListener('submit', async (e) => {
 async function handleGuestBooking() {
   const name = nameInput.value.trim();
   if (!name) {
-    showStatus('فضلاً أدخل الاسم', 'error');
+    showStatus(t('err_enter_name'), 'error');
     return;
   }
 
   const phone = phoneInput.value.trim();
   if (!phone) {
-    showStatus('فضلاً أدخل رقم الجوال (واتساب)', 'error');
+    showStatus(t('err_enter_phone'), 'error');
     return;
   }
   if (!/^[0-9+\s-]{8,15}$/.test(phone)) {
-    showStatus('صيغة رقم الجوال غير صحيحة', 'error');
+    showStatus(t('err_invalid_phone'), 'error');
     return;
   }
 
@@ -132,7 +143,7 @@ async function handleGuestBooking() {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-    showStatus('تم، جاري التوجيه للحجز...', 'success');
+    showStatus(t('msg_guest_success'), 'success');
     redirectByRole('patient');
   } catch (err) {
     showStatus(translateError(err), 'error');
@@ -147,17 +158,17 @@ async function handleSignup(email, password) {
   const name = nameInput.value.trim();
 
   if (!name) {
-    showStatus('فضلاً أدخل الاسم', 'error');
+    showStatus(t('err_enter_name'), 'error');
     return;
   }
 
   const phone = phoneInput.value.trim();
   if (!phone) {
-    showStatus('فضلاً أدخل رقم الجوال (واتساب)', 'error');
+    showStatus(t('err_enter_phone'), 'error');
     return;
   }
   if (!/^[0-9+\s-]{8,15}$/.test(phone)) {
-    showStatus('صيغة رقم الجوال غير صحيحة', 'error');
+    showStatus(t('err_invalid_phone'), 'error');
     return;
   }
 
@@ -181,13 +192,13 @@ async function handleSignup(email, password) {
     await db.collection('users').doc(uid).set(userData);
 
     if (selectedRole === 'clinic') {
-      showStatus('تم إنشاء حساب العيادة، بانتظار موافقة الإدارة', 'info');
+      showStatus(t('msg_clinic_pending'), 'info');
       await auth.signOut();
       setLoading(false);
       return;
     }
 
-    showStatus('تم إنشاء الحساب بنجاح، جاري التوجيه...', 'success');
+    showStatus(t('msg_account_created'), 'success');
     redirectByRole(selectedRole);
   } catch (err) {
     showStatus(translateError(err), 'error');
@@ -207,7 +218,7 @@ async function handleLogin(email, password) {
     const userDoc = await db.collection('users').doc(uid).get();
 
     if (!userDoc.exists) {
-      showStatus('تعذر العثور على بيانات الحساب', 'error');
+      showStatus(t('err_account_not_found'), 'error');
       await auth.signOut();
       setLoading(false);
       return;
@@ -216,27 +227,27 @@ async function handleLogin(email, password) {
     const userData = userDoc.data();
 
     if (userData.status === 'disabled') {
-      showStatus('هذا الحساب موقوف، تواصل مع الإدارة', 'error');
+      showStatus(t('err_account_disabled'), 'error');
       await auth.signOut();
       setLoading(false);
       return;
     }
 
     if (userData.role === 'clinic' && userData.status === 'pending') {
-      showStatus('حساب العيادة بانتظار موافقة الإدارة', 'info');
+      showStatus(t('msg_clinic_awaiting'), 'info');
       await auth.signOut();
       setLoading(false);
       return;
     }
 
     if (userData.role === 'clinic' && userData.status === 'rejected') {
-      showStatus('تم رفض طلب تسجيل هذه العيادة', 'error');
+      showStatus(t('err_clinic_rejected'), 'error');
       await auth.signOut();
       setLoading(false);
       return;
     }
 
-    showStatus('تم تسجيل الدخول، جاري التوجيه...', 'success');
+    showStatus(t('msg_login_success'), 'success');
     redirectByRole(userData.role);
   } catch (err) {
     showStatus(translateError(err), 'error');
@@ -246,7 +257,6 @@ async function handleLogin(email, password) {
 
 // ============================================
 // التوجيه حسب نوع المستخدم
-// (الصفحات التالية سيتم بناؤها لاحقاً)
 // ============================================
 function redirectByRole(role) {
   const destinations = {
@@ -288,13 +298,13 @@ function clearStatus() {
 
 function translateError(err) {
   const map = {
-    'auth/email-already-in-use': 'هذا البريد الإلكتروني مستخدم مسبقاً',
-    'auth/invalid-email': 'صيغة البريد الإلكتروني غير صحيحة',
-    'auth/weak-password': 'كلمة المرور ضعيفة، استخدم 6 أحرف على الأقل',
-    'auth/user-not-found': 'لا يوجد حساب بهذا البريد الإلكتروني',
-    'auth/wrong-password': 'كلمة المرور غير صحيحة',
-    'auth/invalid-credential': 'بيانات الدخول غير صحيحة',
-    'auth/too-many-requests': 'محاولات كثيرة، حاول لاحقاً',
+    'auth/email-already-in-use': t('err_email_in_use'),
+    'auth/invalid-email': t('err_invalid_email'),
+    'auth/weak-password': t('err_weak_password'),
+    'auth/user-not-found': t('err_user_not_found'),
+    'auth/wrong-password': t('err_wrong_password'),
+    'auth/invalid-credential': t('err_invalid_credential'),
+    'auth/too-many-requests': t('err_too_many_requests'),
   };
-  return map[err.code] || 'حدث خطأ، حاول مرة أخرى';
+  return map[err.code] || t('err_generic');
 }
