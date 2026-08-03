@@ -5,6 +5,9 @@ let allClinics = [];
 let allDoctors = [];
 let activeSpecialty = '';
 let searchQuery = '';
+let showAllClinics = false;
+let showAllDoctors = false;
+const CAROUSEL_CAP = 10;
 
 const SPECIALTIES = ['أسنان', 'جلدية', 'أطفال', 'باطنية', 'عيون', 'عظام'];
 
@@ -228,11 +231,14 @@ function renderDoctorsCarousel(doctors) {
 
   if (doctors.length === 0) {
     wrap.innerHTML = '<p class="empty-state">ما فيه أطباء مطابقين</p>';
+    updateViewAllButton('doctors-carousel-wrap', 0, showAllDoctors);
     return;
   }
 
-  wrap.innerHTML = `<div class="carousel-track">${doctors.map((d) => renderDoctorMiniCard(d)).join('')}</div>`;
+  const display = showAllDoctors ? doctors : doctors.slice(0, CAROUSEL_CAP);
+  wrap.innerHTML = `<div class="carousel-track">${display.map((d) => renderDoctorMiniCard(d)).join('')}</div>`;
   setupAutoScroll('doctors-carousel-wrap');
+  updateViewAllButton('doctors-carousel-wrap', doctors.length, showAllDoctors);
 }
 
 function renderDoctorMiniCard(d) {
@@ -257,11 +263,14 @@ function renderClinicsCarousel(clinics) {
 
   if (clinics.length === 0) {
     wrap.innerHTML = '<p class="empty-state">ما فيه عيادات مطابقة، جرب تخصص أو كلمة بحث ثانية</p>';
+    updateViewAllButton('clinics-carousel-wrap', 0, showAllClinics);
     return;
   }
 
-  wrap.innerHTML = `<div class="carousel-track">${clinics.map((c) => renderClinicMiniCard(c)).join('')}</div>`;
+  const display = showAllClinics ? clinics : clinics.slice(0, CAROUSEL_CAP);
+  wrap.innerHTML = `<div class="carousel-track">${display.map((c) => renderClinicMiniCard(c)).join('')}</div>`;
   setupAutoScroll('clinics-carousel-wrap');
+  updateViewAllButton('clinics-carousel-wrap', clinics.length, showAllClinics);
 }
 
 function renderClinicMiniCard(c) {
@@ -373,16 +382,28 @@ function setupAutoScroll(wrapId) {
 // ============================================
 document.querySelectorAll('.view-all-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
-    activeSpecialty = '';
-    searchQuery = '';
-    document.getElementById('hero-search-input').value = '';
-    document.querySelectorAll('.specialty-pill').forEach((p) => p.classList.remove('active'));
-    document.querySelector('.specialty-pill[data-specialty=""]').classList.add('active');
+    if (btn.dataset.target === 'clinics-carousel-wrap') {
+      showAllClinics = !showAllClinics;
+    } else if (btn.dataset.target === 'doctors-carousel-wrap') {
+      showAllDoctors = !showAllDoctors;
+    }
     renderDirectory();
-
-    document.getElementById(btn.dataset.target).scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 });
+
+// يظهر/يخفي زر "عرض الكل" حسب العدد الفعلي، ويبدّل نصه بين "عرض الكل" و"عرض أقل"
+function updateViewAllButton(wrapId, total, showAll) {
+  const btn = document.querySelector(`.view-all-btn[data-target="${wrapId}"]`);
+  if (!btn) return;
+
+  if (total <= CAROUSEL_CAP) {
+    btn.classList.add('hidden');
+    return;
+  }
+
+  btn.classList.remove('hidden');
+  btn.textContent = showAll ? 'عرض أقل' : 'عرض الكل';
+}
 
 // ============================================
 // أدوات مساعدة
