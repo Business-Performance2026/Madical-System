@@ -65,15 +65,7 @@ function renderProfile(clinic, doctors, ratingsMap) {
   const specialties = [...new Set(doctors.map((d) => d.specialty).filter(Boolean))];
 
   contentEl.innerHTML = `
-    ${clinic.address ? `
-      <div class="profile-map-wrap">
-        <iframe
-          src="https://www.google.com/maps?q=${encodeURIComponent(clinic.address)}&output=embed"
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-        ></iframe>
-      </div>
-    ` : ''}
+    ${buildMapBlock(clinic)}
 
     <div class="profile-header-card">
       <div class="profile-logo" style="${logoStyle}">${clinic.logoUrl ? '' : escapeHtml(initials(clinic.name))}</div>
@@ -121,6 +113,60 @@ function renderProfile(clinic, doctors, ratingsMap) {
         : `<div class="profile-doctors-grid">${doctors.map((d) => renderDoctorCard(d, ratingsMap)).join('')}</div>`}
     </section>
   `;
+}
+
+// يبني قسم الخريطة: يفضّل رابط خرائط جوجل (يستخرج إحداثيات دقيقة لو أمكن)،
+// وإلا يرجع للبحث بالعنوان النصي، وإلا ما يعرض شي
+function buildMapBlock(clinic) {
+  if (clinic.mapsLink) {
+    const coords = extractLatLng(clinic.mapsLink);
+
+    if (coords) {
+      // رابط فيه إحداثيات واضحة (روابط جوجل مابس الكاملة عادة فيها @lat,lng) - نضمّن خريطة دقيقة
+      return `
+        <div class="profile-map-wrap">
+          <iframe
+            src="https://www.google.com/maps?q=${coords.lat},${coords.lng}&output=embed"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
+        </div>
+      `;
+    }
+
+    // رابط مختصر (maps.app.goo.gl مثلاً) ما نقدر نستخرج منه إحداثيات من المتصفح مباشرة،
+    // فنعرض زر واضح يفتح نفس الرابط اللي حطته العيادة بدل خريطة مضمّنة فاضية
+    return `
+      <a class="profile-map-link-btn" href="${escapeHtml(clinic.mapsLink)}" target="_blank" rel="noopener">
+        📍 افتح موقع العيادة على خرائط جوجل
+      </a>
+    `;
+  }
+
+  if (clinic.address) {
+    return `
+      <div class="profile-map-wrap">
+        <iframe
+          src="https://www.google.com/maps?q=${encodeURIComponent(clinic.address)}&output=embed"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
+      </div>
+    `;
+  }
+
+  return '';
+}
+
+// يستخرج الإحداثيات من رابط خرائط جوجل الكامل (نمط @lat,lng الشائع بروابط سطح المكتب)
+function extractLatLng(url) {
+  const atMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (atMatch) return { lat: atMatch[1], lng: atMatch[2] };
+
+  const qMatch = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (qMatch) return { lat: qMatch[1], lng: qMatch[2] };
+
+  return null;
 }
 
 function renderDoctorCard(d, ratingsMap) {

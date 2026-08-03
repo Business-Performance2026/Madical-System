@@ -2352,6 +2352,27 @@ body.landing {
   border: none;
 }
 
+.profile-map-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  margin-bottom: 18px;
+  background: var(--white);
+  border: 2px solid var(--blue-500);
+  border-radius: var(--radius-lg);
+  color: var(--blue-900);
+  font-weight: 800;
+  font-size: 14px;
+  text-decoration: none;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.profile-map-link-btn:hover { border-color: var(--gold-600); transform: translateY(-2px); }
+
 .profile-header-card {
   display: flex;
   align-items: center;
@@ -2510,4 +2531,11 @@ body.landing {
   .profile-section { padding: 0 14px 40px; }
   .profile-header-card { flex-direction: column; text-align: center; }
   .profile-map-wrap { height: 180px; }
+}
+
+.field-hint {
+  font-size: 11.5px;
+  color: var(--gray-500);
+  margin: 5px 0 0;
+  line-height: 1.5;
 }

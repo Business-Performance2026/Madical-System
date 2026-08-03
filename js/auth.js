@@ -49,6 +49,7 @@ function setMode(newMode) {
   emailField.classList.toggle('hidden', isGuest);
   passwordField.classList.toggle('hidden', isGuest);
   updatePhoneVisibility();
+  updateGuestButtonVisibility();
 
   if (isGuest) {
     submitBtn.textContent = t('submit_guest');
@@ -74,8 +75,16 @@ roleOptions.forEach((option) => {
     option.classList.add('selected');
     selectedRole = option.dataset.role;
     updatePhoneVisibility();
+    updateGuestButtonVisibility();
   });
 });
+
+// زر "احجز كضيف" يظهر بوضع تسجيل الدخول دايماً، وبوضع إنشاء حساب بس لو المختار "مريض"
+// (ما له داعي للعيادات - تسجيل عيادة يحتاج حساب حقيقي دايماً)
+function updateGuestButtonVisibility() {
+  const shouldShow = mode !== 'guest' && (mode !== 'signup' || selectedRole === 'patient');
+  guestToggleBtn.classList.toggle('hidden', !shouldShow);
+}
 
 // لو المستخدم بدّل اللغة ونحن بوضع "ضيف"، نحدّث نص الأزرار بنفس الوضع الحالي
 function onLanguageChanged() {
