@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">موعد | ملف العيادة</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png">
+  <meta name="theme-color" content="#05314D">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="landing">
+
+  <nav class="landing-nav">
+    <div class="nav-top-row">
+      <div class="nav-brand">
+        <a href="index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
+          <div class="brand-mark">
+            <img src="assets/logo.jpg" alt="موعد" class="brand-logo-img">
+          </div>
+          <span>موعد</span>
+        </a>
+      </div>
+      <a href="login.html" class="btn-primary" id="book-now-nav-btn">تسجيل الدخول</a>
+    </div>
+  </nav>
+
+  <main class="profile-section">
+    <div id="profile-loading" class="loading-state">جاري التحميل...</div>
+    <div id="profile-content" class="hidden"></div>
+  </main>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/clinic-profile.js"></script>
+</body>
+</html>

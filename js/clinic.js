@@ -1655,11 +1655,13 @@ async function loadClinicLogo() {
     const addressInput = document.getElementById('clinic-address');
     const websiteInput = document.getElementById('clinic-website');
     const instagramInput = document.getElementById('clinic-instagram');
+    const servicesInput = document.getElementById('clinic-services');
 
     if (whatsappInput) whatsappInput.value = data.whatsapp || '';
     if (addressInput) addressInput.value = data.address || '';
     if (websiteInput) websiteInput.value = data.website || '';
     if (instagramInput) instagramInput.value = data.instagram || '';
+    if (servicesInput) servicesInput.value = (data.services || []).join('\n');
   } catch (err) {
     console.error('loadClinicLogo error:', err);
   }
@@ -1729,13 +1731,17 @@ if (clinicInfoForm) {
     const address = document.getElementById('clinic-address').value.trim();
     const website = document.getElementById('clinic-website').value.trim();
     const instagram = document.getElementById('clinic-instagram').value.trim();
+    const services = document.getElementById('clinic-services').value
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
 
     const saveBtn = document.getElementById('save-clinic-info-btn');
     saveBtn.disabled = true;
     saveBtn.textContent = t('saving');
 
     try {
-      await db.collection('users').doc(activeClinicUid).update({ whatsapp, address, website, instagram });
+      await db.collection('users').doc(activeClinicUid).update({ whatsapp, address, website, instagram, services });
       alert(t('clinic_info_saved'));
     } catch (err) {
       console.error('save clinic info error:', err);

@@ -2327,3 +2327,187 @@ body.landing {
   border-color: var(--green-600);
   background: #E5F5EC;
 }
+
+/* ============================================
+   صفحة ملف العيادة التفصيلية (clinic-profile.html)
+   ============================================ */
+.profile-section {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+}
+
+.profile-map-wrap {
+  width: 100%;
+  height: 220px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-card);
+}
+
+.profile-map-wrap iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.profile-header-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 16px;
+}
+
+.profile-logo {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: 900;
+  font-size: 26px;
+}
+
+.profile-clinic-name {
+  font-size: 19px;
+  font-weight: 900;
+  color: var(--blue-900);
+  margin: 0 0 4px;
+}
+
+.profile-address {
+  font-size: 13px;
+  color: var(--gray-500);
+  margin: 0 0 8px;
+}
+
+.profile-specialty-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.profile-contact-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.profile-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  background: var(--white);
+  border: 2px solid var(--gray-200);
+  border-radius: 999px;
+  color: var(--blue-900);
+  font-weight: 700;
+  font-size: 13.5px;
+  text-decoration: none;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.profile-contact-btn:hover { border-color: var(--blue-500); transform: translateY(-2px); }
+
+.profile-book-btn {
+  display: block;
+  text-align: center;
+  margin-bottom: 28px;
+  font-size: 16px;
+  padding: 15px;
+}
+
+.profile-block { margin-bottom: 30px; }
+
+.profile-block-title {
+  display: inline-block;
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--white);
+  background: var(--blue-900);
+  padding: 7px 16px;
+  border-radius: 10px;
+  margin: 0 0 16px;
+}
+
+.profile-services-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.service-tag {
+  background: var(--white);
+  border: 2px solid var(--gold-600);
+  color: var(--blue-900);
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+
+.profile-doctors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px;
+}
+
+.profile-doctor-card {
+  background: var(--white);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 16px 10px;
+  text-align: center;
+}
+
+.profile-doctor-photo {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: 900;
+  font-size: 22px;
+}
+
+.pd-name {
+  font-weight: 900;
+  font-size: 13.5px;
+  color: var(--blue-900);
+  margin: 0 0 2px;
+}
+
+.pd-specialty {
+  font-size: 12px;
+  color: var(--blue-700);
+  margin: 0 0 4px;
+}
+
+.pd-rating {
+  font-size: 11.5px;
+  color: var(--gray-500);
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .profile-section { padding: 0 14px 40px; }
+  .profile-header-card { flex-direction: column; text-align: center; }
+  .profile-map-wrap { height: 180px; }
+}
