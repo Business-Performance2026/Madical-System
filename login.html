@@ -57,19 +57,21 @@
         <input type="tel" id="phone" autocomplete="tel" placeholder="9665xxxxxxxx">
       </div>
 
-      <div class="field">
+      <div class="field" id="field-email">
         <label for="email">البريد الإلكتروني</label>
-        <input type="email" id="email" autocomplete="email" required placeholder="example@email.com">
+        <input type="email" id="email" autocomplete="email" placeholder="example@email.com">
       </div>
 
-      <div class="field">
+      <div class="field" id="field-password">
         <label for="password">كلمة المرور</label>
-        <input type="password" id="password" autocomplete="current-password" required minlength="6" placeholder="6 أحرف على الأقل">
+        <input type="password" id="password" autocomplete="current-password" minlength="6" placeholder="6 أحرف على الأقل">
       </div>
 
       <button type="submit" class="btn-primary" id="submit-btn">تسجيل الدخول</button>
 
       <p class="status-msg" id="status-msg" role="status" aria-live="polite"></p>
+
+      <button type="button" id="guest-toggle-btn" class="guest-toggle-btn">أو احجز كضيف بدون تسجيل ←</button>
     </form>
   </main>
 

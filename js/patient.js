@@ -37,6 +37,10 @@ auth.onAuthStateChanged(async (user) => {
   patientPhone = userDoc.data().phone || '';
   document.getElementById('patient-name').textContent = patientName;
 
+  if (user.isAnonymous) {
+    showGuestBanner();
+  }
+
   loadClinics();
   loadFamilyMembers();
   loadMyBookings().then(promptPendingRatingOnce);
@@ -779,6 +783,76 @@ function initPageTabs() {
 function switchToTab(tabName) {
   const btn = document.querySelector(`.page-tabs button[data-tab="${tabName}"]`);
   if (btn) btn.click();
+}
+
+// ============================================
+// شريط تنبيه للضيف + تحويل الحساب المؤقت لدائم بدون خسارة الحجوزات
+// ============================================
+function showGuestBanner() {
+  const wrap = document.getElementById('guest-banner-wrap');
+  if (!wrap) return;
+
+  wrap.innerHTML = `
+    <div class="guest-banner">
+      <p>👋 أنت تستخدم حساب ضيف مؤقت — مربوط بهذا الجهاز/المتصفح بس. احفظ حسابك عشان توصل لحجوزاتك من أي جهاز ولا تخسرها.</p>
+      <button type="button" class="btn-xs approve" id="save-guest-account-btn">💾 احفظ حسابك الآن</button>
+    </div>
+  `;
+
+  document.getElementById('save-guest-account-btn').addEventListener('click', openSaveAccountModal);
+}
+
+function openSaveAccountModal() {
+  showModal(`
+    <h3>💾 احفظ حسابك</h3>
+    <p class="cell-sub">أضف بريد إلكتروني وكلمة مرور — كل حجوزاتك الحالية تبقى معك بدون أي تغيير</p>
+    <div class="field">
+      <label for="save-account-email">البريد الإلكتروني</label>
+      <input type="email" id="save-account-email" placeholder="example@email.com">
+    </div>
+    <div class="field">
+      <label for="save-account-password">كلمة المرور</label>
+      <input type="password" id="save-account-password" minlength="6" placeholder="6 أحرف على الأقل">
+    </div>
+    <button type="button" class="btn-primary" id="submit-save-account-btn">حفظ الحساب</button>
+  `);
+
+  document.getElementById('submit-save-account-btn').addEventListener('click', saveGuestAccount);
+}
+
+async function saveGuestAccount() {
+  const email = document.getElementById('save-account-email').value.trim();
+  const password = document.getElementById('save-account-password').value;
+  const btn = document.getElementById('submit-save-account-btn');
+
+  if (!email || !password || password.length < 6) {
+    alert('تأكد من البريد الإلكتروني وكلمة مرور 6 أحرف على الأقل');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'جاري الحفظ...';
+
+  try {
+    const credential = firebase.auth.EmailAuthProvider.credential(email, password);
+    await auth.currentUser.linkWithCredential(credential);
+
+    await db.collection('users').doc(currentUid).update({ email, isGuest: false });
+
+    closeModal();
+    document.getElementById('guest-banner-wrap').innerHTML = '';
+    alert('تم حفظ حسابك بنجاح! تقدر تسجّل دخول بهذا البريد من أي جهاز بعدين');
+  } catch (err) {
+    console.error('saveGuestAccount error:', err);
+    const messages = {
+      'auth/email-already-in-use': 'هذا البريد مستخدم مسبقاً، جرب بريد ثاني',
+      'auth/invalid-email': 'صيغة البريد غير صحيحة',
+      'auth/weak-password': 'كلمة المرور ضعيفة',
+    };
+    alert(messages[err.code] || 'تعذر حفظ الحساب، حاول مرة أخرى');
+    btn.disabled = false;
+    btn.textContent = 'حفظ الحساب';
+  }
 }
 
 initPageTabs();

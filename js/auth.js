@@ -6,8 +6,12 @@ const tabSignup = document.getElementById('tab-signup');
 
 const nameField = document.getElementById('field-name');
 const phoneField = document.getElementById('field-phone');
+const emailField = document.getElementById('field-email');
+const passwordField = document.getElementById('field-password');
 const roleSelectWrap = document.getElementById('field-role');
 const roleOptions = document.querySelectorAll('.role-option');
+const guestToggleBtn = document.getElementById('guest-toggle-btn');
+const modeSwitchWrap = document.querySelector('.mode-switch');
 
 const nameInput = document.getElementById('name');
 const phoneInput = document.getElementById('phone');
@@ -18,33 +22,46 @@ const submitBtn = document.getElementById('submit-btn');
 const statusMsg = document.getElementById('status-msg');
 const form = document.getElementById('auth-form');
 
-let mode = 'login';       // 'login' أو 'signup'
+let mode = 'login';       // 'login' أو 'signup' أو 'guest'
 let selectedRole = 'patient'; // 'patient' أو 'clinic'
 
 // ============================================
-// التبديل بين "تسجيل الدخول" و"إنشاء حساب"
+// التبديل بين "تسجيل الدخول" و"إنشاء حساب" و"ضيف"
 // ============================================
 tabLogin.addEventListener('click', () => setMode('login'));
 tabSignup.addEventListener('click', () => setMode('signup'));
+guestToggleBtn.addEventListener('click', () => setMode(mode === 'guest' ? 'login' : 'guest'));
 
 function setMode(newMode) {
   mode = newMode;
   const isSignup = mode === 'signup';
+  const isGuest = mode === 'guest';
 
-  tabLogin.classList.toggle('active', !isSignup);
+  modeSwitchWrap.classList.toggle('hidden', isGuest);
+
+  tabLogin.classList.toggle('active', !isSignup && !isGuest);
   tabSignup.classList.toggle('active', isSignup);
 
-  nameField.classList.toggle('hidden', !isSignup);
+  nameField.classList.toggle('hidden', !isSignup && !isGuest);
   roleSelectWrap.classList.toggle('hidden', !isSignup);
+  emailField.classList.toggle('hidden', isGuest);
+  passwordField.classList.toggle('hidden', isGuest);
   updatePhoneVisibility();
 
-  submitBtn.textContent = isSignup ? 'إنشاء الحساب' : 'تسجيل الدخول';
+  if (isGuest) {
+    submitBtn.textContent = 'متابعة كضيف والحجز الآن';
+    guestToggleBtn.textContent = '← رجوع لتسجيل الدخول';
+  } else {
+    submitBtn.textContent = isSignup ? 'إنشاء الحساب' : 'تسجيل الدخول';
+    guestToggleBtn.textContent = 'أو احجز كضيف بدون تسجيل ←';
+  }
+
   clearStatus();
 }
 
-// حقل رقم الجوال يظهر عند تسجيل أي حساب جديد (مريض أو عيادة)
+// حقل رقم الجوال يظهر عند تسجيل أي حساب جديد (مريض أو عيادة) أو وضع الضيف
 function updatePhoneVisibility() {
-  const showPhone = mode === 'signup';
+  const showPhone = mode === 'signup' || mode === 'guest';
   phoneField.classList.toggle('hidden', !showPhone);
 }
 
@@ -65,6 +82,11 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearStatus();
 
+  if (mode === 'guest') {
+    await handleGuestBooking();
+    return;
+  }
+
   const email = emailInput.value.trim();
   const password = passwordInput.value;
 
@@ -74,6 +96,49 @@ form.addEventListener('submit', async (e) => {
     await handleLogin(email, password);
   }
 });
+
+// ============================================
+// حجز كضيف (بدون بريد إلكتروني ولا كلمة مرور) - حساب مؤقت عبر Firebase Anonymous Auth
+// ============================================
+async function handleGuestBooking() {
+  const name = nameInput.value.trim();
+  if (!name) {
+    showStatus('فضلاً أدخل الاسم', 'error');
+    return;
+  }
+
+  const phone = phoneInput.value.trim();
+  if (!phone) {
+    showStatus('فضلاً أدخل رقم الجوال (واتساب)', 'error');
+    return;
+  }
+  if (!/^[0-9+\s-]{8,15}$/.test(phone)) {
+    showStatus('صيغة رقم الجوال غير صحيحة', 'error');
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const cred = await auth.signInAnonymously();
+    const uid = cred.user.uid;
+
+    await db.collection('users').doc(uid).set({
+      name: name,
+      email: '',
+      role: 'patient',
+      status: 'active',
+      phone: phone,
+      isGuest: true,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    showStatus('تم، جاري التوجيه للحجز...', 'success');
+    redirectByRole('patient');
+  } catch (err) {
+    showStatus(translateError(err), 'error');
+    setLoading(false);
+  }
+}
 
 // ============================================
 // إنشاء حساب جديد
