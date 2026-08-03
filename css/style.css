@@ -2245,6 +2245,23 @@ body.landing {
 
 .guest-toggle-btn:hover { text-decoration: underline; }
 
+.forgot-password-btn {
+  display: block;
+  width: 100%;
+  margin: -4px 0 14px;
+  padding: 4px;
+  background: none;
+  border: none;
+  color: var(--gray-500);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.forgot-password-btn:hover { color: var(--blue-700); text-decoration: underline; }
+
 /* ============================================
    شريط تنبيه حساب الضيف (لوحة المريض)
    ============================================ */

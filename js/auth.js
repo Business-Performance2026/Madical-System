@@ -11,6 +11,7 @@ const passwordField = document.getElementById('field-password');
 const roleSelectWrap = document.getElementById('field-role');
 const roleOptions = document.querySelectorAll('.role-option');
 const guestToggleBtn = document.getElementById('guest-toggle-btn');
+const forgotPasswordBtn = document.getElementById('forgot-password-btn');
 const modeSwitchWrap = document.querySelector('.mode-switch');
 
 const nameInput = document.getElementById('name');
@@ -22,38 +23,46 @@ const submitBtn = document.getElementById('submit-btn');
 const statusMsg = document.getElementById('status-msg');
 const form = document.getElementById('auth-form');
 
-let mode = 'login';       // 'login' أو 'signup' أو 'guest'
+let mode = 'login';       // 'login' أو 'signup' أو 'guest' أو 'forgot'
 let selectedRole = 'patient'; // 'patient' أو 'clinic'
 
 // ============================================
-// التبديل بين "تسجيل الدخول" و"إنشاء حساب" و"ضيف"
+// التبديل بين "تسجيل الدخول" و"إنشاء حساب" و"ضيف" و"نسيت كلمة المرور"
 // ============================================
 tabLogin.addEventListener('click', () => setMode('login'));
 tabSignup.addEventListener('click', () => setMode('signup'));
 guestToggleBtn.addEventListener('click', () => setMode(mode === 'guest' ? 'login' : 'guest'));
+forgotPasswordBtn.addEventListener('click', () => setMode(mode === 'forgot' ? 'login' : 'forgot'));
 
 function setMode(newMode) {
   mode = newMode;
   const isSignup = mode === 'signup';
   const isGuest = mode === 'guest';
+  const isForgot = mode === 'forgot';
 
-  modeSwitchWrap.classList.toggle('hidden', isGuest);
+  modeSwitchWrap.classList.toggle('hidden', isGuest || isForgot);
+  guestToggleBtn.classList.toggle('hidden', isForgot);
+  forgotPasswordBtn.classList.toggle('hidden', isSignup || isGuest);
 
-  tabLogin.classList.toggle('active', !isSignup && !isGuest);
+  tabLogin.classList.toggle('active', !isSignup && !isGuest && !isForgot);
   tabSignup.classList.toggle('active', isSignup);
 
   nameField.classList.toggle('hidden', !isSignup && !isGuest);
   roleSelectWrap.classList.toggle('hidden', !isSignup);
   emailField.classList.toggle('hidden', isGuest);
-  passwordField.classList.toggle('hidden', isGuest);
+  passwordField.classList.toggle('hidden', isGuest || isForgot);
   updatePhoneVisibility();
 
   if (isGuest) {
     submitBtn.textContent = t('submit_guest');
     guestToggleBtn.textContent = t('guest_toggle_hide');
+  } else if (isForgot) {
+    submitBtn.textContent = t('send_reset_link');
+    forgotPasswordBtn.textContent = t('forgot_password_back');
   } else {
     submitBtn.textContent = isSignup ? t('submit_signup') : t('submit_login');
     guestToggleBtn.textContent = t('guest_toggle_show');
+    forgotPasswordBtn.textContent = t('forgot_password_show');
   }
 
   clearStatus();
@@ -75,14 +84,18 @@ roleOptions.forEach((option) => {
   });
 });
 
-// لو المستخدم بدّل اللغة ونحن بوضع "ضيف"، نحدّث نص الأزرار بنفس الوضع الحالي
+// لو المستخدم بدّل اللغة، نحدّث نص الأزرار بنفس الوضع الحالي
 function onLanguageChanged() {
   if (mode === 'guest') {
     submitBtn.textContent = t('submit_guest');
     guestToggleBtn.textContent = t('guest_toggle_hide');
+  } else if (mode === 'forgot') {
+    submitBtn.textContent = t('send_reset_link');
+    forgotPasswordBtn.textContent = t('forgot_password_back');
   } else {
     submitBtn.textContent = mode === 'signup' ? t('submit_signup') : t('submit_login');
     guestToggleBtn.textContent = t('guest_toggle_show');
+    forgotPasswordBtn.textContent = t('forgot_password_show');
   }
 }
 
@@ -98,6 +111,11 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
+  if (mode === 'forgot') {
+    await handleForgotPassword();
+    return;
+  }
+
   const email = emailInput.value.trim();
   const password = passwordInput.value;
 
@@ -107,6 +125,27 @@ form.addEventListener('submit', async (e) => {
     await handleLogin(email, password);
   }
 });
+
+// ============================================
+// نسيان كلمة المرور: إرسال رابط إعادة تعيين للبريد المدخل
+// ============================================
+async function handleForgotPassword() {
+  const email = emailInput.value.trim();
+
+  if (!email) {
+    showStatus(t('err_enter_email'), 'error');
+    return;
+  }
+
+  setLoading(true);
+  try {
+    await auth.sendPasswordResetEmail(email);
+    showStatus(t('reset_link_sent'), 'success');
+  } catch (err) {
+    showStatus(translateError(err), 'error');
+  }
+  setLoading(false);
+}
 
 // ============================================
 // حجز كضيف (بدون بريد إلكتروني ولا كلمة مرور) - حساب مؤقت عبر Firebase Anonymous Auth
