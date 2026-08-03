@@ -552,6 +552,49 @@ async function disableDoctorDay(doctorId) {
   loadDashboard();
 }
 
+// يعطّل يوم كامل لكل أطباء العيادة مرة وحدة (عطلة رسمية مثلاً)
+async function disableClinicWideDay() {
+  const dateVal = document.getElementById('clinic-wide-disable-date').value;
+
+  if (!dateVal) {
+    alert('اختر التاريخ اللي تبي تعطّله أول');
+    return;
+  }
+
+  const affectedDoctors = cachedDoctors.filter((d) => (d.workingHours || []).some((h) => h.date === dateVal));
+
+  if (affectedDoctors.length === 0) {
+    alert('ما فيه أي طبيب عنده دوام مسجّل بهذا التاريخ أصلاً');
+    return;
+  }
+
+  const sure = confirm(`تعطيل دوام كل أطباء العيادة (${affectedDoctors.length}) بتاريخ ${dateVal}؟`);
+  if (!sure) return;
+
+  const btn = document.getElementById('clinic-wide-disable-btn');
+  btn.disabled = true;
+  btn.textContent = 'جاري التعطيل...';
+
+  try {
+    await Promise.all(affectedDoctors.map((d) => {
+      const remaining = (d.workingHours || []).filter((h) => h.date !== dateVal);
+      return db.collection('doctors').doc(d.id).update({ workingHours: remaining });
+    }));
+    loadDashboard();
+  } catch (err) {
+    console.error('disableClinicWideDay error:', err);
+    alert('تعذر تعطيل اليوم، حاول مرة أخرى');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'تعطيل العيادة بهذا اليوم';
+  }
+}
+
+const clinicWideDisableBtn = document.getElementById('clinic-wide-disable-btn');
+if (clinicWideDisableBtn) {
+  clinicWideDisableBtn.addEventListener('click', disableClinicWideDay);
+}
+
 // يضيف أوقات عمل لعدة تواريخ دفعة وحدة (نطاق تاريخ + أيام أسبوع مختارة)
 async function submitBulkHours(doctorId) {
   const form = document.querySelector(`[data-bulk-for="${doctorId}"]`);
@@ -644,6 +687,9 @@ function renderDoctorAccordionItem(doc) {
           <div class="mini-form" style="margin-bottom:14px; align-items:center;">
             <input type="text" class="edit-doctor-name" placeholder="اسم الطبيب" value="${escapeHtml(doc.name)}">
             <input type="text" class="edit-doctor-specialty" placeholder="التخصص" value="${escapeHtml(doc.specialty)}">
+            <select class="edit-doctor-slot-minutes" title="مدة الموعد">
+              ${[10, 15, 20, 30, 45, 60].map((m) => `<option value="${m}" ${(doc.slotMinutes || 20) === m ? 'selected' : ''}>${m} دقيقة</option>`).join('')}
+            </select>
           </div>
           <div class="mini-form" style="margin-bottom:14px;">
             <input type="file" accept="image/*" class="edit-doctor-photo" data-id="${doc.id}">
@@ -718,6 +764,7 @@ async function saveDoctorEdit(doctorId) {
   const card = document.querySelector(`[data-action="save-doctor-edit"][data-id="${doctorId}"]`).closest('.doctor-item');
   const name = card.querySelector('.edit-doctor-name').value.trim();
   const specialty = card.querySelector('.edit-doctor-specialty').value.trim();
+  const slotMinutes = parseInt(card.querySelector('.edit-doctor-slot-minutes').value, 10);
   const fileInput = card.querySelector('.edit-doctor-photo');
   const file = fileInput && fileInput.files[0];
 
@@ -742,7 +789,7 @@ async function saveDoctorEdit(doctorId) {
   saveBtn.textContent = 'جاري الحفظ...';
 
   try {
-    const updates = { name, specialty };
+    const updates = { name, specialty, slotMinutes };
 
     if (file) {
       const storagePath = `doctors/${doctorId}_${Date.now()}.jpg`;
@@ -1572,6 +1619,8 @@ async function loadClinicLogo() {
   const preview = document.getElementById('clinic-logo-preview');
   if (!preview) return;
 
+  renderBookingLink();
+
   try {
     const doc = await db.collection('users').doc(activeClinicUid).get();
     const data = doc.exists ? doc.data() : {};
@@ -1670,6 +1719,38 @@ if (clinicInfoForm) {
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = 'حفظ البيانات';
+    }
+  });
+}
+
+// ============================================
+// رابط الحجز المباشر + رمز QR
+// ============================================
+function renderBookingLink() {
+  const linkInput = document.getElementById('booking-link-input');
+  const qrImg = document.getElementById('booking-qr-img');
+  if (!linkInput || !qrImg) return;
+
+  // بناء رابط نسبي لصفحة تسجيل الدخول، عشان يشتغل صح مهما كان الدومين (مخصص أو GitHub Pages بمسار فرعي)
+  const url = new URL('../login.html', window.location.href);
+  url.searchParams.set('clinic', activeClinicUid);
+  const bookingLink = url.href;
+
+  linkInput.value = bookingLink;
+  qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(bookingLink)}`;
+}
+
+const copyBookingLinkBtn = document.getElementById('copy-booking-link-btn');
+if (copyBookingLinkBtn) {
+  copyBookingLinkBtn.addEventListener('click', async () => {
+    const linkInput = document.getElementById('booking-link-input');
+    try {
+      await navigator.clipboard.writeText(linkInput.value);
+      copyBookingLinkBtn.textContent = '✅ نُسخ';
+      setTimeout(() => { copyBookingLinkBtn.textContent = '📋 نسخ'; }, 1800);
+    } catch (err) {
+      linkInput.select();
+      document.execCommand('copy');
     }
   });
 }

@@ -4,6 +4,7 @@
 let currentUid = null;
 let patientName = '';
 let patientPhone = '';
+let familyMembers = [];
 
 const DAYS = [
   { key: 'sunday', label: 'الأحد' },
@@ -37,6 +38,7 @@ auth.onAuthStateChanged(async (user) => {
   document.getElementById('patient-name').textContent = patientName;
 
   loadClinics();
+  loadFamilyMembers();
   loadMyBookings().then(promptPendingRatingOnce);
 });
 
@@ -78,7 +80,16 @@ async function loadClinics() {
       clinicSpecialtiesMap[d.clinicId].add(d.specialty);
     });
 
-    renderClinicsStep();
+    // لو دخل برابط حجز مباشر لعيادة معيّنة (?clinic=uid)، نوديه لخطوة اختيار الطبيب فوراً
+    const clinicParam = new URLSearchParams(window.location.search).get('clinic');
+    const directClinic = clinicParam && allClinics.find((c) => c.id === clinicParam);
+
+    if (directClinic) {
+      selectedClinic = directClinic;
+      goToDoctorsStep();
+    } else {
+      renderClinicsStep();
+    }
   } catch (err) {
     console.error('loadClinics error:', err);
     document.getElementById('booking-steps').innerHTML =
@@ -337,7 +348,7 @@ async function renderAvailableSlots() {
 
   const bookedTimes = new Set(lockedSnap.docs.map((doc) => doc.data().time));
 
-  const allSlots = hoursForDay.flatMap((h) => generateSlots(h.start, h.end));
+  const allSlots = hoursForDay.flatMap((h) => generateSlots(h.start, h.end, selectedDoctor.slotMinutes));
   const availableSlots = [...new Set(allSlots)].filter((t) => !bookedTimes.has(t)).sort();
 
   if (availableSlots.length === 0) {
@@ -364,24 +375,77 @@ function renderConfirmBox() {
   confirmWrap.innerHTML = `
     <div class="confirm-box">
       <p>تأكيد حجز موعد يوم ${selectedDate} الساعة ${selectedTime} مع د. ${escapeHtml(selectedDoctor.name)}؟</p>
+      <div class="field">
+        <label for="booking-for-select">الحجز لـ</label>
+        <select id="booking-for-select">
+          <option value="__self__">نفسي (${escapeHtml(patientName)})</option>
+          ${familyMembers.map((f) => `<option value="${f.id}">${escapeHtml(f.name)}</option>`).join('')}
+          <option value="__new__">+ إضافة فرد جديد من العائلة</option>
+        </select>
+      </div>
+      <div class="field hidden" id="new-family-member-field">
+        <label for="new-family-member-name">اسم الفرد الجديد</label>
+        <input type="text" id="new-family-member-name" placeholder="مثال: سارة (الزوجة)">
+      </div>
       <button type="button" class="btn-primary" id="confirm-booking-btn">إرسال طلب الحجز</button>
     </div>
   `;
+
+  document.getElementById('booking-for-select').addEventListener('change', (e) => {
+    document.getElementById('new-family-member-field').classList.toggle('hidden', e.target.value !== '__new__');
+  });
+
   document.getElementById('confirm-booking-btn').addEventListener('click', submitBooking);
+}
+
+async function loadFamilyMembers() {
+  try {
+    const snap = await db.collection('familyMembers').where('patientId', '==', currentUid).get();
+    familyMembers = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch (err) {
+    console.error('loadFamilyMembers error:', err);
+  }
 }
 
 async function submitBooking() {
   const btn = document.getElementById('confirm-booking-btn');
+  const bookingForSelect = document.getElementById('booking-for-select');
+  const bookingForValue = bookingForSelect.value;
+
+  let bookedForName = patientName;
+
+  if (bookingForValue === '__new__') {
+    const newName = document.getElementById('new-family-member-name').value.trim();
+    if (!newName) {
+      alert('اكتب اسم الفرد الجديد أول');
+      return;
+    }
+    bookedForName = newName;
+  } else if (bookingForValue !== '__self__') {
+    const member = familyMembers.find((f) => f.id === bookingForValue);
+    if (member) bookedForName = member.name;
+  }
+
   btn.disabled = true;
   btn.textContent = 'جاري الإرسال...';
 
   try {
+    // لو اختار "فرد جديد"، نحفظه بقائمة العائلة عشان يظهر بالمرات الجاية
+    if (bookingForValue === '__new__') {
+      await db.collection('familyMembers').add({
+        patientId: currentUid,
+        name: bookedForName,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      loadFamilyMembers();
+    }
+
     const docRef = await db.collection('bookings').add({
       clinicId: selectedClinic.id,
       doctorId: selectedDoctor.id,
       doctorName: selectedDoctor.name,
       patientId: currentUid,
-      patientName: patientName,
+      patientName: bookedForName,
       patientPhone: patientPhone,
       date: selectedDate,
       time: selectedTime,
@@ -649,18 +713,19 @@ function buildLockId(doctorId, date, time) {
 // ============================================
 // أدوات مساعدة
 // ============================================
-function generateSlots(start, end) {
+function generateSlots(start, end, slotMinutes) {
+  const duration = slotMinutes || SLOT_MINUTES;
   const slots = [];
   let [h, m] = start.split(':').map(Number);
   const [endH, endM] = end.split(':').map(Number);
   const endTotal = endH * 60 + endM;
 
   let current = h * 60 + m;
-  while (current + SLOT_MINUTES <= endTotal) {
+  while (current + duration <= endTotal) {
     const hh = String(Math.floor(current / 60)).padStart(2, '0');
     const mm = String(current % 60).padStart(2, '0');
     slots.push(`${hh}:${mm}`);
-    current += SLOT_MINUTES;
+    current += duration;
   }
   return slots;
 }

@@ -190,8 +190,17 @@ function redirectByRole(role) {
     staff: 'clinic/dashboard.html',
     admin: 'admin/dashboard.html',
   };
+
+  let destination = destinations[role] || 'login.html';
+
+  // لو المستخدم دخل من رابط حجز مباشر لعيادة معيّنة، نمرر نفس المعامل بعد تسجيل الدخول
+  const clinicParam = new URLSearchParams(window.location.search).get('clinic');
+  if (clinicParam && role === 'patient') {
+    destination += `?clinic=${encodeURIComponent(clinicParam)}`;
+  }
+
   setTimeout(() => {
-    window.location.href = destinations[role] || 'login.html';
+    window.location.href = destination;
   }, 700);
 }
 

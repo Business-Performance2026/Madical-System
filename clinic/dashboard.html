@@ -99,6 +99,15 @@
       </form>
 
       <div id="doctors-wrap" class="loading-state">جاري التحميل...</div>
+
+      <div class="clinic-wide-disable-block">
+        <h3 class="mini-section-title">🏖️ تعطيل يوم كامل للعيادة (كل الأطباء مرة وحدة)</h3>
+        <p class="section-hint">مفيد للعطل الرسمية — يلغي دوام كل أطباء العيادة بهذا التاريخ دفعة وحدة</p>
+        <div class="disable-day-row">
+          <input type="date" id="clinic-wide-disable-date">
+          <button type="button" class="btn-xs delete" id="clinic-wide-disable-btn">تعطيل العيادة بهذا اليوم</button>
+        </div>
+      </div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="schedule">
@@ -239,6 +248,16 @@
         </div>
         <button type="submit" class="btn-primary" id="save-clinic-info-btn" style="width:auto; padding:12px 28px;">حفظ البيانات</button>
       </form>
+
+      <div class="booking-link-block">
+        <h3 class="mini-section-title">🔗 رابط الحجز المباشر لعيادتك</h3>
+        <p class="section-hint">شارك هذا الرابط أو رمز QR بحسابك بإنستغرام أو بلوحة العيادة — يودّي المريض مباشرة لحجز موعد عندك، بدون ما يحتاج يدور عليك بالتطبيق</p>
+        <div class="booking-link-row">
+          <input type="text" id="booking-link-input" readonly>
+          <button type="button" class="btn-xs toggle" id="copy-booking-link-btn">📋 نسخ</button>
+        </div>
+        <img id="booking-qr-img" class="booking-qr-img" alt="رمز QR لرابط الحجز">
+      </div>
     </section>
 
   </div>
