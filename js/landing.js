@@ -232,6 +232,7 @@ function renderDoctorsCarousel(doctors) {
   }
 
   wrap.innerHTML = `<div class="carousel-track">${doctors.map((d) => renderDoctorMiniCard(d)).join('')}</div>`;
+  setupAutoScroll('doctors-carousel-wrap');
 }
 
 function renderDoctorMiniCard(d) {
@@ -260,6 +261,7 @@ function renderClinicsCarousel(clinics) {
   }
 
   wrap.innerHTML = `<div class="carousel-track">${clinics.map((c) => renderClinicMiniCard(c)).join('')}</div>`;
+  setupAutoScroll('clinics-carousel-wrap');
 }
 
 function renderClinicMiniCard(c) {
@@ -320,6 +322,67 @@ if (searchToggleBtn && navSearchWrap) {
     }
   });
 }
+
+// ============================================
+// تمرير تلقائي مستمر للعيادات والأطباء (يتوقف عند اللمس/التمرير اليدوي ويرجع بعدها)
+// ============================================
+const autoScrollTimers = {};
+
+function setupAutoScroll(wrapId) {
+  clearInterval(autoScrollTimers[wrapId]);
+
+  const track = document.querySelector(`#${wrapId} .carousel-track`);
+  if (!track) return;
+
+  // ما نفعّل التمرير التلقائي إلا لو فيه محتوى أطول من عرض الشاشة فعلاً
+  if (track.scrollWidth <= track.clientWidth + 10) return;
+
+  let resumeTimeout = null;
+
+  const step = () => {
+    // بالـ RTL الأصلي، أقصى تمرير (آخر عنصر) يوصله scrollLeft عند قيمة سالبة تقارب -(scrollWidth - clientWidth)
+    const maxScroll = track.scrollWidth - track.clientWidth;
+    const atEnd = Math.abs(track.scrollLeft) >= maxScroll - 2;
+
+    if (atEnd) {
+      track.scrollTo({ left: 0, behavior: 'smooth' });
+    } else {
+      track.scrollBy({ left: -1, behavior: 'auto' });
+    }
+  };
+
+  autoScrollTimers[wrapId] = setInterval(step, 30);
+
+  const pause = () => clearInterval(autoScrollTimers[wrapId]);
+  const resume = () => {
+    clearTimeout(resumeTimeout);
+    resumeTimeout = setTimeout(() => {
+      clearInterval(autoScrollTimers[wrapId]);
+      autoScrollTimers[wrapId] = setInterval(step, 30);
+    }, 2000);
+  };
+
+  track.addEventListener('mouseenter', pause);
+  track.addEventListener('mouseleave', resume);
+  track.addEventListener('touchstart', pause, { passive: true });
+  track.addEventListener('touchend', resume);
+}
+
+// ============================================
+// زر "عرض الكل" - يمسح أي فلتر مفعّل (بحث/تخصص) ويعرض القائمة كاملة
+// ============================================
+document.querySelectorAll('.view-all-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    activeSpecialty = '';
+    searchQuery = '';
+    document.getElementById('hero-search-input').value = '';
+    document.querySelectorAll('.specialty-pill').forEach((p) => p.classList.remove('active'));
+    document.querySelector('.specialty-pill[data-specialty=""]').classList.add('active');
+    renderDirectory();
+
+    document.getElementById(btn.dataset.target).scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+});
 
 // ============================================
 // أدوات مساعدة

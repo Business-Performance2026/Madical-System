@@ -1157,6 +1157,21 @@ body.landing {
 
 .carousel-header-row .carousel-title { margin: 0; }
 
+.view-all-btn {
+  border: none;
+  background: none;
+  color: var(--gold-glow);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+}
+
+.view-all-btn:hover { opacity: 1; text-decoration: underline; }
+
 /* ============================================
    أيقونة البحث المنسدلة بشريط التنقل
    ============================================ */
@@ -1167,21 +1182,22 @@ body.landing {
 }
 
 .search-toggle-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  background: transparent;
+  width: 30px;
+  height: 30px;
+  border-radius: 0;
+  border: none;
+  background: none;
   color: var(--white);
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.2s, background 0.2s;
+  opacity: 0.85;
+  transition: opacity 0.2s, transform 0.15s;
 }
 
-.search-toggle-btn:hover { border-color: var(--gold-glow); background: rgba(255, 255, 255, 0.08); }
+.search-toggle-btn:hover { opacity: 1; transform: scale(1.1); }
 
 .nav-search-wrap {
   max-width: 1080px;
@@ -2124,7 +2140,7 @@ body.landing {
 
 @media (max-width: 480px) {
   #ads-carousel-wrap { padding: 0 14px; margin-top: 12px; }
-  .ad-slide { aspect-ratio: 16 / 9; }
+  .ad-slide { aspect-ratio: 3 / 1; max-height: 130px; }
 
   .landing-nav { padding: 14px 16px; }
   .nav-search { order: 3; flex-basis: 100%; max-width: 100%; }
