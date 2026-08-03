@@ -149,6 +149,8 @@ const I18N = {
     save_account_invalid_email: 'صيغة البريد غير صحيحة',
     save_account_weak_password: 'كلمة المرور ضعيفة',
     save_account_error: 'تعذر حفظ الحساب، حاول مرة أخرى',
+    case_description_label: 'وصف الحالة (اختياري)',
+    case_description_placeholder: 'مثال: ألم بالضرس من جهة اليمين من 3 أيام...',
     new_booking_error: 'اكتب اسم الفرد الجديد أول',
 
     // لوحة العيادة - عام
@@ -446,6 +448,8 @@ const I18N = {
     save_account_invalid_email: 'Invalid email format',
     save_account_weak_password: 'Weak password',
     save_account_error: 'Could not save the account, please try again',
+    case_description_label: 'Describe your condition (optional)',
+    case_description_placeholder: 'e.g. Tooth pain on the right side for 3 days...',
     new_booking_error: 'Type the new family member\'s name first',
 
     // clinic dashboard - general

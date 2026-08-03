@@ -419,6 +419,10 @@ function renderConfirmBox() {
         <label for="new-family-member-name">${t('new_family_member_label')}</label>
         <input type="text" id="new-family-member-name" placeholder="${t('new_family_member_placeholder')}">
       </div>
+      <div class="field">
+        <label for="case-description">${t('case_description_label')}</label>
+        <textarea id="case-description" rows="3" placeholder="${t('case_description_placeholder')}"></textarea>
+      </div>
       <button type="button" class="btn-primary" id="confirm-booking-btn">${t('send_booking_request')}</button>
     </div>
   `;
@@ -461,6 +465,8 @@ async function submitBooking() {
   btn.disabled = true;
   btn.textContent = t('sending');
 
+  const caseDescription = document.getElementById('case-description').value.trim();
+
   try {
     // لو اختار "فرد جديد"، نحفظه بقائمة العائلة عشان يظهر بالمرات الجاية
     if (bookingForValue === '__new__') {
@@ -482,6 +488,7 @@ async function submitBooking() {
       date: selectedDate,
       time: selectedTime,
       status: 'pending',
+      caseDescription: caseDescription,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 

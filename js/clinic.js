@@ -246,7 +246,10 @@ function renderBookingsActionTable(bookings) {
 function renderBookingRow(b) {
   return `
     <tr>
-      <td class="cell-name">${escapeHtml(b.patientName)}</td>
+      <td class="cell-name">
+        ${escapeHtml(b.patientName)}
+        ${b.caseDescription ? `<p class="case-description" title="${escapeHtml(b.caseDescription)}">📝 ${escapeHtml(b.caseDescription)}</p>` : ''}
+      </td>
       <td class="cell-sub">${bookingNumber(b.id)}</td>
       <td>${escapeHtml(b.doctorName)}</td>
       <td class="cell-sub">${b.date}</td>
@@ -970,7 +973,12 @@ function scheduleTableHtml(bookings, opts) {
 function scheduleRowHtml(b, opts) {
   const cells = [`<td class="cell-sub">${b.time}</td>`];
   if (opts.showDate) cells.push(`<td class="cell-sub">${b.date}</td>`);
-  cells.push(`<td class="cell-name">${escapeHtml(b.patientName)}</td>`);
+  cells.push(`
+    <td class="cell-name">
+      ${escapeHtml(b.patientName)}
+      ${b.caseDescription ? `<p class="case-description" title="${escapeHtml(b.caseDescription)}">📝 ${escapeHtml(b.caseDescription)}</p>` : ''}
+    </td>
+  `);
   cells.push(`<td class="cell-sub">${bookingNumber(b.id)}</td>`);
   if (opts.showDoctor) cells.push(`<td>${escapeHtml(b.doctorName)}</td>`);
   cells.push(`
