@@ -37,19 +37,19 @@ auth.onAuthStateChanged(async (user) => {
 
   if (isPrimaryOwner) {
     activeClinicUid = user.uid;
-    clinicName = userData.name || 'العيادة';
+    clinicName = userData.name || t('role_clinic');
   } else {
     // موظف: نجيب اسم العيادة الأساسية من حساب صاحبها
     activeClinicUid = userData.staffOf;
     const ownerDoc = await db.collection('users').doc(activeClinicUid).get();
-    clinicName = ownerDoc.exists ? (ownerDoc.data().name || 'العيادة') : 'العيادة';
+    clinicName = ownerDoc.exists ? (ownerDoc.data().name || t('role_clinic')) : t('role_clinic');
   }
 
   document.getElementById('clinic-name').textContent = userData.name || clinicName;
 
   const staffIndicator = document.getElementById('staff-indicator');
   if (!isPrimaryOwner && staffIndicator) {
-    staffIndicator.textContent = ` (موظف لدى ${clinicName})`;
+    staffIndicator.textContent = t('staff_of', clinicName);
     staffIndicator.classList.remove('hidden');
   }
 
@@ -141,7 +141,7 @@ function showNewBookingToast(booking, count) {
   const el = document.createElement('div');
   el.className = 'toast-notification';
   el.innerHTML = `
-    <p class="toast-title">🔔 حجز جديد وصل${count > 1 ? ` (${count})` : ''}</p>
+    <p class="toast-title">🔔 ${t('clinic_tab_requests')}${count > 1 ? ` (${count})` : ''}</p>
     <p class="toast-body">${escapeHtml(booking.patientName)} — ${escapeHtml(booking.doctorName)}<br>${booking.date} — ${booking.time}</p>
   `;
   el.addEventListener('click', () => {
@@ -193,7 +193,7 @@ function renderBookingRequests() {
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 
   if (pending.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">لا توجد طلبات حجز جديدة حالياً</p>';
+    wrap.innerHTML = `<p class="empty-state">${t('no_requests')}</p>`;
     return;
   }
 
@@ -211,7 +211,7 @@ function renderRejectedBookings() {
     .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
 
   if (rejected.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">لا توجد مواعيد مرفوضة حالياً</p>';
+    wrap.innerHTML = `<p class="empty-state">${t('no_rejected')}</p>`;
     return;
   }
 
@@ -226,13 +226,13 @@ function renderBookingsActionTable(bookings) {
       <table class="data-table">
         <thead>
           <tr>
-            <th>المريض</th>
-            <th>رقم الحجز</th>
-            <th>الطبيب</th>
-            <th>التاريخ</th>
-            <th>الوقت</th>
-            <th>تواصل</th>
-            <th>إجراء</th>
+            <th data-i18n="col_patient">${t('col_patient')}</th>
+            <th data-i18n="col_booking_number">${t('col_booking_number')}</th>
+            <th data-i18n="col_doctor">${t('col_doctor')}</th>
+            <th data-i18n="col_date">${t('col_date')}</th>
+            <th data-i18n="col_time">${t('col_time')}</th>
+            <th data-i18n="col_contact">${t('col_contact')}</th>
+            <th data-i18n="col_action">${t('col_action')}</th>
           </tr>
         </thead>
         <tbody>
@@ -253,13 +253,13 @@ function renderBookingRow(b) {
       <td class="cell-sub">${b.time}</td>
       <td>
         ${b.patientPhone
-          ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">💬 واتساب</a>`
+          ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">${t('whatsapp_btn')}</a>`
           : '<span class="cell-sub">—</span>'}
       </td>
       <td>
         <div class="row-actions">
-          <button class="btn-xs approve" data-action="accept" data-id="${b.id}">قبول</button>
-          <button class="btn-xs reject" data-action="reject" data-id="${b.id}">رفض</button>
+          <button class="btn-xs approve" data-action="accept" data-id="${b.id}">${t('approve_btn')}</button>
+          <button class="btn-xs reject" data-action="reject" data-id="${b.id}">${t('reject_btn')}</button>
           <button class="btn-xs toggle" data-action="edit" data-id="${b.id}">✏️</button>
           <button class="btn-xs delete" data-action="delete" data-id="${b.id}">🗑️</button>
         </div>
@@ -274,12 +274,12 @@ function renderBookingEditRow(b, colspan) {
     <tr>
       <td colspan="${colspan}">
         <div class="mini-form">
-          <input type="text" class="edit-booking-name" placeholder="اسم المريض" value="${escapeHtml(b.patientName)}">
-          <input type="tel" class="edit-booking-phone" placeholder="رقم الجوال" value="${escapeHtml(b.patientPhone || '')}">
+          <input type="text" class="edit-booking-name" placeholder="${t('col_patient')}" value="${escapeHtml(b.patientName)}">
+          <input type="tel" class="edit-booking-phone" placeholder="${t('label_phone')}" value="${escapeHtml(b.patientPhone || '')}">
           <input type="date" class="edit-booking-date" value="${b.date}">
           <input type="time" class="edit-booking-time" value="${b.time}">
-          <button type="button" class="btn-xs approve" data-action="save-booking-edit" data-id="${b.id}">💾 حفظ</button>
-          <button type="button" class="btn-xs delete" data-action="cancel-booking-edit" data-id="${b.id}">إلغاء</button>
+          <button type="button" class="btn-xs approve" data-action="save-booking-edit" data-id="${b.id}">${t('save_btn')}</button>
+          <button type="button" class="btn-xs delete" data-action="cancel-booking-edit" data-id="${b.id}">${t('cancel_edit_btn')}</button>
         </div>
       </td>
     </tr>
@@ -344,7 +344,7 @@ async function saveBookingEdit(bookingId) {
   const newTime = row.querySelector('.edit-booking-time').value;
 
   if (!patientName || !newDate || !newTime) {
-    alert('الاسم والتاريخ والوقت إجباريين');
+    alert(t('booking_fields_required'));
     return;
   }
 
@@ -380,7 +380,7 @@ async function saveBookingEdit(bookingId) {
     renderUpcoming24h();
   } catch (err) {
     console.error('saveBookingEdit error:', err);
-    alert('تعذر حفظ التعديلات، حاول مرة أخرى');
+    alert(t('save_error'));
   }
 }
 
@@ -402,7 +402,7 @@ function cancelBookingEdit() {
 
 // حذف حجز نهائياً - لو كان مقبول، نحرر قفل الوقت أيضاً
 async function deleteBooking(bookingId) {
-  const sure = confirm('متأكد إنك تبي تحذف هذا الحجز نهائياً؟ لا يمكن التراجع.');
+  const sure = confirm(t('confirm_delete_booking'));
   if (!sure) return;
 
   const booking = cachedBookings.find((b) => b.id === bookingId);
@@ -417,7 +417,7 @@ async function deleteBooking(bookingId) {
     loadDashboard();
   } catch (err) {
     console.error('deleteBooking error:', err);
-    alert('تعذر حذف الحجز، حاول مرة أخرى');
+    alert(t('delete_error'));
   }
 }
 
@@ -453,7 +453,7 @@ function renderDoctors() {
   const wrap = document.getElementById('doctors-wrap');
 
   if (cachedDoctors.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">ما أضفت أي طبيب بعد</p>';
+    wrap.innerHTML = `<p class="empty-state">${t('no_doctors_added')}</p>`;
     return;
   }
 
@@ -532,7 +532,7 @@ async function disableDoctorDay(doctorId) {
   const dateVal = row.querySelector('.disable-day-date').value;
 
   if (!dateVal) {
-    alert('اختر تاريخ اليوم اللي تبي تعطّله أول');
+    alert(t('select_date_first'));
     return;
   }
 
@@ -541,11 +541,11 @@ async function disableDoctorDay(doctorId) {
   const remaining = existing.filter((h) => h.date !== dateVal);
 
   if (remaining.length === existing.length) {
-    alert('ما فيه أوقات عمل مسجّلة لهذا الطبيب بهذا التاريخ أصلاً');
+    alert(t('no_hours_this_date'));
     return;
   }
 
-  const sure = confirm(`تعطيل كل أوقات الطبيب المسجّلة بتاريخ ${dateVal}؟`);
+  const sure = confirm(t('confirm_disable_doctor_day', dateVal));
   if (!sure) return;
 
   await db.collection('doctors').doc(doctorId).update({ workingHours: remaining });
@@ -557,23 +557,23 @@ async function disableClinicWideDay() {
   const dateVal = document.getElementById('clinic-wide-disable-date').value;
 
   if (!dateVal) {
-    alert('اختر التاريخ اللي تبي تعطّله أول');
+    alert(t('select_date_first'));
     return;
   }
 
   const affectedDoctors = cachedDoctors.filter((d) => (d.workingHours || []).some((h) => h.date === dateVal));
 
   if (affectedDoctors.length === 0) {
-    alert('ما فيه أي طبيب عنده دوام مسجّل بهذا التاريخ أصلاً');
+    alert(t('no_doctors_on_date'));
     return;
   }
 
-  const sure = confirm(`تعطيل دوام كل أطباء العيادة (${affectedDoctors.length}) بتاريخ ${dateVal}؟`);
+  const sure = confirm(t('confirm_disable_clinic_day', affectedDoctors.length, dateVal));
   if (!sure) return;
 
   const btn = document.getElementById('clinic-wide-disable-btn');
   btn.disabled = true;
-  btn.textContent = 'جاري التعطيل...';
+  btn.textContent = t('disabling');
 
   try {
     await Promise.all(affectedDoctors.map((d) => {
@@ -583,10 +583,10 @@ async function disableClinicWideDay() {
     loadDashboard();
   } catch (err) {
     console.error('disableClinicWideDay error:', err);
-    alert('تعذر تعطيل اليوم، حاول مرة أخرى');
+    alert(t('disable_error'));
   } finally {
     btn.disabled = false;
-    btn.textContent = 'تعطيل العيادة بهذا اليوم';
+    btn.textContent = t('clinic_wide_disable_btn');
   }
 }
 
@@ -605,21 +605,21 @@ async function submitBulkHours(doctorId) {
   const selectedWeekdays = [...form.querySelectorAll('.bulk-weekday:checked')].map((cb) => cb.value);
 
   if (!fromDate || !toDate || fromDate > toDate) {
-    alert('تأكد إن "من تاريخ" قبل "إلى تاريخ"');
+    alert(t('bulk_date_order_error'));
     return;
   }
   if (selectedWeekdays.length === 0) {
-    alert('اختر يوم أسبوع وحد على الأقل');
+    alert(t('bulk_weekday_required'));
     return;
   }
   if (!start || !end || start >= end) {
-    alert('تأكد إن وقت البداية قبل وقت النهاية');
+    alert(t('time_order_error'));
     return;
   }
 
   const rangeDays = (new Date(toDate) - new Date(fromDate)) / (1000 * 60 * 60 * 24);
   if (rangeDays > 180) {
-    alert('النطاق طويل جداً، اختر مدة أقصاها 6 أشهر بمرة وحدة');
+    alert(t('bulk_range_too_long'));
     return;
   }
 
@@ -644,11 +644,11 @@ async function submitBulkHours(doctorId) {
   }
 
   if (newEntries.length === 0) {
-    alert('ما فيه تواريخ جديدة تُضاف (كلها موجودة مسبقاً أو ما فيه يوم مطابق بالنطاق)');
+    alert(t('bulk_no_new_dates'));
     return;
   }
 
-  const sure = confirm(`بتُضاف ${newEntries.length} تاريخ جديد لهذا الطبيب. تأكيد؟`);
+  const sure = confirm(t('confirm_bulk_add', newEntries.length));
   if (!sure) return;
 
   await db.collection('doctors').doc(doctorId).update({
@@ -676,7 +676,7 @@ function renderDoctorAccordionItem(doc) {
           </div>
         </div>
         <div class="doctor-item-actions">
-          <button class="btn-xs toggle" data-action="print-doctor" data-id="${doc.id}" title="طباعة جدول الطبيب">🖨️</button>
+          <button class="btn-xs toggle" data-action="print-doctor" data-id="${doc.id}" title="${t('print_doctor_title')}">🖨️</button>
           <button class="btn-xs toggle" data-action="edit-doctor" data-id="${doc.id}">✏️</button>
           <button class="btn-xs delete" data-action="delete-doctor" data-id="${doc.id}">🗑️</button>
           <span class="doctor-item-arrow">${isExpanded ? '▲' : '▼'}</span>
@@ -685,18 +685,18 @@ function renderDoctorAccordionItem(doc) {
       <div class="doctor-item-body ${isExpanded ? '' : 'hidden'}">
         ${isEditing ? `
           <div class="mini-form" style="margin-bottom:14px; align-items:center;">
-            <input type="text" class="edit-doctor-name" placeholder="اسم الطبيب" value="${escapeHtml(doc.name)}">
-            <input type="text" class="edit-doctor-specialty" placeholder="التخصص" value="${escapeHtml(doc.specialty)}">
-            <select class="edit-doctor-slot-minutes" title="مدة الموعد">
-              ${[10, 15, 20, 30, 45, 60].map((m) => `<option value="${m}" ${(doc.slotMinutes || 20) === m ? 'selected' : ''}>${m} دقيقة</option>`).join('')}
+            <input type="text" class="edit-doctor-name" placeholder="${t('add_doctor_name_label')}" value="${escapeHtml(doc.name)}">
+            <input type="text" class="edit-doctor-specialty" placeholder="${t('add_doctor_specialty_label')}" value="${escapeHtml(doc.specialty)}">
+            <select class="edit-doctor-slot-minutes" title="${t('slot_duration_label')}">
+              ${[10, 15, 20, 30, 45, 60].map((m) => `<option value="${m}" ${(doc.slotMinutes || 20) === m ? 'selected' : ''}>${m} ${t('minutes_suffix')}</option>`).join('')}
             </select>
           </div>
           <div class="mini-form" style="margin-bottom:14px;">
             <input type="file" accept="image/*" class="edit-doctor-photo" data-id="${doc.id}">
-            <button type="button" class="btn-xs approve" data-action="save-doctor-edit" data-id="${doc.id}">💾 حفظ</button>
-            <button type="button" class="btn-xs delete" data-action="cancel-doctor-edit" data-id="${doc.id}">إلغاء</button>
+            <button type="button" class="btn-xs approve" data-action="save-doctor-edit" data-id="${doc.id}">${t('save_btn')}</button>
+            <button type="button" class="btn-xs delete" data-action="cancel-doctor-edit" data-id="${doc.id}">${t('cancel_edit_btn')}</button>
           </div>
-          <p class="cell-sub" style="margin:-6px 0 14px;">رفع صورة جديدة اختياري — حد أقصى 3 ميجابايت</p>
+          <p class="cell-sub" style="margin:-6px 0 14px;">${t('photo_upload_hint')}</p>
         ` : ''}
         ${renderDoctorHoursSection(doc)}
       </div>
@@ -708,7 +708,7 @@ function renderDoctorHoursSection(doc) {
   return `
     <div class="hours-list">
       ${(doc.workingHours || []).length === 0
-        ? '<span class="cell-sub">ما تم تحديد أوقات عمل بعد</span>'
+        ? `<span class="cell-sub">${t('no_hours_set')}</span>`
         : doc.workingHours.map((h, i) => `
             <span class="hours-chip">
               ${h.date || dayLabel(h.day)} ${h.start} - ${h.end}
@@ -721,24 +721,24 @@ function renderDoctorHoursSection(doc) {
       <input type="date" class="hour-date">
       <input type="time" class="hour-start" value="09:00">
       <input type="time" class="hour-end" value="14:00">
-      <button type="button" class="btn-xs toggle" data-action="add-hour" data-id="${doc.id}">إضافة وقت</button>
-      <button type="button" class="btn-xs approve" data-action="toggle-bulk" data-id="${doc.id}">📅 إضافة بالجملة</button>
+      <button type="button" class="btn-xs toggle" data-action="add-hour" data-id="${doc.id}">${t('add_hour_btn')}</button>
+      <button type="button" class="btn-xs approve" data-action="toggle-bulk" data-id="${doc.id}">${t('bulk_add_toggle')}</button>
     </div>
 
     <div class="disable-day-row" data-disable-day-for="${doc.id}">
       <input type="date" class="disable-day-date">
-      <button type="button" class="btn-xs delete" data-action="disable-day" data-id="${doc.id}">🏖️ تعطيل هذا اليوم</button>
+      <button type="button" class="btn-xs delete" data-action="disable-day" data-id="${doc.id}">${t('disable_day_btn')}</button>
     </div>
 
     <div class="bulk-hours-form hidden" data-bulk-for="${doc.id}">
-      <p class="bulk-hours-title">إضافة أوقات لعدة تواريخ دفعة وحدة</p>
+      <p class="bulk-hours-title">${t('bulk_add_title')}</p>
       <div class="mini-form">
         <div class="field">
-          <label>من تاريخ</label>
+          <label>${t('bulk_from_date')}</label>
           <input type="date" class="bulk-from-date">
         </div>
         <div class="field">
-          <label>إلى تاريخ</label>
+          <label>${t('bulk_to_date')}</label>
           <input type="date" class="bulk-to-date">
         </div>
       </div>
@@ -752,7 +752,7 @@ function renderDoctorHoursSection(doc) {
       <div class="mini-form">
         <input type="time" class="bulk-start" value="09:00">
         <input type="time" class="bulk-end" value="14:00">
-        <button type="button" class="btn-xs approve" data-action="submit-bulk" data-id="${doc.id}">إضافة كل التواريخ المطابقة</button>
+        <button type="button" class="btn-xs approve" data-action="submit-bulk" data-id="${doc.id}">${t('bulk_submit_btn')}</button>
       </div>
     </div>
   `;
@@ -769,24 +769,24 @@ async function saveDoctorEdit(doctorId) {
   const file = fileInput && fileInput.files[0];
 
   if (!name || !specialty) {
-    alert('اسم الطبيب والتخصص إجباريين');
+    alert(t('doctor_name_specialty_required'));
     return;
   }
 
   if (file) {
     if (!file.type.startsWith('image/')) {
-      alert('الملف لازم يكون صورة');
+      alert(t('file_must_be_image'));
       return;
     }
     if (file.size > 3 * 1024 * 1024) {
-      alert('حجم الصورة كبير، الحد الأقصى 3 ميجابايت');
+      alert(t('image_too_large_3mb'));
       return;
     }
   }
 
   const saveBtn = card.querySelector('[data-action="save-doctor-edit"]');
   saveBtn.disabled = true;
-  saveBtn.textContent = 'جاري الحفظ...';
+  saveBtn.textContent = t('saving');
 
   try {
     const updates = { name, specialty, slotMinutes };
@@ -803,14 +803,14 @@ async function saveDoctorEdit(doctorId) {
     loadDashboard();
   } catch (err) {
     console.error('saveDoctorEdit error:', err);
-    alert('تعذر حفظ التعديلات، حاول مرة أخرى');
+    alert(t('save_error'));
     saveBtn.disabled = false;
-    saveBtn.textContent = '💾 حفظ';
+    saveBtn.textContent = t('save_btn');
   }
 }
 
 async function deleteDoctor(doctorId) {
-  const sure = confirm('متأكد إنك تبي تحذف هذا الطبيب؟');
+  const sure = confirm(t('confirm_delete_doctor'));
   if (!sure) return;
   await db.collection('doctors').doc(doctorId).delete();
   loadDashboard();
@@ -823,12 +823,12 @@ async function addWorkingHour(doctorId) {
   const end = card.querySelector('.hour-end').value;
 
   if (!date) {
-    alert('فضلاً اختر التاريخ');
+    alert(t('select_date_required'));
     return;
   }
 
   if (!start || !end || start >= end) {
-    alert('تأكد إن وقت البداية قبل وقت النهاية');
+    alert(t('time_order_error'));
     return;
   }
 
@@ -881,7 +881,7 @@ document.getElementById('print-week-btn').addEventListener('click', printCurrent
 function populateDoctorFilterOptions() {
   const select = document.getElementById('filter-doctor-select');
   const currentValue = select.value;
-  select.innerHTML = '<option value="">كل الأطباء</option>' +
+  select.innerHTML = `<option value="">${t('filter_all_doctors')}</option>` +
     cachedDoctors.map((d) => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('');
   if ([...select.options].some((o) => o.value === currentValue)) {
     select.value = currentValue;
@@ -908,7 +908,7 @@ function renderWeeklySchedule() {
   lastScheduleBookings = accepted;
 
   if (accepted.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">ما فيه مواعيد مطابقة لهذا الفلتر</p>';
+    wrap.innerHTML = `<p class="empty-state">${t('no_matching_appts')}</p>`;
     return;
   }
 
@@ -932,7 +932,7 @@ function renderUpcoming24h() {
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 
   if (upcoming.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">ما فيه مواعيد خلال الـ24 ساعة الجاية</p>';
+    wrap.innerHTML = `<p class="empty-state">${t('no_upcoming24')}</p>`;
     return;
   }
 
@@ -949,11 +949,11 @@ function addDaysISO(iso, days) {
 // جدول موحّد يبني الأعمدة حسب طريقة العرض (يضيف/يحذف عمود الطبيب)
 function scheduleTableHtml(bookings, opts) {
   const colCount = 4 + (opts.showDate ? 1 : 0) + (opts.showDoctor ? 1 : 0);
-  const heads = ['الوقت'];
-  if (opts.showDate) heads.push('التاريخ');
-  heads.push('المريض', 'رقم الحجز');
-  if (opts.showDoctor) heads.push('الطبيب');
-  heads.push('تواصل', 'إجراء');
+  const heads = [t('col_time')];
+  if (opts.showDate) heads.push(t('col_date'));
+  heads.push(t('col_patient'), t('col_booking_number'));
+  if (opts.showDoctor) heads.push(t('col_doctor'));
+  heads.push(t('col_contact'), t('col_action'));
 
   return `
     <div class="table-wrap">
@@ -976,7 +976,7 @@ function scheduleRowHtml(b, opts) {
   cells.push(`
     <td>
       ${b.patientPhone
-        ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">💬 واتساب</a>`
+        ? `<a class="btn-xs whatsapp" href="${buildWhatsAppLink(b)}" target="_blank" rel="noopener">${t('whatsapp_btn')}</a>`
         : '<span class="cell-sub">—</span>'}
     </td>
   `);
@@ -987,10 +987,10 @@ function scheduleRowHtml(b, opts) {
     <td>
       <div class="row-actions">
         ${b.patientPhone
-          ? `<a class="btn-xs toggle" href="${buildReminderLink(b)}" target="_blank" rel="noopener" title="إرسال تذكير واتساب">🔔 تذكير</a>`
+          ? `<a class="btn-xs toggle" href="${buildReminderLink(b)}" target="_blank" rel="noopener" title="${t('reminder_btn')}">${t('reminder_btn')}</a>`
           : ''}
         ${isPastOrToday
-          ? `<button class="btn-xs reject" data-action="mark-no-show" data-id="${b.id}" title="تعليم لم يحضر">❌ لم يحضر</button>`
+          ? `<button class="btn-xs reject" data-action="mark-no-show" data-id="${b.id}" title="${t('no_show_btn')}">${t('no_show_btn')}</button>`
           : ''}
         <button class="btn-xs toggle" data-action="edit-schedule" data-id="${b.id}">✏️</button>
         <button class="btn-xs delete" data-action="delete-schedule" data-id="${b.id}">🗑️</button>
@@ -1020,14 +1020,14 @@ function bindScheduleRowEvents(wrap) {
 
 // تعليم حجز مؤكد بأنه "لم يحضر" (منفصل عن الرفض، يفيد بتتبع المرضى المتكررين بالغياب)
 async function markNoShow(bookingId) {
-  const sure = confirm('تعليم هذا الموعد بـ "لم يحضر"؟');
+  const sure = confirm(t('confirm_no_show'));
   if (!sure) return;
 
   try {
     await db.collection('bookings').doc(bookingId).update({ status: 'no_show' });
   } catch (err) {
     console.error('markNoShow error:', err);
-    alert('تعذر تسجيل الحالة، حاول مرة أخرى');
+    alert(t('save_error'));
   }
 }
 
@@ -1113,7 +1113,7 @@ function renderPrintArea({ title, subtitle, bookings, showDoctor }) {
     area.innerHTML = `
       <h1>${escapeHtml(title)}</h1>
       <p>${escapeHtml(subtitle)}</p>
-      <p>لا توجد مواعيد مؤكدة بهذا الأسبوع.</p>
+      <p>${t('no_confirmed_this_week')}</p>
     `;
     return;
   }
@@ -1124,11 +1124,11 @@ function renderPrintArea({ title, subtitle, bookings, showDoctor }) {
     <table class="print-table">
       <thead>
         <tr>
-          <th>التاريخ</th>
-          <th>الوقت</th>
-          <th>المريض</th>
-          ${showDoctor ? '<th>الطبيب</th>' : ''}
-          <th>رقم الحجز</th>
+          <th>${t('col_date')}</th>
+          <th>${t('col_time')}</th>
+          <th>${t('col_patient')}</th>
+          ${showDoctor ? `<th>${t('col_doctor')}</th>` : ''}
+          <th>${t('col_booking_number')}</th>
         </tr>
       </thead>
       <tbody>
@@ -1173,7 +1173,7 @@ function renderPatientSearch(query) {
   }
 
   if (patients.length === 0) {
-    wrap.innerHTML = `<p class="empty-state">${query ? 'ما فيه نتائج مطابقة' : 'ما فيه مرضى مسجّلين بعد'}</p>`;
+    wrap.innerHTML = `<p class="empty-state">${query ? t('no_patients_match') : t('no_patients_registered')}</p>`;
     return;
   }
 
@@ -1182,10 +1182,10 @@ function renderPatientSearch(query) {
       <table class="data-table">
         <thead>
           <tr>
-            <th>اسم المريض</th>
-            <th>رقم الجوال</th>
-            <th>عدد الحجوزات</th>
-            <th>آخر موعد</th>
+            <th>${t('col_patient')}</th>
+            <th>${t('col_phone')}</th>
+            <th>${t('stat_total_bookings')}</th>
+            <th>${t('col_last_visit')}</th>
           </tr>
         </thead>
         <tbody>
@@ -1298,13 +1298,13 @@ if (addStaffForm) {
     const password = document.getElementById('new-staff-password').value;
 
     if (!name || !email || password.length < 6) {
-      alert('تأكد من تعبئة كل الحقول (كلمة المرور 6 أحرف على الأقل)');
+      alert(t('staff_fields_required'));
       return;
     }
 
     const submitBtn = addStaffForm.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
-    submitBtn.textContent = 'جاري الإضافة...';
+    submitBtn.textContent = t('adding');
 
     try {
       await addStaffMember(name, email, password);
@@ -1313,14 +1313,14 @@ if (addStaffForm) {
     } catch (err) {
       console.error('addStaffMember error:', err);
       const messages = {
-        'auth/email-already-in-use': 'هذا البريد الإلكتروني مستخدم مسبقاً',
-        'auth/invalid-email': 'صيغة البريد الإلكتروني غير صحيحة',
-        'auth/weak-password': 'كلمة المرور ضعيفة، استخدم 6 أحرف على الأقل',
+        'auth/email-already-in-use': t('err_email_in_use'),
+        'auth/invalid-email': t('err_invalid_email'),
+        'auth/weak-password': t('err_weak_password'),
       };
-      alert(messages[err.code] || 'تعذر إضافة الموظف، حاول مرة أخرى');
+      alert(messages[err.code] || t('add_staff_error'));
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'إضافة موظف';
+      submitBtn.textContent = t('add_staff_btn');
     }
   });
 }
@@ -1364,7 +1364,7 @@ function renderStaffList() {
   if (!wrap) return;
 
   if (cachedStaff.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">ما أضفت أي موظف بعد</p>';
+    wrap.innerHTML = `<p class="empty-state">${t('no_staff_added')}</p>`;
     return;
   }
 
@@ -1373,10 +1373,10 @@ function renderStaffList() {
       <table class="data-table">
         <thead>
           <tr>
-            <th>الاسم</th>
-            <th>البريد الإلكتروني</th>
-            <th>الحالة</th>
-            <th>إجراءات</th>
+            <th>${t('label_name')}</th>
+            <th>${t('label_email')}</th>
+            <th>${t('col_status')}</th>
+            <th>${t('col_action')}</th>
           </tr>
         </thead>
         <tbody>
@@ -1386,7 +1386,7 @@ function renderStaffList() {
               <td class="cell-sub">${escapeHtml(s.email)}</td>
               <td>${staffStatusBadge(s.status)}</td>
               <td>
-                <button class="btn-xs toggle" data-action="reset-staff-password" data-email="${escapeHtml(s.email)}">🔄 Reset</button>
+                <button class="btn-xs toggle" data-action="reset-staff-password" data-email="${escapeHtml(s.email)}">${t('reset_password_btn')}</button>
               </td>
             </tr>
           `).join('')}
@@ -1402,20 +1402,20 @@ function renderStaffList() {
 
 // يرسل بريد إعادة تعيين كلمة المرور للموظف (رابط آمن، ما يكشف كلمة المرور لأحد)
 async function resetStaffPassword(email) {
-  const sure = confirm(`إرسال رابط إعادة تعيين كلمة المرور إلى ${email}؟`);
+  const sure = confirm(t('confirm_reset_password', email));
   if (!sure) return;
 
   try {
     await auth.sendPasswordResetEmail(email);
-    alert('تم إرسال رابط إعادة التعيين بنجاح، الموظف يفتح بريده ويتابع الخطوات');
+    alert(t('reset_password_sent'));
   } catch (err) {
     console.error('resetStaffPassword error:', err);
-    alert('تعذر إرسال رابط إعادة التعيين، تأكد من صحة البريد الإلكتروني');
+    alert(t('reset_password_error'));
   }
 }
 
 function staffStatusBadge(status) {
-  const labels = { active: 'فعّال', disabled: 'موقوف' };
+  const labels = { active: t('status_active'), disabled: t('status_disabled') };
   const cls = { active: 'badge-active', disabled: 'badge-disabled' };
   return `<span class="badge ${cls[status] || ''}">${labels[status] || status}</span>`;
 }
@@ -1496,7 +1496,7 @@ function drawDoctorsChart(entries) {
     type: 'bar',
     data: {
       labels: entries.map((e) => e[0]),
-      datasets: [{ label: 'عدد الحجوزات', data: entries.map((e) => e[1]), backgroundColor: '#158A7E', borderRadius: 6 }],
+      datasets: [{ label: t('stat_total_bookings'), data: entries.map((e) => e[1]), backgroundColor: '#158A7E', borderRadius: 6 }],
     },
     options: {
       responsive: true,
@@ -1514,7 +1514,7 @@ function drawHoursChart(entries) {
     type: 'bar',
     data: {
       labels: entries.map((e) => formatHourLabel(e[0])),
-      datasets: [{ label: 'عدد الحجوزات', data: entries.map((e) => e[1]), backgroundColor: '#4ED9C4', borderRadius: 6 }],
+      datasets: [{ label: t('stat_total_bookings'), data: entries.map((e) => e[1]), backgroundColor: '#4ED9C4', borderRadius: 6 }],
     },
     options: {
       responsive: true,
@@ -1534,7 +1534,7 @@ function drawPatientsChart(buckets) {
     data: {
       labels: keys.map(formatMonthLabel),
       datasets: [{
-        label: 'مرضى جدد',
+        label: t('chart_new_patients'),
         data: keys.map((k) => buckets[k]),
         borderColor: '#0F2440',
         backgroundColor: 'rgba(21,138,126,0.15)',
@@ -1563,13 +1563,20 @@ function buildLast6MonthBuckets() {
 
 function formatHourLabel(hourStr) {
   const h = parseInt(hourStr, 10);
+  if (currentLang === 'en') {
+    const period = h < 12 ? 'AM' : 'PM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12} ${period}`;
+  }
   const period = h < 12 ? 'ص' : 'م';
   const h12 = h % 12 === 0 ? 12 : h % 12;
   return `${h12} ${period}`;
 }
 
 function formatMonthLabel(key) {
-  const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  const monthsAr = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  const monthsEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const months = currentLang === 'en' ? monthsEn : monthsAr;
   const m = parseInt(key.split('-')[1], 10);
   return months[m - 1];
 }
@@ -1583,8 +1590,14 @@ if (exportCsvBtn) {
 }
 
 function exportBookingsCSV() {
-  const statusLabels = { pending: 'قيد الانتظار', accepted: 'مقبول', rejected: 'مرفوض', cancelled: 'ملغى', no_show: 'لم يحضر' };
-  const headers = ['رقم الحجز', 'المريض', 'الجوال', 'الطبيب', 'التاريخ', 'الوقت', 'الحالة'];
+  const statusLabels = {
+    pending: t('status_pending'),
+    accepted: t('status_accepted'),
+    rejected: t('status_rejected'),
+    cancelled: t('status_cancelled'),
+    no_show: t('status_no_show'),
+  };
+  const headers = [t('col_booking_number'), t('col_patient'), t('col_phone'), t('col_doctor'), t('col_date'), t('col_time'), t('col_status')];
 
   const rows = [...cachedBookings]
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
@@ -1660,20 +1673,20 @@ if (uploadLogoBtn) {
     const file = fileInput.files[0];
 
     if (!file) {
-      alert('اختر صورة أول');
+      alert(t('select_image_first'));
       return;
     }
     if (!file.type.startsWith('image/')) {
-      alert('الملف لازم يكون صورة');
+      alert(t('file_must_be_image'));
       return;
     }
     if (file.size > 3 * 1024 * 1024) {
-      alert('حجم الصورة كبير، الحد الأقصى 3 ميجابايت');
+      alert(t('image_too_large_3mb'));
       return;
     }
 
     uploadLogoBtn.disabled = true;
-    uploadLogoBtn.textContent = 'جاري الرفع...';
+    uploadLogoBtn.textContent = t('uploading');
 
     try {
       const storagePath = `clinics/${activeClinicUid}_${Date.now()}.jpg`;
@@ -1685,13 +1698,13 @@ if (uploadLogoBtn) {
 
       renderLogoPreview(logoUrl);
       fileInput.value = '';
-      alert('تم رفع الشعار بنجاح');
+      alert(t('logo_uploaded_success'));
     } catch (err) {
       console.error('upload logo error:', err);
-      alert('تعذر رفع الشعار، حاول مرة أخرى');
+      alert(t('logo_upload_error'));
     } finally {
       uploadLogoBtn.disabled = false;
-      uploadLogoBtn.textContent = 'رفع الشعار';
+      uploadLogoBtn.textContent = t('upload_logo_btn');
     }
   });
 }
@@ -1708,17 +1721,17 @@ if (clinicInfoForm) {
 
     const saveBtn = document.getElementById('save-clinic-info-btn');
     saveBtn.disabled = true;
-    saveBtn.textContent = 'جاري الحفظ...';
+    saveBtn.textContent = t('saving');
 
     try {
       await db.collection('users').doc(activeClinicUid).update({ whatsapp, address, website, instagram });
-      alert('تم حفظ بيانات العيادة بنجاح');
+      alert(t('clinic_info_saved'));
     } catch (err) {
       console.error('save clinic info error:', err);
-      alert('تعذر حفظ البيانات، حاول مرة أخرى');
+      alert(t('save_error'));
     } finally {
       saveBtn.disabled = false;
-      saveBtn.textContent = 'حفظ البيانات';
+      saveBtn.textContent = t('save_clinic_info_btn');
     }
   });
 }
@@ -1746,13 +1759,27 @@ if (copyBookingLinkBtn) {
     const linkInput = document.getElementById('booking-link-input');
     try {
       await navigator.clipboard.writeText(linkInput.value);
-      copyBookingLinkBtn.textContent = '✅ نُسخ';
-      setTimeout(() => { copyBookingLinkBtn.textContent = '📋 نسخ'; }, 1800);
+      copyBookingLinkBtn.textContent = t('copied_label');
+      setTimeout(() => { copyBookingLinkBtn.textContent = t('copy_link_btn'); }, 1800);
     } catch (err) {
       linkInput.select();
       document.execCommand('copy');
     }
   });
+}
+
+// لما تتبدّل اللغة، نعيد رسم كل قسم فيه محتوى حي بدون إعادة تحميل من القاعدة
+function onLanguageChanged() {
+  renderDoctors();
+  renderBookingRequests();
+  renderRejectedBookings();
+  renderWeeklySchedule();
+  renderUpcoming24h();
+  renderAnalytics();
+  if (isPrimaryOwner) renderStaffList();
+
+  const patientSearchInput = document.getElementById('patient-search');
+  if (patientSearchInput) renderPatientSearch(patientSearchInput.value.trim());
 }
 
 initPageTabs();

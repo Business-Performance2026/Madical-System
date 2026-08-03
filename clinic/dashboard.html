@@ -27,234 +27,237 @@
         </div>
         <div class="header-titles">
           <p class="brand-title">لوحة العيادة</p>
-          <p class="brand-subtitle">مرحباً، <span id="clinic-name">...</span><span id="staff-indicator" class="hidden"></span></p>
+          <p class="brand-subtitle"><span data-i18n="welcome_prefix">مرحباً، </span><span id="clinic-name">...</span><span id="staff-indicator" class="hidden"></span></p>
         </div>
       </div>
       <div class="header-actions">
+        <button type="button" id="lang-toggle-btn" class="lang-toggle-btn" aria-label="English">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm6.93 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8 8 0 0 1 18.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14a7.9 7.9 0 0 1 0-4h3.38a16.6 16.6 0 0 0 0 4zm.81 2h2.95A15.7 15.7 0 0 0 9.4 19.56 8 8 0 0 1 5.07 16zm2.95-8H5.07a8 8 0 0 1 4.33-3.56A15.7 15.7 0 0 0 8.02 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66a14.6 14.6 0 0 1 0-4h4.68a14.6 14.6 0 0 1 0 4zm.28 5.56A15.7 15.7 0 0 0 15.98 16h2.95a8 8 0 0 1-4.31 3.56zM16.36 14a16.6 16.6 0 0 0 0-4h3.38a7.9 7.9 0 0 1 0 4z"/></svg>
+        </button>
         <button type="button" class="notif-bell" id="notif-bell" title="طلبات الحجز الجديدة">
           🔔
           <span class="notif-badge hidden" id="notif-badge">0</span>
         </button>
-        <button class="btn-outline" id="logout-btn">تسجيل الخروج</button>
+        <button class="btn-outline" id="logout-btn" data-i18n="logout">تسجيل الخروج</button>
       </div>
     </header>
 
     <div class="stats-grid">
       <div class="stat-card">
         <span class="stat-number" id="stat-today">—</span>
-        <span class="stat-label">حجوزات اليوم</span>
+        <span class="stat-label" data-i18n="stat_today">حجوزات اليوم</span>
       </div>
       <div class="stat-card">
         <span class="stat-number" id="stat-upcoming">—</span>
-        <span class="stat-label">حجوزات قادمة</span>
+        <span class="stat-label" data-i18n="stat_upcoming">حجوزات قادمة</span>
       </div>
       <div class="stat-card">
         <span class="stat-number" id="stat-pending">—</span>
-        <span class="stat-label">طلبات جديدة</span>
+        <span class="stat-label" data-i18n="stat_pending">طلبات جديدة</span>
       </div>
       <div class="stat-card">
         <span class="stat-number" id="stat-patients">—</span>
-        <span class="stat-label">إجمالي المرضى</span>
+        <span class="stat-label" data-i18n="stat_total_patients">إجمالي المرضى</span>
       </div>
     </div>
 
     <div class="page-tabs">
-      <button type="button" class="active" data-tab="requests">طلبات الحجز الجديدة</button>
-      <button type="button" data-tab="rejected">المواعيد المرفوضة</button>
-      <button type="button" data-tab="doctors">الأطباء</button>
-      <button type="button" data-tab="schedule">جدول الأسبوع</button>
-      <button type="button" data-tab="upcoming24h">المواعيد القادمة خلال 24 ساعة</button>
-      <button type="button" data-tab="patients">بحث المرضى</button>
-      <button type="button" data-tab="staff">الموظفين</button>
-      <button type="button" data-tab="analytics">الإحصائيات</button>
-      <button type="button" data-tab="settings">إعدادات العيادة</button>
+      <button type="button" class="active" data-tab="requests" data-i18n="clinic_tab_requests">طلبات الحجز الجديدة</button>
+      <button type="button" data-tab="rejected" data-i18n="clinic_tab_rejected">المواعيد المرفوضة</button>
+      <button type="button" data-tab="doctors" data-i18n="clinic_tab_doctors">الأطباء</button>
+      <button type="button" data-tab="schedule" data-i18n="clinic_tab_schedule">جدول الأسبوع</button>
+      <button type="button" data-tab="upcoming24h" data-i18n="clinic_tab_upcoming24">المواعيد القادمة خلال 24 ساعة</button>
+      <button type="button" data-tab="patients" data-i18n="clinic_tab_patients">بحث المرضى</button>
+      <button type="button" data-tab="staff" data-i18n="clinic_tab_staff">الموظفين</button>
+      <button type="button" data-tab="analytics" data-i18n="clinic_tab_analytics">الإحصائيات</button>
+      <button type="button" data-tab="settings" data-i18n="clinic_tab_settings">إعدادات العيادة</button>
     </div>
 
     <section class="section-card tab-panel" data-panel="requests">
-      <h2 class="section-title">طلبات الحجز الجديدة</h2>
-      <p class="section-hint">اقبل الطلب عشان يُقفل الوقت تلقائياً، أو ارفضه ليبقى متاح لمريض ثاني</p>
-      <div id="requests-wrap" class="loading-state">جاري التحميل...</div>
+      <h2 class="section-title" data-i18n="clinic_tab_requests">طلبات الحجز الجديدة</h2>
+      <p class="section-hint" data-i18n="requests_hint">اقبل الطلب عشان يُقفل الوقت تلقائياً، أو ارفضه ليبقى متاح لمريض ثاني</p>
+      <div id="requests-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="rejected">
-      <h2 class="section-title">المواعيد المرفوضة</h2>
-      <p class="section-hint">تقدر تراجع قرارك وتقبلها، أو تعدّل موعدها، أو تحذفها نهائياً</p>
-      <div id="rejected-wrap" class="loading-state">جاري التحميل...</div>
+      <h2 class="section-title" data-i18n="clinic_tab_rejected">المواعيد المرفوضة</h2>
+      <p class="section-hint" data-i18n="rejected_hint">تقدر تراجع قرارك وتقبلها، أو تعدّل موعدها، أو تحذفها نهائياً</p>
+      <div id="rejected-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="doctors">
-      <h2 class="section-title">الأطباء وأوقات العمل</h2>
-      <p class="section-hint">أضف طبيب وحدد أوقات عمله، وهذي الأوقات هي اللي بتظهر للمريض عند الحجز</p>
+      <h2 class="section-title" data-i18n="clinic_tab_doctors">الأطباء وأوقات العمل</h2>
+      <p class="section-hint" data-i18n="doctors_hint">أضف طبيب وحدد أوقات عمله، وهذي الأوقات هي اللي بتظهر للمريض عند الحجز</p>
 
       <form id="add-doctor-form" class="inline-form">
         <div class="field">
-          <label for="new-doctor-name">اسم الطبيب</label>
-          <input type="text" id="new-doctor-name" placeholder="د. سارة أحمد" required>
+          <label for="new-doctor-name" data-i18n="add_doctor_name_label">اسم الطبيب</label>
+          <input type="text" id="new-doctor-name" data-i18n-placeholder="add_doctor_name_placeholder" placeholder="د. سارة أحمد" required>
         </div>
         <div class="field">
-          <label for="new-doctor-specialty">التخصص</label>
-          <input type="text" id="new-doctor-specialty" placeholder="أسنان" required>
+          <label for="new-doctor-specialty" data-i18n="add_doctor_specialty_label">التخصص</label>
+          <input type="text" id="new-doctor-specialty" data-i18n-placeholder="add_doctor_specialty_placeholder" placeholder="أسنان" required>
         </div>
-        <button type="submit" class="btn-primary">إضافة طبيب</button>
+        <button type="submit" class="btn-primary" data-i18n="add_doctor_btn">إضافة طبيب</button>
       </form>
 
-      <div id="doctors-wrap" class="loading-state">جاري التحميل...</div>
+      <div id="doctors-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
 
       <div class="clinic-wide-disable-block">
-        <h3 class="mini-section-title">🏖️ تعطيل يوم كامل للعيادة (كل الأطباء مرة وحدة)</h3>
-        <p class="section-hint">مفيد للعطل الرسمية — يلغي دوام كل أطباء العيادة بهذا التاريخ دفعة وحدة</p>
+        <h3 class="mini-section-title" data-i18n="clinic_wide_disable_title">🏖️ تعطيل يوم كامل للعيادة (كل الأطباء مرة وحدة)</h3>
+        <p class="section-hint" data-i18n="clinic_wide_disable_hint">مفيد للعطل الرسمية — يلغي دوام كل أطباء العيادة بهذا التاريخ دفعة وحدة</p>
         <div class="disable-day-row">
           <input type="date" id="clinic-wide-disable-date">
-          <button type="button" class="btn-xs delete" id="clinic-wide-disable-btn">تعطيل العيادة بهذا اليوم</button>
+          <button type="button" class="btn-xs delete" id="clinic-wide-disable-btn" data-i18n="clinic_wide_disable_btn">تعطيل العيادة بهذا اليوم</button>
         </div>
       </div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="schedule">
-      <h2 class="section-title">جدول هذا الأسبوع</h2>
-      <p class="section-hint">فلتر حسب الطبيب و/أو التاريخ و/أو الوقت — تقدر تجمعهم مع بعض أو تسيب أي وحدة فاضية</p>
+      <h2 class="section-title" data-i18n="clinic_tab_schedule">جدول هذا الأسبوع</h2>
+      <p class="section-hint" data-i18n="schedule_filter_hint">فلتر حسب الطبيب و/أو التاريخ و/أو الوقت — تقدر تجمعهم مع بعض أو تسيب أي وحدة فاضية</p>
 
       <div class="schedule-filters">
         <div class="field">
-          <label for="filter-doctor-select">الطبيب</label>
+          <label for="filter-doctor-select" data-i18n="filter_doctor_label">الطبيب</label>
           <select id="filter-doctor-select">
-            <option value="">كل الأطباء</option>
+            <option value="" data-i18n="filter_all_doctors">كل الأطباء</option>
           </select>
         </div>
         <div class="field">
-          <label for="filter-date-input">التاريخ</label>
+          <label for="filter-date-input" data-i18n="filter_date_label">التاريخ</label>
           <input type="date" id="filter-date-input">
         </div>
         <div class="field">
-          <label for="filter-time-input">الوقت</label>
+          <label for="filter-time-input" data-i18n="filter_time_label">الوقت</label>
           <input type="time" id="filter-time-input">
         </div>
-        <button type="button" class="btn-outline" id="clear-schedule-filters">مسح الفلاتر</button>
-        <button type="button" class="btn-xs toggle" id="print-week-btn">🖨️ طباعة/PDF لهذا العرض</button>
+        <button type="button" class="btn-outline" id="clear-schedule-filters" data-i18n="clear_filters_btn">مسح الفلاتر</button>
+        <button type="button" class="btn-xs toggle" id="print-week-btn" data-i18n="print_schedule_btn">🖨️ طباعة/PDF لهذا العرض</button>
       </div>
 
-      <div id="schedule-wrap" class="loading-state">جاري التحميل...</div>
+      <div id="schedule-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="upcoming24h">
-      <h2 class="section-title">المواعيد القادمة خلال 24 ساعة</h2>
-      <p class="section-hint">مواعيد اليوم وبكرة (كل مريض له موعد بكرة يظهر هنا من اليوم) — أرسل تذكير قبل ما ينسى المريض موعده</p>
-      <div id="upcoming24h-wrap" class="loading-state">جاري التحميل...</div>
+      <h2 class="section-title" data-i18n="clinic_tab_upcoming24">المواعيد القادمة خلال 24 ساعة</h2>
+      <p class="section-hint" data-i18n="upcoming24_hint">مواعيد اليوم وبكرة (كل مريض له موعد بكرة يظهر هنا من اليوم) — أرسل تذكير قبل ما ينسى المريض موعده</p>
+      <div id="upcoming24h-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="patients">
-      <h2 class="section-title">البحث عن المرضى</h2>
-      <input type="text" id="patient-search" class="search-box" placeholder="اكتب اسم المريض...">
-      <div id="patients-wrap" class="loading-state">جاري التحميل...</div>
+      <h2 class="section-title" data-i18n="clinic_tab_patients">البحث عن المرضى</h2>
+      <input type="text" id="patient-search" class="search-box" data-i18n-placeholder="patient_search_placeholder" placeholder="اكتب اسم المريض...">
+      <div id="patients-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="staff">
-      <h2 class="section-title">الموظفين</h2>
-      <p class="section-hint">أضف موظف يقدر يدخل يدير حجوزات وأطباء العيادة نيابة عنك. الإيقاف والحذف يبقون من لوحة الأدمن فقط، للأمان</p>
+      <h2 class="section-title" data-i18n="clinic_tab_staff">الموظفين</h2>
+      <p class="section-hint" data-i18n="staff_hint">أضف موظف يقدر يدخل يدير حجوزات وأطباء العيادة نيابة عنك. الإيقاف والحذف يبقون من لوحة الأدمن فقط، للأمان</p>
 
       <form id="add-staff-form" class="inline-form">
         <div class="field">
-          <label for="new-staff-name">اسم الموظف</label>
-          <input type="text" id="new-staff-name" placeholder="مثال: سارة علي" required>
+          <label for="new-staff-name" data-i18n="staff_name_label">اسم الموظف</label>
+          <input type="text" id="new-staff-name" data-i18n-placeholder="staff_name_placeholder" placeholder="مثال: سارة علي" required>
         </div>
         <div class="field">
-          <label for="new-staff-email">البريد الإلكتروني</label>
+          <label for="new-staff-email" data-i18n="label_email">البريد الإلكتروني</label>
           <input type="email" id="new-staff-email" placeholder="staff@example.com" required>
         </div>
         <div class="field">
-          <label for="new-staff-password">كلمة المرور</label>
-          <input type="password" id="new-staff-password" placeholder="6 أحرف على الأقل" minlength="6" required>
+          <label for="new-staff-password" data-i18n="staff_password_label">كلمة المرور</label>
+          <input type="password" id="new-staff-password" data-i18n-placeholder="placeholder_password" placeholder="6 أحرف على الأقل" minlength="6" required>
         </div>
-        <button type="submit" class="btn-primary">إضافة موظف</button>
+        <button type="submit" class="btn-primary" data-i18n="add_staff_btn">إضافة موظف</button>
       </form>
 
-      <div id="staff-wrap" class="loading-state">جاري التحميل...</div>
+      <div id="staff-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="analytics">
-      <h2 class="section-title">الإحصائيات</h2>
-      <p class="section-hint">نظرة عامة على كل حجوزات العيادة (كل الأوقات)</p>
+      <h2 class="section-title" data-i18n="clinic_tab_analytics">الإحصائيات</h2>
+      <p class="section-hint" data-i18n="analytics_hint">نظرة عامة على كل حجوزات العيادة (كل الأوقات)</p>
 
-      <div id="analytics-empty" class="empty-state hidden">ما فيه بيانات كافية للإحصائيات بعد</div>
+      <div id="analytics-empty" class="empty-state hidden" data-i18n="no_analytics_data">ما فيه بيانات كافية للإحصائيات بعد</div>
 
       <div id="analytics-content">
         <div class="stats-grid" style="margin-bottom:22px;">
           <div class="stat-card">
             <span class="stat-number" id="stat-total-bookings">—</span>
-            <span class="stat-label">إجمالي الحجوزات</span>
+            <span class="stat-label" data-i18n="stat_total_bookings">إجمالي الحجوزات</span>
           </div>
           <div class="stat-card">
             <span class="stat-number" id="stat-top-doctor" style="font-size:18px;">—</span>
-            <span class="stat-label">أكثر طبيب مطلوب</span>
+            <span class="stat-label" data-i18n="stat_top_doctor">أكثر طبيب مطلوب</span>
           </div>
           <div class="stat-card">
             <span class="stat-number" id="stat-top-hour">—</span>
-            <span class="stat-label">أكثر وقت ازدحاماً</span>
+            <span class="stat-label" data-i18n="stat_top_hour">أكثر وقت ازدحاماً</span>
           </div>
           <div class="stat-card">
             <span class="stat-number" id="stat-cancel-rate">—</span>
-            <span class="stat-label">نسبة الإلغاء/الرفض/الغياب</span>
+            <span class="stat-label" data-i18n="stat_cancel_rate">نسبة الإلغاء/الرفض/الغياب</span>
           </div>
         </div>
 
-        <button type="button" class="btn-outline" id="export-csv-btn" style="margin-bottom:22px;">📥 تصدير كل الحجوزات (Excel/CSV)</button>
+        <button type="button" class="btn-outline" id="export-csv-btn" style="margin-bottom:22px;" data-i18n="export_csv_btn">📥 تصدير كل الحجوزات (Excel/CSV)</button>
 
         <div class="chart-block">
-          <p class="chart-title">الحجوزات حسب الطبيب</p>
+          <p class="chart-title" data-i18n="chart_by_doctor">الحجوزات حسب الطبيب</p>
           <canvas id="chart-doctors" height="200"></canvas>
         </div>
 
         <div class="chart-block">
-          <p class="chart-title">الحجوزات حسب الوقت (بالساعة)</p>
+          <p class="chart-title" data-i18n="chart_by_hour">الحجوزات حسب الوقت (بالساعة)</p>
           <canvas id="chart-hours" height="200"></canvas>
         </div>
 
         <div class="chart-block">
-          <p class="chart-title">مرضى جدد شهرياً (آخر 6 أشهر)</p>
+          <p class="chart-title" data-i18n="chart_new_patients">مرضى جدد شهرياً (آخر 6 أشهر)</p>
           <canvas id="chart-patients-monthly" height="200"></canvas>
         </div>
       </div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="settings">
-      <h2 class="section-title">إعدادات العيادة</h2>
-      <p class="section-hint">شعار العيادة وبيانات التواصل تظهر بالشاشة الرئيسية العامة وبكل مكان يذكر عيادتك بالتطبيق</p>
+      <h2 class="section-title" data-i18n="clinic_tab_settings">إعدادات العيادة</h2>
+      <p class="section-hint" data-i18n="settings_hint">شعار العيادة وبيانات التواصل تظهر بالشاشة الرئيسية العامة وبكل مكان يذكر عيادتك بالتطبيق</p>
 
       <div class="clinic-logo-preview-wrap">
         <div class="clinic-logo-preview" id="clinic-logo-preview"></div>
         <div class="mini-form" style="flex:1;">
           <input type="file" accept="image/*" id="clinic-logo-input">
-          <button type="button" class="btn-primary" id="upload-logo-btn" style="width:auto; padding:11px 22px;">رفع الشعار</button>
+          <button type="button" class="btn-primary" id="upload-logo-btn" style="width:auto; padding:11px 22px;" data-i18n="upload_logo_btn">رفع الشعار</button>
         </div>
       </div>
-      <p class="cell-sub" style="margin-top:8px; margin-bottom:24px;">حد أقصى 3 ميجابايت — يفضّل صورة مربعة</p>
+      <p class="cell-sub" style="margin-top:8px; margin-bottom:24px;" data-i18n="logo_size_hint">حد أقصى 3 ميجابايت — يفضّل صورة مربعة</p>
 
       <form id="clinic-info-form">
         <div class="field">
-          <label for="clinic-whatsapp">رقم واتساب العيادة</label>
+          <label for="clinic-whatsapp" data-i18n="clinic_whatsapp_label">رقم واتساب العيادة</label>
           <input type="tel" id="clinic-whatsapp" placeholder="9665xxxxxxxx">
         </div>
         <div class="field">
-          <label for="clinic-address">الموقع / العنوان</label>
-          <input type="text" id="clinic-address" placeholder="مثال: مسقط، الخوض">
+          <label for="clinic-address" data-i18n="clinic_address_label">الموقع / العنوان</label>
+          <input type="text" id="clinic-address" data-i18n-placeholder="clinic_address_placeholder" placeholder="مثال: مسقط، الخوض">
         </div>
         <div class="field">
-          <label for="clinic-website">الموقع الإلكتروني</label>
+          <label for="clinic-website" data-i18n="clinic_website_label">الموقع الإلكتروني</label>
           <input type="url" id="clinic-website" placeholder="https://...">
         </div>
         <div class="field">
-          <label for="clinic-instagram">حساب انستقرام</label>
+          <label for="clinic-instagram" data-i18n="clinic_instagram_label">حساب انستقرام</label>
           <input type="text" id="clinic-instagram" placeholder="@اسم_الحساب أو رابط كامل">
         </div>
-        <button type="submit" class="btn-primary" id="save-clinic-info-btn" style="width:auto; padding:12px 28px;">حفظ البيانات</button>
+        <button type="submit" class="btn-primary" id="save-clinic-info-btn" style="width:auto; padding:12px 28px;" data-i18n="save_clinic_info_btn">حفظ البيانات</button>
       </form>
 
       <div class="booking-link-block">
-        <h3 class="mini-section-title">🔗 رابط الحجز المباشر لعيادتك</h3>
-        <p class="section-hint">شارك هذا الرابط أو رمز QR بحسابك بإنستغرام أو بلوحة العيادة — يودّي المريض مباشرة لحجز موعد عندك، بدون ما يحتاج يدور عليك بالتطبيق</p>
+        <h3 class="mini-section-title" data-i18n="booking_link_title">🔗 رابط الحجز المباشر لعيادتك</h3>
+        <p class="section-hint" data-i18n="booking_link_hint">شارك هذا الرابط أو رمز QR بحسابك بإنستغرام أو بلوحة العيادة — يودّي المريض مباشرة لحجز موعد عندك، بدون ما يحتاج يدور عليك بالتطبيق</p>
         <div class="booking-link-row">
           <input type="text" id="booking-link-input" readonly>
-          <button type="button" class="btn-xs toggle" id="copy-booking-link-btn">📋 نسخ</button>
+          <button type="button" class="btn-xs toggle" id="copy-booking-link-btn" data-i18n="copy_link_btn">📋 نسخ</button>
         </div>
         <img id="booking-qr-img" class="booking-qr-img" alt="رمز QR لرابط الحجز">
       </div>
@@ -275,6 +278,7 @@
   <!-- Chart.js لرسم الإحصائيات -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 
+  <script src="../js/i18n.js"></script>
   <script src="../js/firebase-config.js"></script>
   <script src="../js/clinic.js"></script>
 </body>
