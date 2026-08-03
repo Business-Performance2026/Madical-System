@@ -43,6 +43,7 @@ auth.onAuthStateChanged(async (user) => {
 
   loadClinics();
   loadFamilyMembers();
+  loadMyWaitlist();
   loadMyBookings().then(promptPendingRatingOnce);
 });
 
@@ -356,7 +357,11 @@ async function renderAvailableSlots() {
   const availableSlots = [...new Set(allSlots)].filter((t) => !bookedTimes.has(t)).sort();
 
   if (availableSlots.length === 0) {
-    slotsWrap.innerHTML = '<p class="warning-text">⚠️ كل الأوقات محجوزة باليوم المختار، جرّب يوم ثاني</p>';
+    slotsWrap.innerHTML = `
+      <p class="warning-text">⚠️ كل الأوقات محجوزة باليوم المختار، جرّب يوم ثاني</p>
+      <button type="button" class="btn-xs toggle" id="join-waitlist-btn">🔔 انضم لقائمة الانتظار لهذا اليوم</button>
+    `;
+    document.getElementById('join-waitlist-btn').addEventListener('click', joinWaitlist);
     return;
   }
 
@@ -712,6 +717,140 @@ function openRatingModal(bookingId, isAutoPrompt) {
 
 function buildLockId(doctorId, date, time) {
   return `${doctorId}_${date}_${time.replace(':', '')}`;
+}
+
+// ============================================
+// قائمة الانتظار
+// ============================================
+async function joinWaitlist() {
+  const btn = document.getElementById('join-waitlist-btn');
+
+  // نتأكد ما انضم قبل لنفس اليوم مع نفس الطبيب
+  const existing = await db.collection('waitlist')
+    .where('patientId', '==', currentUid)
+    .where('doctorId', '==', selectedDoctor.id)
+    .where('date', '==', selectedDate)
+    .get();
+
+  if (!existing.empty) {
+    alert('أنت مسجّل بقائمة الانتظار لهذا اليوم مسبقاً');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'جاري الإضافة...';
+
+  try {
+    await db.collection('waitlist').add({
+      clinicId: selectedClinic.id,
+      doctorId: selectedDoctor.id,
+      doctorName: selectedDoctor.name,
+      patientId: currentUid,
+      patientName: patientName,
+      patientPhone: patientPhone,
+      date: selectedDate,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    alert('✅ تم تسجيلك بقائمة الانتظار — بنعلمك أول ما يتحرر وقت بهذا اليوم');
+    btn.textContent = '✅ مسجّل بقائمة الانتظار';
+    loadMyWaitlist();
+  } catch (err) {
+    console.error('joinWaitlist error:', err);
+    alert('تعذر الانضمام لقائمة الانتظار، حاول مرة أخرى');
+    btn.disabled = false;
+    btn.textContent = '🔔 انضم لقائمة الانتظار لهذا اليوم';
+  }
+}
+
+let cachedWaitlist = [];
+
+async function loadMyWaitlist() {
+  const wrap = document.getElementById('my-waitlist-wrap');
+  if (!wrap) return;
+
+  try {
+    const snap = await db.collection('waitlist').where('patientId', '==', currentUid).get();
+    cachedWaitlist = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+    if (cachedWaitlist.length === 0) {
+      wrap.innerHTML = '';
+      return;
+    }
+
+    wrap.innerHTML = `
+      <h3 class="mini-section-title" style="margin-top:24px;">🔔 قوائم انتظاري</h3>
+      <div id="waitlist-items-wrap" class="loading-state">جاري فحص التوفر...</div>
+    `;
+
+    await renderWaitlistItems();
+  } catch (err) {
+    console.error('loadMyWaitlist error:', err);
+  }
+}
+
+// يفحص لكل عنصر بقائمة الانتظار هل فيه وقت متاح الآن فعلياً، ويعرض النتيجة
+async function renderWaitlistItems() {
+  const itemsWrap = document.getElementById('waitlist-items-wrap');
+  if (!itemsWrap) return;
+
+  const results = await Promise.all(cachedWaitlist.map(async (w) => {
+    const doctorDoc = await db.collection('doctors').doc(w.doctorId).get();
+    if (!doctorDoc.exists) return { ...w, available: false };
+
+    const doctor = doctorDoc.data();
+    const dayKey = DAYS[new Date(w.date + 'T00:00:00').getDay()].key;
+    const hoursForDay = (doctor.workingHours || []).filter((h) => h.date === w.date || (!h.date && h.day === dayKey));
+
+    if (hoursForDay.length === 0) return { ...w, available: false };
+
+    const lockedSnap = await db.collection('lockedSlots').where('doctorId', '==', w.doctorId).where('date', '==', w.date).get();
+    const bookedTimes = new Set(lockedSnap.docs.map((doc) => doc.data().time));
+    const allSlots = hoursForDay.flatMap((h) => generateSlots(h.start, h.end, doctor.slotMinutes));
+    const available = allSlots.some((t) => !bookedTimes.has(t));
+
+    return { ...w, available };
+  }));
+
+  itemsWrap.innerHTML = results.map((w) => `
+    <div class="waitlist-item ${w.available ? 'waitlist-open' : ''}">
+      <div>
+        <p class="appt-main">د. ${escapeHtml(w.doctorName)}</p>
+        <p class="appt-sub">${w.date}</p>
+      </div>
+      <div class="appt-actions">
+        ${w.available
+          ? `<button type="button" class="btn-xs approve" data-action="book-now" data-doctor="${w.doctorId}" data-date="${w.date}">🎉 فيه وقت متاح — احجز الآن</button>`
+          : '<span class="badge badge-pending">⏳ لسا مشغول</span>'}
+        <button type="button" class="btn-xs delete" data-action="leave-waitlist" data-id="${w.id}">إلغاء</button>
+      </div>
+    </div>
+  `).join('');
+
+  itemsWrap.querySelectorAll('[data-action="leave-waitlist"]').forEach((btn) => {
+    btn.addEventListener('click', () => leaveWaitlist(btn.dataset.id));
+  });
+  itemsWrap.querySelectorAll('[data-action="book-now"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const doctorDoc = await db.collection('doctors').doc(btn.dataset.doctor).get();
+      if (!doctorDoc.exists) return;
+      selectedDoctor = { id: doctorDoc.id, ...doctorDoc.data() };
+      selectedDate = btn.dataset.date;
+      selectedTime = '';
+      switchToTab('booking');
+      renderDateStep();
+    });
+  });
+}
+
+async function leaveWaitlist(entryId) {
+  try {
+    await db.collection('waitlist').doc(entryId).delete();
+    loadMyWaitlist();
+  } catch (err) {
+    console.error('leaveWaitlist error:', err);
+    alert('تعذر الإلغاء، حاول مرة أخرى');
+  }
 }
 
 // ============================================

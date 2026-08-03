@@ -1,4 +1,91 @@
 // ============================================
+// دعم اللغتين (عربي/إنجليزي)
+// ============================================
+const translations = {
+  ar: {
+    nav_login: 'تسجيل الدخول',
+    search_placeholder: 'دوّر على تخصص أو اسم عيادة...',
+    spec_all: 'الكل',
+    spec_dental: 'أسنان',
+    spec_derma: 'جلدية',
+    spec_peds: 'أطفال',
+    spec_internal: 'باطنية',
+    spec_eye: 'عيون',
+    spec_ortho: 'عظام',
+    section_clinics: 'العيادات',
+    section_doctors: 'الأطباء',
+    view_all: 'عرض الكل',
+    view_less: 'عرض أقل',
+    loading: 'جاري التحميل...',
+    cta_title: 'جاهز تحجز موعدك؟',
+    cta_sub: 'سجّل حساب مجاني كمريض، أو سجّل عيادتك عشان تستقبل حجوزات جديدة',
+    cta_btn: 'ابدأ الآن',
+    footer_text: '© موعد — نظام حجز مواعيد العيادات',
+    search_results: (parts) => `نتائج البحث: ${parts.join(' • ')}`,
+    results_count: (docs, clinics) => `${docs} طبيب • ${clinics} عيادة`,
+    no_doctors_match: 'ما فيه أطباء مطابقين',
+    no_clinics_match: 'ما فيه عيادات مطابقة، جرب تخصص أو كلمة بحث ثانية',
+    load_error: 'تعذر تحميل البيانات حالياً',
+    doctor_count: (n) => `${n} ${n === 1 ? 'طبيب' : 'أطباء'}`,
+  },
+  en: {
+    nav_login: 'Login',
+    search_placeholder: 'Search by specialty or clinic name...',
+    spec_all: 'All',
+    spec_dental: 'Dental',
+    spec_derma: 'Dermatology',
+    spec_peds: 'Pediatrics',
+    spec_internal: 'Internal Medicine',
+    spec_eye: 'Ophthalmology',
+    spec_ortho: 'Orthopedics',
+    section_clinics: 'Clinics',
+    section_doctors: 'Doctors',
+    view_all: 'View All',
+    view_less: 'View Less',
+    loading: 'Loading...',
+    cta_title: 'Ready to book your appointment?',
+    cta_sub: 'Create a free patient account, or register your clinic to start receiving bookings',
+    cta_btn: 'Get Started',
+    footer_text: '© Mawid — Clinic Appointment Booking System',
+    search_results: (parts) => `Search results: ${parts.join(' • ')}`,
+    results_count: (docs, clinics) => `${docs} doctors • ${clinics} clinics`,
+    no_doctors_match: 'No matching doctors',
+    no_clinics_match: 'No matching clinics, try a different specialty or search term',
+    load_error: 'Could not load data right now',
+    doctor_count: (n) => `${n} ${n === 1 ? 'doctor' : 'doctors'}`,
+  },
+};
+
+let currentLang = localStorage.getItem('mawid_lang') || 'ar';
+
+function t(key, ...args) {
+  const entry = translations[currentLang][key];
+  return typeof entry === 'function' ? entry(...args) : entry;
+}
+
+function applyLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('mawid_lang', lang);
+
+  document.getElementById('html-root').setAttribute('lang', lang);
+  document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.dataset.i18n;
+    if (translations[lang][key]) el.textContent = translations[lang][key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    const key = el.dataset.i18nPlaceholder;
+    if (translations[lang][key]) el.placeholder = translations[lang][key];
+  });
+}
+
+document.getElementById('lang-toggle-btn').addEventListener('click', () => {
+  applyLanguage(currentLang === 'ar' ? 'en' : 'ar');
+  renderDirectory();
+});
+
+// ============================================
 // تحميل العيادات الفعّالة والأطباء (قراءة عامة، بدون تسجيل دخول)
 // ============================================
 let allClinics = [];
@@ -12,6 +99,8 @@ const CAROUSEL_CAP = 10;
 const SPECIALTIES = ['أسنان', 'جلدية', 'أطفال', 'باطنية', 'عيون', 'عظام'];
 
 async function initLanding() {
+  applyLanguage(currentLang);
+
   try {
     const clinicsSnap = await db.collection('users')
       .where('role', '==', 'clinic')
@@ -31,7 +120,7 @@ async function initLanding() {
     renderDirectory();
   } catch (err) {
     console.error('initLanding error:', err);
-    const errorMsg = '<p class="empty-state">تعذر تحميل البيانات حالياً</p>';
+    const errorMsg = `<p class="empty-state">${t('load_error')}</p>`;
     document.getElementById('doctors-carousel-wrap').innerHTML = errorMsg;
     document.getElementById('clinics-carousel-wrap').innerHTML = errorMsg;
   }
@@ -215,8 +304,8 @@ function renderDirectory() {
     const parts = [];
     if (searchQuery) parts.push(`"${searchQuery}"`);
     if (activeSpecialty) parts.push(activeSpecialty);
-    titleEl.textContent = `نتائج البحث: ${parts.join(' • ')}`;
-    hintEl.textContent = `${filteredDoctors.length} طبيب • ${filteredClinics.length} عيادة`;
+    titleEl.textContent = t('search_results', parts);
+    hintEl.textContent = t('results_count', filteredDoctors.length, filteredClinics.length);
     headerEl.classList.remove('hidden');
   } else {
     headerEl.classList.add('hidden');
@@ -230,7 +319,7 @@ function renderDoctorsCarousel(doctors) {
   const wrap = document.getElementById('doctors-carousel-wrap');
 
   if (doctors.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">ما فيه أطباء مطابقين</p>';
+    wrap.innerHTML = `<p class="empty-state">${t('no_doctors_match')}</p>`;
     updateViewAllButton('doctors-carousel-wrap', 0, showAllDoctors);
     return;
   }
@@ -262,7 +351,7 @@ function renderClinicsCarousel(clinics) {
   const wrap = document.getElementById('clinics-carousel-wrap');
 
   if (clinics.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">ما فيه عيادات مطابقة، جرب تخصص أو كلمة بحث ثانية</p>';
+    wrap.innerHTML = `<p class="empty-state">${t('no_clinics_match')}</p>`;
     updateViewAllButton('clinics-carousel-wrap', 0, showAllClinics);
     return;
   }
@@ -278,7 +367,7 @@ function renderClinicMiniCard(c) {
   const specialties = [...new Set(doctors.map((d) => d.specialty).filter(Boolean))];
   const subText = specialties.length
     ? specialties.slice(0, 2).join('، ')
-    : `${doctors.length} ${doctors.length === 1 ? 'طبيب' : 'أطباء'}`;
+    : t('doctor_count', doctors.length);
 
   const logoStyle = c.logoUrl
     ? `background-image:url('${c.logoUrl}')`
@@ -402,7 +491,7 @@ function updateViewAllButton(wrapId, total, showAll) {
   }
 
   btn.classList.remove('hidden');
-  btn.textContent = showAll ? 'عرض أقل' : 'عرض الكل';
+  btn.textContent = showAll ? t('view_less') : t('view_all');
 }
 
 // ============================================

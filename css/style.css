@@ -926,14 +926,39 @@ body.landing {
 
 .landing-nav {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  gap: 10px;
   max-width: 1080px;
   margin: 0 auto;
-  padding: 18px 20px;
-  flex-wrap: wrap;
+  padding: 18px 20px 14px;
 }
+
+.nav-top-row,
+.nav-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nav-bottom-row { justify-content: flex-start; gap: 10px; }
+
+.lang-toggle-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: none;
+  color: var(--white);
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.85;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.lang-toggle-btn:hover { opacity: 1; transform: scale(1.1) rotate(15deg); }
 
 .nav-search {
   flex: 1;
@@ -1175,12 +1200,6 @@ body.landing {
 /* ============================================
    أيقونة البحث المنسدلة بشريط التنقل
    ============================================ */
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .search-toggle-btn {
   width: 30px;
   height: 30px;
@@ -2242,4 +2261,24 @@ body.landing {
   color: var(--blue-900);
   flex: 1;
   min-width: 200px;
+}
+
+/* ============================================
+   قائمة انتظار المريض
+   ============================================ */
+.waitlist-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  margin-bottom: 10px;
+}
+
+.waitlist-item.waitlist-open {
+  border-color: var(--green-600);
+  background: #E5F5EC;
 }

@@ -186,6 +186,23 @@ service cloud.firestore {
     }
 
     // ============================================
+    // waitlist
+    // قائمة انتظار: مريض ينضم ليوم مزدحم عند طبيب معيّن، يتابع لو تحرر وقت
+    // ============================================
+    match /waitlist/{entryId} {
+      allow read: if isSignedIn() && (
+        resource.data.patientId == request.auth.uid
+        || isClinicOrStaff(resource.data.clinicId)
+        || isAdmin()
+      );
+      allow create: if isActivePatient() && request.resource.data.patientId == request.auth.uid;
+      allow delete: if isSignedIn() && (
+        resource.data.patientId == request.auth.uid
+        || isClinicOrStaff(resource.data.clinicId)
+      );
+    }
+
+    // ============================================
     // ads
     // إعلانات الشاشة الرئيسية - قراءة عامة، تحكم كامل للأدمن بس
     // ============================================

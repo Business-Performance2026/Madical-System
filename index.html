@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="html-root">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>موعد | دليل العيادات واحجز موعدك الطبي</title>
+  <title id="page-title">موعد | دليل العيادات واحجز موعدك الطبي</title>
   <!-- إعدادات تطبيق الجوال (Add to Home Screen) -->
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
@@ -19,21 +19,24 @@
 <body class="landing">
 
   <nav class="landing-nav">
-    <div class="nav-brand">
-      <div class="brand-mark">
-        <img src="assets/logo.jpg" alt="موعد" class="brand-logo-img">
+    <div class="nav-top-row">
+      <div class="nav-brand">
+        <div class="brand-mark">
+          <img src="assets/logo.jpg" alt="موعد" class="brand-logo-img">
+        </div>
+        <span>موعد</span>
       </div>
-      <span>موعد</span>
+      <a href="login.html" class="btn-primary" data-i18n="nav_login">تسجيل الدخول</a>
     </div>
-    <div class="nav-actions">
+    <div class="nav-bottom-row">
       <button type="button" id="search-toggle-btn" class="search-toggle-btn" aria-label="بحث">🔍</button>
-      <a href="login.html" class="btn-primary">تسجيل الدخول</a>
+      <button type="button" id="lang-toggle-btn" class="lang-toggle-btn" aria-label="English">🌐</button>
     </div>
   </nav>
 
   <div class="nav-search-wrap hidden" id="nav-search-wrap">
     <form id="hero-search-form" class="nav-search">
-      <input type="text" id="hero-search-input" placeholder="دوّر على تخصص أو اسم عيادة...">
+      <input type="text" id="hero-search-input" data-i18n-placeholder="search_placeholder" placeholder="دوّر على تخصص أو اسم عيادة...">
     </form>
   </div>
 
@@ -43,31 +46,31 @@
     <div class="specialty-filter-bar" id="specialty-filter-bar">
       <button type="button" class="specialty-pill active" data-specialty="">
         <span class="pill-circle">🏥</span>
-        <span class="pill-label">الكل</span>
+        <span class="pill-label" data-i18n="spec_all">الكل</span>
       </button>
       <button type="button" class="specialty-pill" data-specialty="أسنان">
         <span class="pill-circle">🦷</span>
-        <span class="pill-label">أسنان<span class="pill-count" data-count-for="أسنان"></span></span>
+        <span class="pill-label" data-i18n="spec_dental">أسنان<span class="pill-count" data-count-for="أسنان"></span></span>
       </button>
       <button type="button" class="specialty-pill" data-specialty="جلدية">
         <span class="pill-circle">🧴</span>
-        <span class="pill-label">جلدية<span class="pill-count" data-count-for="جلدية"></span></span>
+        <span class="pill-label" data-i18n="spec_derma">جلدية<span class="pill-count" data-count-for="جلدية"></span></span>
       </button>
       <button type="button" class="specialty-pill" data-specialty="أطفال">
         <span class="pill-circle">🧸</span>
-        <span class="pill-label">أطفال<span class="pill-count" data-count-for="أطفال"></span></span>
+        <span class="pill-label" data-i18n="spec_peds">أطفال<span class="pill-count" data-count-for="أطفال"></span></span>
       </button>
       <button type="button" class="specialty-pill" data-specialty="باطنية">
         <span class="pill-circle">🩺</span>
-        <span class="pill-label">باطنية<span class="pill-count" data-count-for="باطنية"></span></span>
+        <span class="pill-label" data-i18n="spec_internal">باطنية<span class="pill-count" data-count-for="باطنية"></span></span>
       </button>
       <button type="button" class="specialty-pill" data-specialty="عيون">
         <span class="pill-circle">👁️</span>
-        <span class="pill-label">عيون<span class="pill-count" data-count-for="عيون"></span></span>
+        <span class="pill-label" data-i18n="spec_eye">عيون<span class="pill-count" data-count-for="عيون"></span></span>
       </button>
       <button type="button" class="specialty-pill" data-specialty="عظام">
         <span class="pill-circle">🦴</span>
-        <span class="pill-label">عظام<span class="pill-count" data-count-for="عظام"></span></span>
+        <span class="pill-label" data-i18n="spec_ortho">عظام<span class="pill-count" data-count-for="عظام"></span></span>
       </button>
     </div>
 
@@ -78,28 +81,28 @@
 
     <section class="carousel-block">
       <div class="carousel-header-row">
-        <h3 class="carousel-title carousel-title-sm">العيادات</h3>
-        <button type="button" class="view-all-btn" data-target="clinics-carousel-wrap">عرض الكل</button>
+        <h3 class="carousel-title carousel-title-sm" data-i18n="section_clinics">العيادات</h3>
+        <button type="button" class="view-all-btn" data-target="clinics-carousel-wrap" data-i18n="view_all">عرض الكل</button>
       </div>
-      <div id="clinics-carousel-wrap" class="loading-state">جاري التحميل...</div>
+      <div id="clinics-carousel-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
 
     <section class="carousel-block">
       <div class="carousel-header-row">
-        <h3 class="carousel-title">الأطباء</h3>
-        <button type="button" class="view-all-btn" data-target="doctors-carousel-wrap">عرض الكل</button>
+        <h3 class="carousel-title" data-i18n="section_doctors">الأطباء</h3>
+        <button type="button" class="view-all-btn" data-target="doctors-carousel-wrap" data-i18n="view_all">عرض الكل</button>
       </div>
-      <div id="doctors-carousel-wrap" class="loading-state">جاري التحميل...</div>
+      <div id="doctors-carousel-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
   </main>
 
   <div class="cta-banner">
-    <h2>جاهز تحجز موعدك؟</h2>
-    <p>سجّل حساب مجاني كمريض، أو سجّل عيادتك عشان تستقبل حجوزات جديدة</p>
-    <a href="login.html" class="btn-primary">ابدأ الآن</a>
+    <h2 data-i18n="cta_title">جاهز تحجز موعدك؟</h2>
+    <p data-i18n="cta_sub">سجّل حساب مجاني كمريض، أو سجّل عيادتك عشان تستقبل حجوزات جديدة</p>
+    <a href="login.html" class="btn-primary" data-i18n="cta_btn">ابدأ الآن</a>
   </div>
 
-  <footer class="landing-footer">© موعد — نظام حجز مواعيد العيادات</footer>
+  <footer class="landing-footer" data-i18n="footer_text">© موعد — نظام حجز مواعيد العيادات</footer>
 
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
