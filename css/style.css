@@ -2337,41 +2337,18 @@ body.landing {
   padding: 0 20px 60px;
 }
 
-.profile-map-wrap {
-  width: 100%;
-  height: 220px;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  margin-bottom: 18px;
-  box-shadow: var(--shadow-card);
-}
-
-.profile-map-wrap iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-.profile-map-link-btn {
-  display: flex;
+.profile-directions-link {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 16px;
+  gap: 7px;
   margin-bottom: 18px;
-  background: var(--white);
-  border: 2px solid var(--blue-500);
-  border-radius: var(--radius-lg);
-  color: var(--blue-900);
-  font-weight: 800;
-  font-size: 14px;
+  color: var(--blue-700);
+  font-weight: 700;
+  font-size: 13.5px;
   text-decoration: none;
-  box-shadow: var(--shadow-card);
-  transition: border-color 0.2s, transform 0.15s;
 }
 
-.profile-map-link-btn:hover { border-color: var(--gold-600); transform: translateY(-2px); }
+.profile-directions-link:hover { text-decoration: underline; }
 
 .profile-header-card {
   display: flex;

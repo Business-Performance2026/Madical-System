@@ -212,6 +212,7 @@ async function handleGuestBooking() {
 
   setLoading(true);
   try {
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const cred = await auth.signInAnonymously();
     const uid = cred.user.uid;
 
@@ -256,6 +257,7 @@ async function handleSignup(email, password) {
 
   setLoading(true);
   try {
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     const uid = cred.user.uid;
 
@@ -294,6 +296,7 @@ async function handleSignup(email, password) {
 async function handleLogin(email, password) {
   setLoading(true);
   try {
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const cred = await auth.signInWithEmailAndPassword(email, password);
     const uid = cred.user.uid;
 
