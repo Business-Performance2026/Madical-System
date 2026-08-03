@@ -130,7 +130,7 @@ function buildMapBlock(clinic) {
 
   return `
     <a class="profile-directions-link" href="${escapeHtml(mapUrl)}" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#2E7DD6" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+      <svg viewBox="0 0 24 24" width="18" height="18"><path fill="var(--gold-600)" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
       <span>موقع العيادة على خرائط جوجل</span>
     </a>
   `;
