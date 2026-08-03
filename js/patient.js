@@ -16,7 +16,9 @@ const DAYS = [
   { key: 'saturday', label: 'السبت' },
 ];
 
-const SLOT_MINUTES = 20; // مدة كل موعد
+const SLOT_MINUTES = 20; // مدة كل موعد افتراضياً
+
+let currentBookingStep = null; // 'clinics' | 'doctors' | 'date' | null - يفيد بإعادة الرسم عند تبديل اللغة
 
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
@@ -33,7 +35,7 @@ auth.onAuthStateChanged(async (user) => {
   }
 
   currentUid = user.uid;
-  patientName = userDoc.data().name || 'مريض';
+  patientName = userDoc.data().name || t('role_patient');
   patientPhone = userDoc.data().phone || '';
   document.getElementById('patient-name').textContent = patientName;
 
@@ -51,6 +53,18 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
   await auth.signOut();
   window.location.href = '../index.html';
 });
+
+// لما تتبدّل اللغة، نعيد رسم أي محتوى حي معروض حالياً بدون إعادة تحميل من القاعدة
+function onLanguageChanged() {
+  if (currentBookingStep === 'clinics') renderClinicsStep();
+  else if (currentBookingStep === 'doctors') renderDoctorsStep();
+  else if (currentBookingStep === 'date') renderDateStep();
+
+  if (cachedMyBookings.length || document.getElementById('upcoming-appts-wrap')) {
+    rerenderBookingsListsFromCache();
+  }
+  if (cachedWaitlist.length) renderWaitlistItems();
+}
 
 // ============================================
 // حالة خطوات الحجز
@@ -98,7 +112,7 @@ async function loadClinics() {
   } catch (err) {
     console.error('loadClinics error:', err);
     document.getElementById('booking-steps').innerHTML =
-      '<p class="empty-state">حدث خطأ أثناء تحميل العيادات، حدّث الصفحة وحاول مرة أخرى</p>';
+      `<p class="empty-state">${t('load_clinics_error')}</p>`;
   }
 }
 
@@ -107,10 +121,11 @@ async function loadClinics() {
 // ============================================
 function renderClinicsStep() {
   const wrap = document.getElementById('booking-steps');
+  currentBookingStep = 'clinics';
 
   wrap.innerHTML = `
-    <span class="step-hint">الخطوة 1 من 3: اختر العيادة</span>
-    <input type="text" id="clinic-search" class="search-box" placeholder="ابحث باسم العيادة...">
+    <span class="step-hint">${t('step1_hint')}</span>
+    <input type="text" id="clinic-search" class="search-box" placeholder="${t('search_clinic_placeholder')}">
     <div class="choice-list" id="clinics-list"></div>
   `;
 
@@ -128,13 +143,13 @@ function updateClinicsList(query) {
   const listEl = document.getElementById('clinics-list');
 
   if (list.length === 0) {
-    listEl.innerHTML = `<p class="empty-state">${allClinics.length === 0 ? 'ما فيه عيادات فعّالة حالياً' : 'ما فيه عيادات مطابقة'}</p>`;
+    listEl.innerHTML = `<p class="empty-state">${allClinics.length === 0 ? t('no_active_clinics') : t('no_matching_clinics')}</p>`;
     return;
   }
 
   listEl.innerHTML = list.map((c) => {
     const specialties = clinicSpecialtiesMap[c.id] ? [...clinicSpecialtiesMap[c.id]] : [];
-    const subText = specialties.length ? specialties.join('، ') : 'ما تم إضافة تخصصات بعد';
+    const subText = specialties.length ? specialties.join('، ') : t('no_specialties');
     return `
       <div class="choice-card" data-id="${c.id}">
         <div>
@@ -159,7 +174,7 @@ function updateClinicsList(query) {
 // ============================================
 async function goToDoctorsStep() {
   const wrap = document.getElementById('booking-steps');
-  wrap.innerHTML = '<p class="loading-state">جاري تحميل الأطباء...</p>';
+  wrap.innerHTML = `<p class="loading-state">${t('loading_doctors')}</p>`;
 
   const [doctorsSnap, reviewsSnap] = await Promise.all([
     db.collection('doctors').where('clinicId', '==', selectedClinic.id).get(),
@@ -181,10 +196,11 @@ async function goToDoctorsStep() {
 
 function renderDoctorsStep() {
   const wrap = document.getElementById('booking-steps');
+  currentBookingStep = 'doctors';
 
   wrap.innerHTML = `
-    <span class="step-hint">الخطوة 2 من 3: اختر الطبيب — ${escapeHtml(selectedClinic.name)}</span>
-    <button type="button" class="btn-outline" id="back-to-clinics" style="margin-bottom:16px;">‹ رجوع لاختيار العيادة</button>
+    <span class="step-hint">${t('step2_hint', escapeHtml(selectedClinic.name))}</span>
+    <button type="button" class="btn-outline" id="back-to-clinics" style="margin-bottom:16px;">${t('back_to_clinics')}</button>
     <div class="choice-list" id="doctors-list"></div>
   `;
 
@@ -192,15 +208,15 @@ function renderDoctorsStep() {
 
   const listEl = document.getElementById('doctors-list');
   if (clinicDoctors.length === 0) {
-    listEl.innerHTML = '<p class="empty-state">هذي العيادة ما أضافت أطباء بعد</p>';
+    listEl.innerHTML = `<p class="empty-state">${t('no_doctors_yet')}</p>`;
     return;
   }
 
   listEl.innerHTML = clinicDoctors.map((d) => {
     const ratingInfo = doctorRatingsMap[d.id];
     const ratingText = ratingInfo
-      ? `⭐ ${(ratingInfo.sum / ratingInfo.count).toFixed(1)} (${ratingInfo.count} تقييم)`
-      : 'ما فيه تقييمات بعد';
+      ? t('rating_summary', (ratingInfo.sum / ratingInfo.count).toFixed(1), ratingInfo.count)
+      : t('rating_no_reviews');
 
     return `
     <div class="choice-card" data-id="${d.id}">
@@ -230,17 +246,18 @@ let currentCalendarMonth = null; // أول يوم بالشهر المعروض ح
 
 function renderDateStep() {
   const wrap = document.getElementById('booking-steps');
+  currentBookingStep = 'date';
 
   const today = new Date();
   currentCalendarMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
   wrap.innerHTML = `
-    <span class="step-hint">الخطوة 3 من 3: اختر الموعد — د. ${escapeHtml(selectedDoctor.name)}</span>
-    <button type="button" class="btn-outline" id="back-to-doctors" style="margin-bottom:16px;">‹ رجوع لاختيار الطبيب</button>
+    <span class="step-hint">${t('step3_hint', escapeHtml(selectedDoctor.name))}</span>
+    <button type="button" class="btn-outline" id="back-to-doctors" style="margin-bottom:16px;">${t('back_to_doctors')}</button>
 
     <div class="calendar-legend">
-      <span class="legend-item"><span class="legend-dot legend-available"></span>يوجد دوام</span>
-      <span class="legend-item"><span class="legend-dot legend-unavailable"></span>ما يوجد دوام</span>
+      <span class="legend-item"><span class="legend-dot legend-available"></span>${t('legend_available')}</span>
+      <span class="legend-item"><span class="legend-dot legend-unavailable"></span>${t('legend_unavailable')}</span>
     </div>
 
     <div class="booking-calendar" id="booking-calendar"></div>
@@ -265,7 +282,9 @@ function renderCalendarGrid() {
   const year = currentCalendarMonth.getFullYear();
   const month = currentCalendarMonth.getMonth();
 
-  const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  const monthNames = currentLang === 'en'
+    ? ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    : ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   const firstOfMonth = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const startOffset = firstOfMonth.getDay(); // 0 = الأحد
@@ -296,6 +315,10 @@ function renderCalendarGrid() {
     cellsHtml += `<button type="button" class="${classes.join(' ')}" ${(!available || isPast) ? 'disabled' : ''} data-date="${dateISO}">${d}</button>`;
   }
 
+  const dayLabels = currentLang === 'en'
+    ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    : DAYS.map((d) => d.label.slice(0, 3));
+
   cal.innerHTML = `
     <div class="calendar-header">
       <button type="button" class="calendar-nav" id="cal-prev" ${isCurrentMonth ? 'disabled' : ''}>›</button>
@@ -303,7 +326,7 @@ function renderCalendarGrid() {
       <button type="button" class="calendar-nav" id="cal-next" ${monthsFromNow >= maxMonthsAhead ? 'disabled' : ''}>‹</button>
     </div>
     <div class="calendar-weekdays">
-      ${DAYS.map((d) => `<span>${d.label.slice(0, 3)}</span>`).join('')}
+      ${dayLabels.map((d) => `<span>${d}</span>`).join('')}
     </div>
     <div class="calendar-grid">${cellsHtml}</div>
   `;
@@ -330,7 +353,7 @@ function changeCalendarMonth(delta) {
 
 async function renderAvailableSlots() {
   const slotsWrap = document.getElementById('slots-wrap');
-  slotsWrap.innerHTML = '<p class="loading-state">جاري تحميل الأوقات المتاحة...</p>';
+  slotsWrap.innerHTML = `<p class="loading-state">${t('loading_slots')}</p>`;
 
   // نطابق أوقات العمل بالتاريخ المحدد فعلياً (النظام الجديد)،
   // مع بقاء التوافق مع أي أوقات قديمة كانت محفوظة بيوم أسبوع متكرر
@@ -340,7 +363,7 @@ async function renderAvailableSlots() {
   );
 
   if (hoursForDay.length === 0) {
-    slotsWrap.innerHTML = '<p class="warning-text">⚠️ الطبيب ما عنده دوام باليوم المختار، جرّب يوم ثاني</p>';
+    slotsWrap.innerHTML = `<p class="warning-text">${t('no_working_hours_day')}</p>`;
     return;
   }
 
@@ -358,15 +381,15 @@ async function renderAvailableSlots() {
 
   if (availableSlots.length === 0) {
     slotsWrap.innerHTML = `
-      <p class="warning-text">⚠️ كل الأوقات محجوزة باليوم المختار، جرّب يوم ثاني</p>
-      <button type="button" class="btn-xs toggle" id="join-waitlist-btn">🔔 انضم لقائمة الانتظار لهذا اليوم</button>
+      <p class="warning-text">${t('all_slots_booked')}</p>
+      <button type="button" class="btn-xs toggle" id="join-waitlist-btn">${t('join_waitlist_btn')}</button>
     `;
     document.getElementById('join-waitlist-btn').addEventListener('click', joinWaitlist);
     return;
   }
 
-  slotsWrap.innerHTML = `<div class="slot-grid">${availableSlots.map((t) => `
-    <button type="button" class="slot-btn" data-time="${t}">${t}</button>
+  slotsWrap.innerHTML = `<div class="slot-grid">${availableSlots.map((tm) => `
+    <button type="button" class="slot-btn" data-time="${tm}">${tm}</button>
   `).join('')}</div>`;
 
   slotsWrap.querySelectorAll('.slot-btn').forEach((btn) => {
@@ -383,20 +406,20 @@ function renderConfirmBox() {
   const confirmWrap = document.getElementById('confirm-wrap');
   confirmWrap.innerHTML = `
     <div class="confirm-box">
-      <p>تأكيد حجز موعد يوم ${selectedDate} الساعة ${selectedTime} مع د. ${escapeHtml(selectedDoctor.name)}؟</p>
+      <p>${t('confirm_booking_text', selectedDate, selectedTime, escapeHtml(selectedDoctor.name))}</p>
       <div class="field">
-        <label for="booking-for-select">الحجز لـ</label>
+        <label for="booking-for-select">${t('booking_for_label')}</label>
         <select id="booking-for-select">
-          <option value="__self__">نفسي (${escapeHtml(patientName)})</option>
+          <option value="__self__">${t('booking_for_self', escapeHtml(patientName))}</option>
           ${familyMembers.map((f) => `<option value="${f.id}">${escapeHtml(f.name)}</option>`).join('')}
-          <option value="__new__">+ إضافة فرد جديد من العائلة</option>
+          <option value="__new__">${t('booking_for_new')}</option>
         </select>
       </div>
       <div class="field hidden" id="new-family-member-field">
-        <label for="new-family-member-name">اسم الفرد الجديد</label>
-        <input type="text" id="new-family-member-name" placeholder="مثال: سارة (الزوجة)">
+        <label for="new-family-member-name">${t('new_family_member_label')}</label>
+        <input type="text" id="new-family-member-name" placeholder="${t('new_family_member_placeholder')}">
       </div>
-      <button type="button" class="btn-primary" id="confirm-booking-btn">إرسال طلب الحجز</button>
+      <button type="button" class="btn-primary" id="confirm-booking-btn">${t('send_booking_request')}</button>
     </div>
   `;
 
@@ -426,7 +449,7 @@ async function submitBooking() {
   if (bookingForValue === '__new__') {
     const newName = document.getElementById('new-family-member-name').value.trim();
     if (!newName) {
-      alert('اكتب اسم الفرد الجديد أول');
+      alert(t('new_booking_error'));
       return;
     }
     bookedForName = newName;
@@ -436,7 +459,7 @@ async function submitBooking() {
   }
 
   btn.disabled = true;
-  btn.textContent = 'جاري الإرسال...';
+  btn.textContent = t('sending');
 
   try {
     // لو اختار "فرد جديد"، نحفظه بقائمة العائلة عشان يظهر بالمرات الجاية
@@ -468,17 +491,17 @@ async function submitBooking() {
     loadMyBookings();
 
     showModal(`
-      <h3>✅ تم إرسال طلب الحجز</h3>
-      <p>رقم حجزك</p>
+      <h3>${t('booking_success_title')}</h3>
+      <p>${t('booking_number_label')}</p>
       <p class="modal-code">${code}</p>
-      <p class="cell-sub">بتوصلك حالته بعد ما تراجعه العيادة، وتقدر تتابعها من قسم "مواعيدي الحالية" تحت</p>
-      <button type="button" class="btn-primary" id="modal-ok-btn">تم</button>
+      <p class="cell-sub">${t('booking_success_note')}</p>
+      <button type="button" class="btn-primary" id="modal-ok-btn">${t('modal_ok')}</button>
     `);
     document.getElementById('modal-ok-btn').addEventListener('click', closeModal);
   } catch (err) {
-    alert('حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى');
+    alert(t('booking_error'));
     btn.disabled = false;
-    btn.textContent = 'إرسال طلب الحجز';
+    btn.textContent = t('send_booking_request');
   }
 }
 
@@ -515,16 +538,21 @@ async function loadMyBookings() {
   myReviews = {};
   reviewsSnap.docs.forEach((doc) => { myReviews[doc.id] = doc.data(); });
 
+  rerenderBookingsListsFromCache();
+}
+
+// يعيد رسم قائمتي "الحالية" و"السابقة" من البيانات المحفوظة بالذاكرة بدون إعادة تحميل (يفيد عند تبديل اللغة)
+function rerenderBookingsListsFromCache() {
   const todayStr = todayISO();
-  const upcoming = bookings
+  const upcoming = cachedMyBookings
     .filter((b) => b.status !== 'rejected' && b.status !== 'cancelled' && b.status !== 'no_show' && b.date >= todayStr)
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-  const past = bookings
+  const past = cachedMyBookings
     .filter((b) => b.status === 'rejected' || b.status === 'cancelled' || b.status === 'no_show' || b.date < todayStr)
     .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
 
-  renderBookingsList('upcoming-appts-wrap', upcoming, 'ما فيه مواعيد قادمة حالياً', true);
-  renderBookingsList('past-appts-wrap', past, 'ما فيه مواعيد سابقة', false);
+  renderBookingsList('upcoming-appts-wrap', upcoming, t('no_upcoming_appts'), true);
+  renderBookingsList('past-appts-wrap', past, t('no_past_appts'), false);
 }
 
 function renderBookingsList(elementId, bookings, emptyText, isUpcoming) {
@@ -542,19 +570,19 @@ function renderBookingsList(elementId, bookings, emptyText, isUpcoming) {
     return `
     <div class="appt-card">
       <div>
-        <p class="appt-main">د. ${escapeHtml(b.doctorName)}</p>
-        <p class="appt-sub">${b.date} — ${b.time} • رقم الحجز: ${bookingNumber(b.id)}</p>
+        <p class="appt-main">${escapeHtml(b.doctorName)}</p>
+        <p class="appt-sub">${b.date} — ${b.time} • ${t('booking_number_short')}: ${bookingNumber(b.id)}</p>
         ${myReview ? `<p class="appt-sub">${starsDisplay(myReview.rating)} ${myReview.comment ? '— ' + escapeHtml(myReview.comment) : ''}</p>` : ''}
       </div>
       <div class="appt-actions">
         ${bookingStatusBadge(b.status)}
         ${isUpcoming && (b.status === 'pending' || b.status === 'accepted')
           ? `
-            <button type="button" class="btn-xs toggle" data-action="reschedule" data-id="${b.id}">🔁 إعادة جدولة</button>
-            <button type="button" class="btn-xs delete" data-action="cancel" data-id="${b.id}">إلغاء الحجز</button>
+            <button type="button" class="btn-xs toggle" data-action="reschedule" data-id="${b.id}">${t('reschedule_btn')}</button>
+            <button type="button" class="btn-xs delete" data-action="cancel" data-id="${b.id}">${t('cancel_booking_btn')}</button>
           `
           : ''}
-        ${canRate ? `<button type="button" class="btn-xs approve" data-action="rate" data-id="${b.id}">⭐ قيّم زيارتك</button>` : ''}
+        ${canRate ? `<button type="button" class="btn-xs approve" data-action="rate" data-id="${b.id}">${t('rate_visit_btn')}</button>` : ''}
       </div>
     </div>
   `;
@@ -576,7 +604,7 @@ function starsDisplay(rating) {
 }
 
 async function cancelBooking(bookingId) {
-  const sure = confirm('متأكد إنك تبي تلغي هذا الحجز؟');
+  const sure = confirm(t('confirm_cancel'));
   if (!sure) return;
 
   const booking = cachedMyBookings.find((b) => b.id === bookingId);
@@ -592,7 +620,7 @@ async function cancelBooking(bookingId) {
     loadMyBookings();
   } catch (err) {
     console.error('cancelBooking error:', err);
-    alert('تعذر إلغاء الحجز، حاول مرة أخرى');
+    alert(t('cancel_error'));
   }
 }
 
@@ -603,7 +631,7 @@ async function startReschedule(bookingId) {
   const booking = cachedMyBookings.find((b) => b.id === bookingId);
   if (!booking) return;
 
-  const sure = confirm('بنلغي هذا الموعد ونوديك تختار وقت جديد لنفس الطبيب. تكمل؟');
+  const sure = confirm(t('confirm_reschedule'));
   if (!sure) return;
 
   try {
@@ -614,7 +642,7 @@ async function startReschedule(bookingId) {
 
     const doctorDoc = await db.collection('doctors').doc(booking.doctorId).get();
     if (!doctorDoc.exists) {
-      alert('تعذر جلب بيانات الطبيب، جرب تحجز من جديد يدوياً');
+      alert(t('reschedule_doctor_error'));
       loadMyBookings();
       return;
     }
@@ -629,7 +657,7 @@ async function startReschedule(bookingId) {
     loadMyBookings();
   } catch (err) {
     console.error('startReschedule error:', err);
-    alert('تعذر بدء إعادة الجدولة، حاول مرة أخرى');
+    alert(t('reschedule_error'));
   }
 }
 
@@ -659,14 +687,14 @@ function openRatingModal(bookingId, isAutoPrompt) {
   let selectedStars = 0;
 
   showModal(`
-    <h3>⭐ قيّم زيارتك</h3>
-    <p class="cell-sub">مع د. ${escapeHtml(booking.doctorName)} — ${booking.date}</p>
+    <h3>${t('rate_visit_title')}</h3>
+    <p class="cell-sub">${escapeHtml(booking.doctorName)} — ${booking.date}</p>
     <div class="star-picker" id="star-picker">
       ${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="star-btn" data-star="${n}">☆</button>`).join('')}
     </div>
-    <textarea id="rating-comment" class="rating-textarea" placeholder="تعليقك (اختياري)..." rows="3"></textarea>
-    <button type="button" class="btn-primary" id="submit-rating-btn">إرسال التقييم</button>
-    ${isAutoPrompt ? '<button type="button" class="btn-outline" id="later-rating-btn" style="margin-top:10px;">لاحقاً</button>' : ''}
+    <textarea id="rating-comment" class="rating-textarea" placeholder="${t('rating_comment_placeholder')}" rows="3"></textarea>
+    <button type="button" class="btn-primary" id="submit-rating-btn">${t('submit_rating')}</button>
+    ${isAutoPrompt ? `<button type="button" class="btn-outline" id="later-rating-btn" style="margin-top:10px;">${t('later')}</button>` : ''}
   `);
 
   const laterBtn = document.getElementById('later-rating-btn');
@@ -684,14 +712,14 @@ function openRatingModal(bookingId, isAutoPrompt) {
 
   document.getElementById('submit-rating-btn').addEventListener('click', async () => {
     if (selectedStars < 1) {
-      alert('اختر تقييم من 1 إلى 5 نجوم');
+      alert(t('rating_stars_required'));
       return;
     }
 
     const comment = document.getElementById('rating-comment').value.trim();
     const submitBtn = document.getElementById('submit-rating-btn');
     submitBtn.disabled = true;
-    submitBtn.textContent = 'جاري الإرسال...';
+    submitBtn.textContent = t('sending');
 
     try {
       await db.collection('reviews').doc(bookingId).set({
@@ -708,9 +736,9 @@ function openRatingModal(bookingId, isAutoPrompt) {
       loadMyBookings();
     } catch (err) {
       console.error('submitRating error:', err);
-      alert('تعذر إرسال التقييم، حاول مرة أخرى');
+      alert(t('rating_error'));
       submitBtn.disabled = false;
-      submitBtn.textContent = 'إرسال التقييم';
+      submitBtn.textContent = t('submit_rating');
     }
   });
 }
@@ -733,12 +761,12 @@ async function joinWaitlist() {
     .get();
 
   if (!existing.empty) {
-    alert('أنت مسجّل بقائمة الانتظار لهذا اليوم مسبقاً');
+    alert(t('waitlist_already_joined'));
     return;
   }
 
   btn.disabled = true;
-  btn.textContent = 'جاري الإضافة...';
+  btn.textContent = t('joining');
 
   try {
     await db.collection('waitlist').add({
@@ -752,14 +780,14 @@ async function joinWaitlist() {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-    alert('✅ تم تسجيلك بقائمة الانتظار — بنعلمك أول ما يتحرر وقت بهذا اليوم');
-    btn.textContent = '✅ مسجّل بقائمة الانتظار';
+    alert(t('waitlist_join_success'));
+    btn.textContent = t('waitlist_joined_label');
     loadMyWaitlist();
   } catch (err) {
     console.error('joinWaitlist error:', err);
-    alert('تعذر الانضمام لقائمة الانتظار، حاول مرة أخرى');
+    alert(t('waitlist_join_error'));
     btn.disabled = false;
-    btn.textContent = '🔔 انضم لقائمة الانتظار لهذا اليوم';
+    btn.textContent = t('join_waitlist_btn');
   }
 }
 
@@ -779,8 +807,8 @@ async function loadMyWaitlist() {
     }
 
     wrap.innerHTML = `
-      <h3 class="mini-section-title" style="margin-top:24px;">🔔 قوائم انتظاري</h3>
-      <div id="waitlist-items-wrap" class="loading-state">جاري فحص التوفر...</div>
+      <h3 class="mini-section-title" style="margin-top:24px;">${t('my_waitlist_title')}</h3>
+      <div id="waitlist-items-wrap" class="loading-state">${t('waitlist_checking')}</div>
     `;
 
     await renderWaitlistItems();
@@ -807,7 +835,7 @@ async function renderWaitlistItems() {
     const lockedSnap = await db.collection('lockedSlots').where('doctorId', '==', w.doctorId).where('date', '==', w.date).get();
     const bookedTimes = new Set(lockedSnap.docs.map((doc) => doc.data().time));
     const allSlots = hoursForDay.flatMap((h) => generateSlots(h.start, h.end, doctor.slotMinutes));
-    const available = allSlots.some((t) => !bookedTimes.has(t));
+    const available = allSlots.some((tm) => !bookedTimes.has(tm));
 
     return { ...w, available };
   }));
@@ -815,14 +843,14 @@ async function renderWaitlistItems() {
   itemsWrap.innerHTML = results.map((w) => `
     <div class="waitlist-item ${w.available ? 'waitlist-open' : ''}">
       <div>
-        <p class="appt-main">د. ${escapeHtml(w.doctorName)}</p>
+        <p class="appt-main">${escapeHtml(w.doctorName)}</p>
         <p class="appt-sub">${w.date}</p>
       </div>
       <div class="appt-actions">
         ${w.available
-          ? `<button type="button" class="btn-xs approve" data-action="book-now" data-doctor="${w.doctorId}" data-date="${w.date}">🎉 فيه وقت متاح — احجز الآن</button>`
-          : '<span class="badge badge-pending">⏳ لسا مشغول</span>'}
-        <button type="button" class="btn-xs delete" data-action="leave-waitlist" data-id="${w.id}">إلغاء</button>
+          ? `<button type="button" class="btn-xs approve" data-action="book-now" data-doctor="${w.doctorId}" data-date="${w.date}">${t('waitlist_open')}</button>`
+          : `<span class="badge badge-pending">${t('waitlist_still_full')}</span>`}
+        <button type="button" class="btn-xs delete" data-action="leave-waitlist" data-id="${w.id}">${t('waitlist_cancel_btn')}</button>
       </div>
     </div>
   `).join('');
@@ -849,7 +877,77 @@ async function leaveWaitlist(entryId) {
     loadMyWaitlist();
   } catch (err) {
     console.error('leaveWaitlist error:', err);
-    alert('تعذر الإلغاء، حاول مرة أخرى');
+    alert(t('waitlist_leave_error'));
+  }
+}
+
+// ============================================
+// شريط تنبيه للضيف + تحويل الحساب المؤقت لدائم بدون خسارة الحجوزات
+// ============================================
+function showGuestBanner() {
+  const wrap = document.getElementById('guest-banner-wrap');
+  if (!wrap) return;
+
+  wrap.innerHTML = `
+    <div class="guest-banner">
+      <p>${t('guest_banner_text')}</p>
+      <button type="button" class="btn-xs approve" id="save-guest-account-btn">${t('save_guest_account_btn')}</button>
+    </div>
+  `;
+
+  document.getElementById('save-guest-account-btn').addEventListener('click', openSaveAccountModal);
+}
+
+function openSaveAccountModal() {
+  showModal(`
+    <h3>${t('save_account_title')}</h3>
+    <p class="cell-sub">${t('save_account_hint')}</p>
+    <div class="field">
+      <label for="save-account-email">${t('label_email')}</label>
+      <input type="email" id="save-account-email" placeholder="example@email.com">
+    </div>
+    <div class="field">
+      <label for="save-account-password">${t('label_password')}</label>
+      <input type="password" id="save-account-password" minlength="6" placeholder="${t('placeholder_password')}">
+    </div>
+    <button type="button" class="btn-primary" id="submit-save-account-btn">${t('save_account_btn')}</button>
+  `);
+
+  document.getElementById('submit-save-account-btn').addEventListener('click', saveGuestAccount);
+}
+
+async function saveGuestAccount() {
+  const email = document.getElementById('save-account-email').value.trim();
+  const password = document.getElementById('save-account-password').value;
+  const btn = document.getElementById('submit-save-account-btn');
+
+  if (!email || !password || password.length < 6) {
+    alert(t('save_account_fields_error'));
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = t('saving');
+
+  try {
+    const credential = firebase.auth.EmailAuthProvider.credential(email, password);
+    await auth.currentUser.linkWithCredential(credential);
+
+    await db.collection('users').doc(currentUid).update({ email, isGuest: false });
+
+    closeModal();
+    document.getElementById('guest-banner-wrap').innerHTML = '';
+    alert(t('save_account_success'));
+  } catch (err) {
+    console.error('saveGuestAccount error:', err);
+    const messages = {
+      'auth/email-already-in-use': t('save_account_email_in_use'),
+      'auth/invalid-email': t('save_account_invalid_email'),
+      'auth/weak-password': t('save_account_weak_password'),
+    };
+    alert(messages[err.code] || t('save_account_error'));
+    btn.disabled = false;
+    btn.textContent = t('save_account_btn');
   }
 }
 
@@ -874,7 +972,13 @@ function generateSlots(start, end, slotMinutes) {
 }
 
 function bookingStatusBadge(status) {
-  const labels = { pending: 'قيد الانتظار', accepted: 'مقبول', rejected: 'مرفوض', cancelled: 'ملغى', no_show: 'لم يحضر' };
+  const labels = {
+    pending: t('status_pending'),
+    accepted: t('status_accepted'),
+    rejected: t('status_rejected'),
+    cancelled: t('status_cancelled'),
+    no_show: t('status_no_show'),
+  };
   const cls = { pending: 'badge-pending', accepted: 'badge-active', rejected: 'badge-rejected', cancelled: 'badge-cancelled', no_show: 'badge-no-show' };
   return `<span class="badge ${cls[status] || ''}">${labels[status] || status}</span>`;
 }
@@ -922,76 +1026,6 @@ function initPageTabs() {
 function switchToTab(tabName) {
   const btn = document.querySelector(`.page-tabs button[data-tab="${tabName}"]`);
   if (btn) btn.click();
-}
-
-// ============================================
-// شريط تنبيه للضيف + تحويل الحساب المؤقت لدائم بدون خسارة الحجوزات
-// ============================================
-function showGuestBanner() {
-  const wrap = document.getElementById('guest-banner-wrap');
-  if (!wrap) return;
-
-  wrap.innerHTML = `
-    <div class="guest-banner">
-      <p>👋 أنت تستخدم حساب ضيف مؤقت — مربوط بهذا الجهاز/المتصفح بس. احفظ حسابك عشان توصل لحجوزاتك من أي جهاز ولا تخسرها.</p>
-      <button type="button" class="btn-xs approve" id="save-guest-account-btn">💾 احفظ حسابك الآن</button>
-    </div>
-  `;
-
-  document.getElementById('save-guest-account-btn').addEventListener('click', openSaveAccountModal);
-}
-
-function openSaveAccountModal() {
-  showModal(`
-    <h3>💾 احفظ حسابك</h3>
-    <p class="cell-sub">أضف بريد إلكتروني وكلمة مرور — كل حجوزاتك الحالية تبقى معك بدون أي تغيير</p>
-    <div class="field">
-      <label for="save-account-email">البريد الإلكتروني</label>
-      <input type="email" id="save-account-email" placeholder="example@email.com">
-    </div>
-    <div class="field">
-      <label for="save-account-password">كلمة المرور</label>
-      <input type="password" id="save-account-password" minlength="6" placeholder="6 أحرف على الأقل">
-    </div>
-    <button type="button" class="btn-primary" id="submit-save-account-btn">حفظ الحساب</button>
-  `);
-
-  document.getElementById('submit-save-account-btn').addEventListener('click', saveGuestAccount);
-}
-
-async function saveGuestAccount() {
-  const email = document.getElementById('save-account-email').value.trim();
-  const password = document.getElementById('save-account-password').value;
-  const btn = document.getElementById('submit-save-account-btn');
-
-  if (!email || !password || password.length < 6) {
-    alert('تأكد من البريد الإلكتروني وكلمة مرور 6 أحرف على الأقل');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'جاري الحفظ...';
-
-  try {
-    const credential = firebase.auth.EmailAuthProvider.credential(email, password);
-    await auth.currentUser.linkWithCredential(credential);
-
-    await db.collection('users').doc(currentUid).update({ email, isGuest: false });
-
-    closeModal();
-    document.getElementById('guest-banner-wrap').innerHTML = '';
-    alert('تم حفظ حسابك بنجاح! تقدر تسجّل دخول بهذا البريد من أي جهاز بعدين');
-  } catch (err) {
-    console.error('saveGuestAccount error:', err);
-    const messages = {
-      'auth/email-already-in-use': 'هذا البريد مستخدم مسبقاً، جرب بريد ثاني',
-      'auth/invalid-email': 'صيغة البريد غير صحيحة',
-      'auth/weak-password': 'كلمة المرور ضعيفة',
-    };
-    alert(messages[err.code] || 'تعذر حفظ الحساب، حاول مرة أخرى');
-    btn.disabled = false;
-    btn.textContent = 'حفظ الحساب';
-  }
 }
 
 initPageTabs();

@@ -27,35 +27,40 @@
         </div>
         <div class="header-titles">
           <p class="brand-title">موعد</p>
-          <p class="brand-subtitle">مرحباً، <span id="patient-name">...</span></p>
+          <p class="brand-subtitle"><span data-i18n="welcome_prefix">مرحباً، </span><span id="patient-name">...</span></p>
         </div>
       </div>
-      <button class="btn-outline" id="logout-btn">تسجيل الخروج</button>
+      <div class="header-actions">
+        <button type="button" id="lang-toggle-btn" class="lang-toggle-btn" aria-label="English">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm6.93 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8 8 0 0 1 18.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14a7.9 7.9 0 0 1 0-4h3.38a16.6 16.6 0 0 0 0 4zm.81 2h2.95A15.7 15.7 0 0 0 9.4 19.56 8 8 0 0 1 5.07 16zm2.95-8H5.07a8 8 0 0 1 4.33-3.56A15.7 15.7 0 0 0 8.02 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66a14.6 14.6 0 0 1 0-4h4.68a14.6 14.6 0 0 1 0 4zm.28 5.56A15.7 15.7 0 0 0 15.98 16h2.95a8 8 0 0 1-4.31 3.56zM16.36 14a16.6 16.6 0 0 0 0-4h3.38a7.9 7.9 0 0 1 0 4z"/></svg>
+        </button>
+        <button class="btn-outline" id="logout-btn" data-i18n="logout">تسجيل الخروج</button>
+      </div>
     </header>
 
     <div id="guest-banner-wrap"></div>
 
     <div class="page-tabs">
-      <button type="button" class="active" data-tab="booking">احجز موعد جديد</button>
-      <button type="button" data-tab="upcoming">مواعيدي الحالية</button>
-      <button type="button" data-tab="past">مواعيدي السابقة</button>
+      <button type="button" class="active" data-tab="booking" data-i18n="tab_new_booking">احجز موعد جديد</button>
+      <button type="button" data-tab="upcoming" data-i18n="tab_upcoming">مواعيدي الحالية</button>
+      <button type="button" data-tab="past" data-i18n="tab_past">مواعيدي السابقة</button>
     </div>
 
     <section class="section-card tab-panel" data-panel="booking">
-      <h2 class="section-title">احجز موعد جديد</h2>
-      <p class="section-hint">اختر العيادة، بعدين الطبيب، وبنعرض لك بس الأوقات المتاحة فعلياً</p>
-      <div id="booking-steps" class="loading-state">جاري التحميل...</div>
+      <h2 class="section-title" data-i18n="section_new_booking_title">احجز موعد جديد</h2>
+      <p class="section-hint" data-i18n="section_new_booking_hint">اختر العيادة، بعدين الطبيب، وبنعرض لك بس الأوقات المتاحة فعلياً</p>
+      <div id="booking-steps" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="upcoming">
-      <h2 class="section-title">مواعيدي الحالية</h2>
-      <div id="upcoming-appts-wrap" class="loading-state">جاري التحميل...</div>
+      <h2 class="section-title" data-i18n="section_upcoming_title">مواعيدي الحالية</h2>
+      <div id="upcoming-appts-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
       <div id="my-waitlist-wrap"></div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="past">
-      <h2 class="section-title">مواعيدي السابقة</h2>
-      <div id="past-appts-wrap" class="loading-state">جاري التحميل...</div>
+      <h2 class="section-title" data-i18n="section_past_title">مواعيدي السابقة</h2>
+      <div id="past-appts-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
 
   </div>
@@ -67,6 +72,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
+  <script src="../js/i18n.js"></script>
   <script src="../js/firebase-config.js"></script>
   <script src="../js/patient.js"></script>
 </body>
