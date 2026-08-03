@@ -25,18 +25,13 @@
       </div>
       <span>موعد</span>
     </div>
+    <form id="hero-search-form" class="nav-search">
+      <input type="text" id="hero-search-input" placeholder="دوّر على تخصص أو اسم عيادة...">
+    </form>
     <a href="login.html" class="btn-primary">تسجيل الدخول</a>
   </nav>
 
-  <header class="hero-compact">
-    <h1>دليل العيادات — دوّر واحجز بثواني</h1>
-    <p>ابحث باسم العيادة أو التخصص، وشوف الأطباء والأوقات المتاحة فوراً</p>
-    <form id="hero-search-form" class="hero-search">
-      <input type="text" id="hero-search-input" placeholder="دوّر على تخصص أو اسم عيادة...">
-      <button type="submit">ابحث</button>
-    </form>
-    <p class="hero-stats-line" id="hero-stats-line"></p>
-  </header>
+  <div id="ads-carousel-wrap" class="hidden"></div>
 
   <main class="directory-section">
     <div class="specialty-filter-bar" id="specialty-filter-bar">
@@ -63,19 +58,31 @@
       </button>
     </div>
 
-    <div class="directory-header">
-      <h2 id="directory-title">تصفح العيادات والأطباء</h2>
+    <div class="directory-header hidden" id="directory-header">
+      <h2 id="directory-title"></h2>
       <p class="section-hint" id="directory-hint"></p>
     </div>
 
     <section class="carousel-block">
-      <h3 class="carousel-title">الأطباء</h3>
-      <div id="doctors-carousel-wrap" class="loading-state">جاري التحميل...</div>
+      <div class="carousel-header-row">
+        <h3 class="carousel-title carousel-title-sm">العيادات</h3>
+        <div class="carousel-arrows">
+          <button type="button" class="carousel-arrow-btn" data-target="clinics-carousel-wrap" data-dir="prev">›</button>
+          <button type="button" class="carousel-arrow-btn" data-target="clinics-carousel-wrap" data-dir="next">‹</button>
+        </div>
+      </div>
+      <div id="clinics-carousel-wrap" class="loading-state">جاري التحميل...</div>
     </section>
 
     <section class="carousel-block">
-      <h3 class="carousel-title carousel-title-sm">العيادات</h3>
-      <div id="clinics-carousel-wrap" class="loading-state">جاري التحميل...</div>
+      <div class="carousel-header-row">
+        <h3 class="carousel-title">الأطباء</h3>
+        <div class="carousel-arrows">
+          <button type="button" class="carousel-arrow-btn" data-target="doctors-carousel-wrap" data-dir="prev">›</button>
+          <button type="button" class="carousel-arrow-btn" data-target="doctors-carousel-wrap" data-dir="next">‹</button>
+        </div>
+      </div>
+      <div id="doctors-carousel-wrap" class="loading-state">جاري التحميل...</div>
     </section>
   </main>
 

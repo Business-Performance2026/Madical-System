@@ -172,5 +172,14 @@ service cloud.firestore {
       // حذف: الأدمن بس (لإزالة تقييم مسيء مثلاً)
       allow delete: if isAdmin();
     }
+
+    // ============================================
+    // ads
+    // إعلانات الشاشة الرئيسية - قراءة عامة، تحكم كامل للأدمن بس
+    // ============================================
+    match /ads/{adId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
   }
 }

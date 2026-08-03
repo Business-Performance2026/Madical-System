@@ -928,10 +928,32 @@ body.landing {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   max-width: 1080px;
   margin: 0 auto;
   padding: 18px 20px;
+  flex-wrap: wrap;
 }
+
+.nav-search {
+  flex: 1;
+  min-width: 160px;
+  max-width: 360px;
+}
+
+.nav-search input {
+  width: 100%;
+  padding: 11px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--white);
+}
+
+.nav-search input::placeholder { color: rgba(255, 255, 255, 0.6); }
+.nav-search input:focus { outline: none; border-color: var(--gold-glow); background: rgba(255, 255, 255, 0.14); }
 
 .landing-nav .nav-brand {
   display: flex;
@@ -1108,6 +1130,40 @@ body.landing {
    ============================================ */
 .carousel-block { margin-bottom: 30px; }
 
+.carousel-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.carousel-header-row .carousel-title { margin: 0; }
+
+.carousel-arrows {
+  display: flex;
+  gap: 8px;
+}
+
+.carousel-arrow-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--gray-200);
+  background: var(--white);
+  color: var(--blue-900);
+  font-size: 17px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.carousel-arrow-btn:hover { border-color: var(--gold-600); background: var(--blue-100); }
+
 .carousel-title {
   display: inline-block;
   font-size: 18px;
@@ -1210,6 +1266,15 @@ body.landing {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.cc-address-icon {
+  color: #2E7DD6;
+  flex-shrink: 0;
 }
 
 .cc-links {
@@ -1916,4 +1981,124 @@ body.landing {
   font-weight: 900;
   font-size: 26px;
   border: 2px solid var(--gray-200);
+}
+
+/* ============================================
+   إدارة الإعلانات بلوحة الأدمن
+   ============================================ */
+.ad-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--gray-200);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.ad-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-glow), var(--gold-600));
+  width: 0%;
+  transition: width 0.2s ease;
+}
+
+.ads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.ad-card {
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  text-align: center;
+}
+
+.ad-thumb {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background: var(--gray-50);
+}
+
+.ad-card-title {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--blue-900);
+  margin: 0 0 4px;
+}
+
+/* ============================================
+   شريط الإعلانات المتحرك بالشاشة الرئيسية
+   ============================================ */
+#ads-carousel-wrap {
+  max-width: 1080px;
+  margin: 16px auto 0;
+  padding: 0 20px;
+}
+
+.ads-carousel {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  /* نجبر LTR داخلياً بس عشان حساب حركة الشريط يكون متوقع بغض النظر عن اتجاه الصفحة */
+  direction: ltr;
+}
+
+.ads-track {
+  display: flex;
+  transition: transform 0.5s ease;
+}
+
+.ad-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  aspect-ratio: 21 / 6;
+  display: block;
+  background: var(--gray-50);
+}
+
+.ad-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ads-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+
+.ad-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, width 0.2s;
+}
+
+.ad-dot.active {
+  background: var(--gold-glow);
+  width: 20px;
+  border-radius: 999px;
+}
+
+@media (max-width: 480px) {
+  #ads-carousel-wrap { padding: 0 14px; margin-top: 12px; }
+  .ad-slide { aspect-ratio: 16 / 9; }
+
+  .landing-nav { padding: 14px 16px; }
+  .nav-search { order: 3; flex-basis: 100%; max-width: 100%; }
 }

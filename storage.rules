@@ -32,5 +32,17 @@ service firebase.storage {
         && request.resource.size < 3 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
+
+    // صور الإعلانات بالشاشة الرئيسية
+    match /ads/{fileName} {
+      allow read: if true;
+
+      // الرفع/الحذف للأدمن بس
+      allow write: if request.auth != null
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.status == 'active'
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
   }
 }

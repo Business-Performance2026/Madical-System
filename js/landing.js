@@ -24,7 +24,6 @@ async function initLanding() {
       .map((doc) => ({ id: doc.id, ...doc.data() }))
       .filter((d) => clinicIds.has(d.clinicId));
 
-    renderStatsLine();
     renderSpecialtyCounts();
     renderDirectory();
   } catch (err) {
@@ -33,12 +32,92 @@ async function initLanding() {
     document.getElementById('doctors-carousel-wrap').innerHTML = errorMsg;
     document.getElementById('clinics-carousel-wrap').innerHTML = errorMsg;
   }
+
+  loadAdsCarousel();
 }
 
-function renderStatsLine() {
-  const specialtiesCount = new Set(allDoctors.map((d) => d.specialty).filter(Boolean)).size;
-  document.getElementById('hero-stats-line').textContent =
-    `${allClinics.length} عيادة مسجّلة • ${allDoctors.length} طبيب • ${specialtiesCount} تخصص متوفر`;
+// ============================================
+// شريط الإعلانات المتحرك (يتحكم فيه الأدمن)
+// ============================================
+let adSlideIndex = 0;
+let adRotateTimer = null;
+
+async function loadAdsCarousel() {
+  const wrap = document.getElementById('ads-carousel-wrap');
+  try {
+    const snap = await db.collection('ads').get();
+    const ads = snap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => {
+        if (!a.createdAt || !b.createdAt) return 0;
+        return b.createdAt.toMillis() - a.createdAt.toMillis();
+      });
+
+    if (ads.length === 0) {
+      wrap.classList.add('hidden');
+      return;
+    }
+
+    renderAdsCarousel(ads);
+    wrap.classList.remove('hidden');
+  } catch (err) {
+    console.error('loadAdsCarousel error:', err);
+    wrap.classList.add('hidden');
+  }
+}
+
+function renderAdsCarousel(ads) {
+  const wrap = document.getElementById('ads-carousel-wrap');
+
+  wrap.innerHTML = `
+    <div class="ads-carousel">
+      <div class="ads-track" id="ads-track">
+        ${ads.map((ad) => `
+          <a class="ad-slide" href="${ad.linkUrl ? escapeHtml(ad.linkUrl) : '#'}" data-has-link="${ad.linkUrl ? '1' : '0'}" target="${ad.linkUrl ? '_blank' : '_self'}" rel="noopener">
+            <img src="${ad.imageUrl}" alt="${escapeHtml(ad.title || 'إعلان')}" loading="lazy">
+          </a>
+        `).join('')}
+      </div>
+      ${ads.length > 1 ? `
+        <div class="ads-dots">
+          ${ads.map((_, i) => `<button type="button" class="ad-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></button>`).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  wrap.querySelectorAll('.ad-slide').forEach((slide) => {
+    if (slide.dataset.hasLink === '0') {
+      slide.addEventListener('click', (e) => e.preventDefault());
+    }
+  });
+
+  wrap.querySelectorAll('.ad-dot').forEach((dot) => {
+    dot.addEventListener('click', () => {
+      goToAdSlide(Number(dot.dataset.index), ads.length);
+      restartAdRotation(ads.length);
+    });
+  });
+
+  adSlideIndex = 0;
+  if (ads.length > 1) restartAdRotation(ads.length);
+}
+
+function goToAdSlide(index, total) {
+  adSlideIndex = ((index % total) + total) % total;
+  const track = document.getElementById('ads-track');
+  if (track) track.style.transform = `translateX(-${adSlideIndex * 100}%)`;
+
+  document.querySelectorAll('.ad-dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i === adSlideIndex);
+  });
+}
+
+function restartAdRotation(total) {
+  clearInterval(adRotateTimer);
+  adRotateTimer = setInterval(() => {
+    goToAdSlide(adSlideIndex + 1, total);
+  }, 4500);
 }
 
 // عدد العيادات لكل تخصص، يظهر بجانب كل تبويب تخصص
@@ -125,6 +204,7 @@ function renderDirectory() {
   const filteredClinicIds = new Set(filteredClinics.map((c) => c.id));
   const filteredDoctors = allDoctors.filter((d) => filteredClinicIds.has(d.clinicId));
 
+  const headerEl = document.getElementById('directory-header');
   const titleEl = document.getElementById('directory-title');
   const hintEl = document.getElementById('directory-hint');
 
@@ -134,9 +214,9 @@ function renderDirectory() {
     if (activeSpecialty) parts.push(activeSpecialty);
     titleEl.textContent = `نتائج البحث: ${parts.join(' • ')}`;
     hintEl.textContent = `${filteredDoctors.length} طبيب • ${filteredClinics.length} عيادة`;
+    headerEl.classList.remove('hidden');
   } else {
-    titleEl.textContent = 'تصفح العيادات والأطباء';
-    hintEl.textContent = '';
+    headerEl.classList.add('hidden');
   }
 
   renderDoctorsCarousel(filteredDoctors);
@@ -205,7 +285,7 @@ function renderClinicMiniCard(c) {
         <div class="clinic-logo-circle" style="${logoStyle}">${c.logoUrl ? '' : escapeHtml(initials(c.name))}</div>
         <p class="cc-name">${escapeHtml(c.name)}</p>
         <p class="cc-sub">${escapeHtml(subText)}</p>
-        ${c.address ? `<p class="cc-address">${escapeHtml(c.address)}</p>` : ''}
+        ${c.address ? `<p class="cc-address"><svg class="cc-address-icon" viewBox="0 0 24 24" width="11" height="11"><path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>${escapeHtml(c.address)}</p>` : ''}
       </a>
       ${linksHtml ? `<div class="cc-links">${linksHtml}</div>` : ''}
     </div>
@@ -226,6 +306,21 @@ function instagramUrl(handle) {
   if (/^https?:\/\//i.test(handle)) return handle;
   return `https://instagram.com/${handle.replace(/^@/, '')}`;
 }
+
+// ============================================
+// أزرار تمرير الأسهم (توضيح إضافي بجانب السحب باللمس)
+// ============================================
+document.querySelectorAll('.carousel-arrow-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const track = document.querySelector(`#${btn.dataset.target} .carousel-track`);
+    if (!track) return;
+
+    const amount = 320;
+    // الصفحة RTL، فالتمرير للأمام (زر ‹) يحتاج قيمة سالبة، وللخلف (زر ›) قيمة موجبة
+    const delta = btn.dataset.dir === 'next' ? -amount : amount;
+    track.scrollBy({ left: delta, behavior: 'smooth' });
+  });
+});
 
 // ============================================
 // أدوات مساعدة

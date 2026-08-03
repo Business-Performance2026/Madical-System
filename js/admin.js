@@ -46,6 +46,7 @@ async function loadDashboard() {
   renderPendingClinics(allUsers);
   renderRejectedClinics(allUsers);
   renderStaffList(allUsers);
+  loadAds();
   renderRecentUsers(allUsers);
   renderAllUsersTable(allUsers);
   renderPlatformStats(allUsers, allDoctors, allBookings);
@@ -629,6 +630,143 @@ function formatMonthLabelShort(key) {
   const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   const m = parseInt(key.split('-')[1], 10);
   return months[m - 1];
+}
+
+// ============================================
+// إعلانات الشاشة الرئيسية
+// ============================================
+let cachedAds = [];
+
+const addAdForm = document.getElementById('add-ad-form');
+if (addAdForm) {
+  addAdForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const title = document.getElementById('new-ad-title').value.trim();
+    const linkUrl = document.getElementById('new-ad-link').value.trim();
+    const fileInput = document.getElementById('new-ad-image');
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert('فضلاً اختر صورة');
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      alert('الملف لازم يكون صورة');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('حجم الصورة كبير، الحد الأقصى 5 ميجابايت');
+      return;
+    }
+
+    const submitBtn = addAdForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'جاري الرفع...';
+
+    const progressWrap = document.getElementById('ad-upload-progress');
+    const progressFill = document.getElementById('ad-progress-fill');
+    progressWrap.classList.remove('hidden');
+    progressFill.style.width = '0%';
+
+    try {
+      const storagePath = `ads/${Date.now()}_${file.name}`;
+      const ref = storage.ref(storagePath);
+      const uploadTask = ref.put(file);
+
+      await new Promise((resolve, reject) => {
+        uploadTask.on('state_changed',
+          (snapshot) => {
+            const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+            progressFill.style.width = `${pct}%`;
+          },
+          reject,
+          resolve
+        );
+      });
+
+      const imageUrl = await ref.getDownloadURL();
+
+      await db.collection('ads').add({
+        title,
+        linkUrl,
+        imageUrl,
+        storagePath,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+
+      addAdForm.reset();
+      loadAds();
+    } catch (err) {
+      console.error('add ad error:', err);
+      alert('تعذر رفع الإعلان، حاول مرة أخرى');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'رفع الإعلان';
+      progressWrap.classList.add('hidden');
+    }
+  });
+}
+
+async function loadAds() {
+  const wrap = document.getElementById('ads-list-wrap');
+  if (!wrap) return;
+
+  try {
+    const snap = await db.collection('ads').get();
+    cachedAds = snap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => {
+        if (!a.createdAt || !b.createdAt) return 0;
+        return b.createdAt.toMillis() - a.createdAt.toMillis();
+      });
+    renderAdsList();
+  } catch (err) {
+    console.error('loadAds error:', err);
+    wrap.innerHTML = '<p class="empty-state">تعذر تحميل الإعلانات</p>';
+  }
+}
+
+function renderAdsList() {
+  const wrap = document.getElementById('ads-list-wrap');
+
+  if (cachedAds.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">ما فيه إعلانات مضافة بعد</p>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="ads-grid">
+      ${cachedAds.map((ad) => `
+        <div class="ad-card">
+          <img src="${ad.imageUrl}" alt="${escapeHtml(ad.title || 'إعلان')}" class="ad-thumb">
+          <p class="ad-card-title">${escapeHtml(ad.title || 'بدون عنوان')}</p>
+          ${ad.linkUrl ? `<p class="cell-sub">${escapeHtml(ad.linkUrl)}</p>` : ''}
+          <button class="btn-xs delete" data-action="delete-ad" data-id="${ad.id}" data-path="${escapeHtml(ad.storagePath || '')}">🗑️ حذف</button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  wrap.querySelectorAll('[data-action="delete-ad"]').forEach((btn) => {
+    btn.addEventListener('click', () => deleteAd(btn.dataset.id, btn.dataset.path));
+  });
+}
+
+async function deleteAd(adId, storagePath) {
+  const sure = confirm('حذف هذا الإعلان نهائياً؟');
+  if (!sure) return;
+
+  try {
+    await db.collection('ads').doc(adId).delete();
+    if (storagePath) {
+      await storage.ref(storagePath).delete().catch(() => {});
+    }
+    loadAds();
+  } catch (err) {
+    console.error('deleteAd error:', err);
+    alert('تعذر حذف الإعلان، حاول مرة أخرى');
+  }
 }
 
 initPageTabs();

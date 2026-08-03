@@ -59,6 +59,7 @@
       <button type="button" data-tab="recent">آخر التسجيلات</button>
       <button type="button" data-tab="accounts">إدارة الحسابات</button>
       <button type="button" data-tab="platform-stats">الإحصائيات الشاملة</button>
+      <button type="button" data-tab="ads">إعلانات الرئيسية</button>
     </div>
 
     <section class="section-card tab-panel" data-panel="pending">
@@ -134,12 +135,40 @@
       </div>
     </section>
 
+    <section class="section-card tab-panel hidden" data-panel="ads">
+      <h2 class="section-title">إعلانات الشاشة الرئيسية</h2>
+      <p class="section-hint">الصور اللي ترفعها هنا تظهر بشريط متحرك أعلى الشاشة الرئيسية العامة، وتتقلب تلقائياً</p>
+
+      <form id="add-ad-form" class="inline-form">
+        <div class="field">
+          <label for="new-ad-title">عنوان الإعلان (اختياري)</label>
+          <input type="text" id="new-ad-title" placeholder="مثال: عرض عيادة الأسنان">
+        </div>
+        <div class="field">
+          <label for="new-ad-link">رابط عند الضغط (اختياري)</label>
+          <input type="url" id="new-ad-link" placeholder="https://...">
+        </div>
+        <div class="field">
+          <label for="new-ad-image">الصورة</label>
+          <input type="file" id="new-ad-image" accept="image/*" required>
+        </div>
+        <button type="submit" class="btn-primary">رفع الإعلان</button>
+      </form>
+
+      <div id="ad-upload-progress" class="hidden">
+        <div class="ad-progress-bar"><div class="ad-progress-fill" id="ad-progress-fill"></div></div>
+      </div>
+
+      <div id="ads-list-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
   </div>
 
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
   <!-- Chart.js لرسم الإحصائيات -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
