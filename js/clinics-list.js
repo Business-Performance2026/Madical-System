@@ -32,10 +32,13 @@ function renderClinicsList(clinics) {
   }
 
   wrap.innerHTML = clinics.map((c) => `
-    <div class="clinic-list-card">
-      <a href="clinic-profile.html?id=${c.id}" class="clinic-list-card-name">${escapeHtml(c.name)}</a>
-      <a href="login.html?clinic=${c.id}" class="btn-primary clinic-list-card-btn">${t('profile_book_now_short')}</a>
-    </div>
+    <a href="clinic-profile.html?id=${c.id}" class="clinic-list-card">
+      <div class="clinic-list-card-info">
+        <p class="clinic-list-card-name">${escapeHtml(c.name)}</p>
+        ${c.address ? `<p class="clinic-list-card-address">📍 ${escapeHtml(c.address)}</p>` : ''}
+      </div>
+      <span class="clinic-list-card-arrow">‹</span>
+    </a>
   `).join('');
 }
 
