@@ -47,6 +47,12 @@ auth.onAuthStateChanged(async (user) => {
   loadFamilyMembers();
   loadMyWaitlist();
   loadMyBookings().then(promptPendingRatingOnce);
+
+  // لو دخل برابط يطلب تبويب معيّن (من الشريط السفلي بصفحات ثانية مثلاً)
+  const tabParam = new URLSearchParams(window.location.search).get('tab');
+  if (tabParam && ['booking', 'upcoming', 'past'].includes(tabParam)) {
+    switchToTab(tabParam);
+  }
 });
 
 document.getElementById('logout-btn').addEventListener('click', async () => {

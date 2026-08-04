@@ -388,11 +388,18 @@ function redirectByRole(role, immediate) {
 
   let destination = destinations[role] || 'login.html';
 
+  const params = new URLSearchParams();
+
   // لو المستخدم دخل من رابط حجز مباشر لعيادة معيّنة، نمرر نفس المعامل بعد تسجيل الدخول
   const clinicParam = new URLSearchParams(window.location.search).get('clinic');
-  if (clinicParam && role === 'patient') {
-    destination += `?clinic=${encodeURIComponent(clinicParam)}`;
-  }
+  if (clinicParam && role === 'patient') params.set('clinic', clinicParam);
+
+  // لو المستخدم جاي من رابط يطلب تبويب معيّن (مواعيدي/حسابي من الشريط السفلي مثلاً)
+  const tabParam = new URLSearchParams(window.location.search).get('tab');
+  if (tabParam && role === 'patient') params.set('tab', tabParam);
+
+  const queryString = params.toString();
+  if (queryString) destination += `?${queryString}`;
 
   if (immediate) {
     window.location.href = destination;
