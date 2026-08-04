@@ -371,7 +371,8 @@ function renderDoctorsCarousel(doctors) {
   }
 
   const display = showAllDoctors ? doctors : doctors.slice(0, CAROUSEL_CAP);
-  buildPagedCarousel('doctors-carousel-wrap', display, renderDoctorMiniCard);
+  wrap.innerHTML = `<div class="carousel-track">${display.map((d) => renderDoctorMiniCard(d)).join('')}</div>`;
+  setupContinuousScroll('doctors-carousel-wrap');
   updateViewAllButton('doctors-carousel-wrap', doctors.length, showAllDoctors);
 }
 
@@ -402,7 +403,8 @@ function renderClinicsCarousel(clinics) {
   }
 
   const display = showAllClinics ? clinics : clinics.slice(0, CAROUSEL_CAP);
-  buildPagedCarousel('clinics-carousel-wrap', display, renderClinicMiniCard);
+  wrap.innerHTML = `<div class="carousel-track">${display.map((c) => renderClinicMiniCard(c)).join('')}</div>`;
+  setupContinuousScroll('clinics-carousel-wrap');
   updateViewAllButton('clinics-carousel-wrap', clinics.length, showAllClinics);
 }
 
@@ -446,95 +448,45 @@ if (searchToggleBtn && navSearchWrap) {
 // ============================================
 // تمرير تلقائي مستمر للعيادات والأطباء (يتوقف عند اللمس/التمرير اليدوي ويرجع بعدها)
 // ============================================
-const pagedCarouselTimers = {};
+const continuousScrollTimers = {};
 
-// يبني قسم بصفحات منزلقة (نفس أسلوب شريط الإعلانات بالضبط) بدل شريط قابل للتمرير اليدوي
-function buildPagedCarousel(wrapId, items, renderCardFn) {
-  const wrap = document.getElementById(wrapId);
-  if (!wrap) return;
+function setupContinuousScroll(wrapId) {
+  clearInterval(continuousScrollTimers[wrapId]);
 
-  // نحسب كم كرت يناسب عرض الشاشة المتاح (بناءً على مقاس الكرت + الفجوة المحددين بالتنسيق)
-  const cardWidth = 148 + 14;
-  const containerWidth = wrap.clientWidth || (window.innerWidth - 40);
-  const perPage = Math.max(1, Math.floor(containerWidth / cardWidth));
-
-  const pages = [];
-  for (let i = 0; i < items.length; i += perPage) {
-    pages.push(items.slice(i, i + perPage));
-  }
-
-  wrap.innerHTML = `
-    <div class="paged-carousel-viewport">
-      <div class="paged-carousel-track" id="${wrapId}-ptrack">
-        ${pages.map((page) => `
-          <div class="paged-carousel-page">${page.map(renderCardFn).join('')}</div>
-        `).join('')}
-      </div>
-    </div>
-    ${pages.length > 1 ? `<div class="carousel-dots" id="${wrapId}-dots"></div>` : ''}
-  `;
-
-  if (pages.length > 1) setupPagedAutoAdvance(wrapId, pages.length);
-}
-
-const pagedCarouselState = {}; // { wrapId: { index, timer } }
-
-function setupPagedAutoAdvance(wrapId, totalPages) {
-  clearInterval(pagedCarouselTimers[wrapId]);
-
-  const dotsWrap = document.getElementById(`${wrapId}-dots`);
-  if (dotsWrap) {
-    dotsWrap.innerHTML = Array.from({ length: totalPages }, (_, i) =>
-      `<button type="button" class="carousel-dot ${i === 0 ? 'active' : ''}" data-page="${i}"></button>`
-    ).join('');
-
-    dotsWrap.querySelectorAll('.carousel-dot').forEach((dot) => {
-      dot.addEventListener('click', () => {
-        goToCarouselPage(wrapId, Number(dot.dataset.page), totalPages);
-        restartPagedTimer(wrapId, totalPages);
-      });
-    });
-  }
-
-  pagedCarouselState[wrapId] = 0;
-  restartPagedTimer(wrapId, totalPages);
-
-  const viewport = document.querySelector(`#${wrapId} .paged-carousel-viewport`);
-  if (viewport) {
-    let resumeTimeout = null;
-    const pause = () => clearInterval(pagedCarouselTimers[wrapId]);
-    const resume = () => {
-      clearTimeout(resumeTimeout);
-      resumeTimeout = setTimeout(() => restartPagedTimer(wrapId, totalPages), 2500);
-    };
-    viewport.addEventListener('mouseenter', pause);
-    viewport.addEventListener('mouseleave', resume);
-    viewport.addEventListener('touchstart', pause, { passive: true });
-    viewport.addEventListener('touchend', resume);
-  }
-}
-
-function restartPagedTimer(wrapId, totalPages) {
-  clearInterval(pagedCarouselTimers[wrapId]);
-  pagedCarouselTimers[wrapId] = setInterval(() => {
-    const next = (pagedCarouselState[wrapId] + 1) % totalPages;
-    goToCarouselPage(wrapId, next, totalPages);
-  }, 3500);
-}
-
-function goToCarouselPage(wrapId, pageIndex, totalPages) {
-  const track = document.getElementById(`${wrapId}-ptrack`);
+  const track = document.querySelector(`#${wrapId} .carousel-track`);
   if (!track) return;
 
-  pagedCarouselState[wrapId] = pageIndex;
-  track.style.transform = `translateX(${pageIndex * 100}%)`;
+  // ما نفعّل التمرير التلقائي إلا لو فيه محتوى أطول من عرض الشاشة فعلاً
+  if (track.scrollWidth <= track.clientWidth + 10) return;
 
-  const dotsWrap = document.getElementById(`${wrapId}-dots`);
-  if (dotsWrap) {
-    dotsWrap.querySelectorAll('.carousel-dot').forEach((dot, i) => {
-      dot.classList.toggle('active', i === pageIndex);
-    });
-  }
+  let resumeTimeout = null;
+
+  const step = () => {
+    const maxScroll = track.scrollWidth - track.clientWidth;
+    const atEnd = Math.abs(track.scrollLeft) >= maxScroll - 2;
+
+    if (atEnd) {
+      track.scrollTo({ left: 0, behavior: 'smooth' });
+    } else {
+      track.scrollBy({ left: -1, behavior: 'auto' });
+    }
+  };
+
+  continuousScrollTimers[wrapId] = setInterval(step, 30);
+
+  const pause = () => clearInterval(continuousScrollTimers[wrapId]);
+  const resume = () => {
+    clearTimeout(resumeTimeout);
+    resumeTimeout = setTimeout(() => {
+      clearInterval(continuousScrollTimers[wrapId]);
+      continuousScrollTimers[wrapId] = setInterval(step, 30);
+    }, 2000);
+  };
+
+  track.addEventListener('mouseenter', pause);
+  track.addEventListener('mouseleave', resume);
+  track.addEventListener('touchstart', pause, { passive: true });
+  track.addEventListener('touchend', resume);
 }
 
 // ============================================

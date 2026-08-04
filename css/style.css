@@ -1322,25 +1322,17 @@ body.landing {
   padding: 5px 13px;
 }
 
-.paged-carousel-viewport {
-  overflow: hidden;
-  padding: 4px 2px 16px;
-  /* نجبر LTR داخلياً عشان حساب حركة الانزلاق يكون متوقع بغض النظر عن اتجاه الصفحة */
-  direction: ltr;
-}
-
-.paged-carousel-track {
-  display: flex;
-  transition: transform 0.5s ease;
-}
-
-.paged-carousel-page {
-  flex: 0 0 100%;
+.carousel-track {
   display: flex;
   gap: 14px;
-  justify-content: center;
-  direction: rtl;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 4px 2px 12px;
+  -webkit-overflow-scrolling: touch;
 }
+
+.carousel-track::-webkit-scrollbar { height: 6px; }
+.carousel-track::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 999px; }
 
 .doctor-card-mini,
 .clinic-card-mini {
@@ -2581,33 +2573,6 @@ body.landing {
 }
 
 /* ============================================
-   نقاط قسمي العيادات والأطباء بالشاشة الرئيسية
-   ============================================ */
-.carousel-dots {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 12px;
-}
-
-.carousel-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: none;
-  background: var(--gray-200);
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.2s, width 0.2s;
-}
-
-.carousel-dot.active {
-  background: var(--gold-600);
-  width: 20px;
-  border-radius: 999px;
-}
-
-/* ============================================
    قسم فروع العيادة بصفحة الملف التفصيلي
    ============================================ */
 .profile-branches-list {
@@ -2634,3 +2599,67 @@ body.landing {
 .profile-branch-card:hover { border-color: var(--gold-600); transform: translateX(-3px); }
 
 .branch-icon { font-size: 18px; }
+
+/* ============================================
+   شريط التنقل السفلي (لوحة المريض بالجوال بس) - بألوان تطبيقنا
+   ============================================ */
+.bottom-nav { display: none; }
+
+@media (max-width: 640px) {
+  body.dashboard { padding-bottom: 82px; }
+
+  .bottom-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border-top: 1px solid var(--gray-200);
+    padding: 8px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    z-index: 200;
+    box-shadow: 0 -6px 20px rgba(15, 36, 64, 0.12);
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--gray-500);
+    font-family: inherit;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    padding: 4px 0;
+  }
+
+  .bottom-nav-item svg { width: 22px; height: 22px; }
+
+  .bottom-nav-item.active { color: var(--blue-900); }
+
+  .bottom-nav-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 54px;
+    height: 54px;
+    margin-top: -30px;
+    border-radius: 50%;
+    border: 4px solid var(--white);
+    background: linear-gradient(135deg, var(--gold-glow), var(--gold-600));
+    color: var(--white);
+    box-shadow: 0 6px 16px rgba(209, 159, 0, 0.45);
+    cursor: pointer;
+  }
+
+  .bottom-nav-center svg { width: 24px; height: 24px; }
+  .bottom-nav-center.active { box-shadow: 0 6px 16px rgba(4, 64, 89, 0.5); background: linear-gradient(135deg, var(--blue-700), var(--blue-900)); }
+}

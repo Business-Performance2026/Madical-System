@@ -1079,6 +1079,7 @@ function initPageTabs() {
       tabButtons.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       panels.forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== btn.dataset.tab));
+      syncBottomNavActive(btn.dataset.tab);
     });
   });
 }
@@ -1088,6 +1089,37 @@ function switchToTab(tabName) {
   const btn = document.querySelector(`.page-tabs button[data-tab="${tabName}"]`);
   if (btn) btn.click();
 }
+
+// ============================================
+// شريط التنقل السفلي (جوال بس) - نفس التبويبات الموجودة، بشكل أقرب لتطبيقات الجوال
+// ============================================
+const bottomNavMap = { booking: 'bottom-nav-book', upcoming: 'bottom-nav-appointments', past: 'bottom-nav-profile' };
+
+function syncBottomNavActive(tabName) {
+  Object.values(bottomNavMap).forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  const activeId = bottomNavMap[tabName];
+  const activeEl = activeId && document.getElementById(activeId);
+  if (activeEl) activeEl.classList.add('active');
+}
+
+const bottomNavBook = document.getElementById('bottom-nav-book');
+if (bottomNavBook) bottomNavBook.addEventListener('click', () => { switchToTab('booking'); syncBottomNavActive('booking'); });
+
+const bottomNavAppointments = document.getElementById('bottom-nav-appointments');
+if (bottomNavAppointments) bottomNavAppointments.addEventListener('click', () => { switchToTab('upcoming'); syncBottomNavActive('upcoming'); });
+
+const bottomNavProfile = document.getElementById('bottom-nav-profile');
+if (bottomNavProfile) bottomNavProfile.addEventListener('click', () => { switchToTab('past'); syncBottomNavActive('past'); });
+
+// لو المستخدم بدّل التبويب من الشريط العلوي مباشرة، نزامن الشريط السفلي معه
+document.querySelectorAll('.page-tabs button').forEach((btn) => {
+  btn.addEventListener('click', () => syncBottomNavActive(btn.dataset.tab));
+});
+
+syncBottomNavActive('booking'); // الحالة الافتراضية عند فتح الصفحة
 
 // ============================================
 // جرس التنبيهات: يعدّ حالات "قبول/رفض/غيره" اللي ما شافها المريض بعد

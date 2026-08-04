@@ -54,6 +54,10 @@ const I18N = {
     err_generic: 'حدث خطأ، حاول مرة أخرى',
 
     // لوحة المريض - عناصر ثابتة
+    bottom_nav_home: 'الرئيسية',
+    bottom_nav_clinics: 'العيادات',
+    bottom_nav_appointments: 'مواعيدي',
+    bottom_nav_profile: 'حسابي',
     welcome_prefix: 'مرحباً، ',
     tab_new_booking: 'احجز موعد جديد',
     tab_upcoming: 'مواعيدي الحالية',
@@ -389,6 +393,10 @@ const I18N = {
     err_generic: 'An error occurred, please try again',
 
     // patient dashboard - static
+    bottom_nav_home: 'Home',
+    bottom_nav_clinics: 'Clinics',
+    bottom_nav_appointments: 'Appointments',
+    bottom_nav_profile: 'My Account',
     welcome_prefix: 'Welcome, ',
     tab_new_booking: 'New Booking',
     tab_upcoming: 'Upcoming Appointments',
