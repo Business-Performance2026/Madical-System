@@ -448,14 +448,15 @@ function renderClinicMiniCard(c) {
     ? specialties.slice(0, 2).join('، ')
     : t('doctor_count', doctors.length);
 
-  const logoStyle = c.logoUrl
-    ? `background-image:url('${c.logoUrl}')`
-    : `background:${avatarColor(c.name)}`;
+  const logoInner = c.logoUrl
+    ? `<img src="${c.logoUrl}" alt="${escapeHtml(c.name)}" class="clinic-logo-circle-img">`
+    : escapeHtml(initials(c.name));
+  const logoStyle = c.logoUrl ? '' : `background:${avatarColor(c.name)}`;
 
   return `
     <div class="clinic-card-mini">
       <a href="clinic-profile.html?id=${c.id}" class="clinic-card-mini-link">
-        <div class="clinic-logo-circle" style="${logoStyle}">${c.logoUrl ? '' : escapeHtml(initials(c.name))}</div>
+        <div class="clinic-logo-circle" style="${logoStyle}">${logoInner}</div>
         <p class="cc-name">${escapeHtml(c.name)}</p>
         <p class="cc-sub">${escapeHtml(subText)}</p>
         ${c.address ? `<p class="cc-address"><svg class="cc-address-icon" viewBox="0 0 24 24" width="11" height="11"><path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>${escapeHtml(c.address)}</p>` : ''}

@@ -76,15 +76,16 @@ function onLanguageChanged() {
 function renderProfile(clinic, doctors, ratingsMap, branches) {
   const contentEl = document.getElementById('profile-content');
 
-  const logoStyle = clinic.logoUrl
-    ? `background-image:url('${clinic.logoUrl}')`
-    : `background:${avatarColor(clinic.name)}`;
+  const logoInner = clinic.logoUrl
+    ? `<img src="${clinic.logoUrl}" alt="${escapeHtml(clinic.name)}" class="profile-logo-img">`
+    : escapeHtml(initials(clinic.name));
+  const logoStyle = clinic.logoUrl ? '' : `background:${avatarColor(clinic.name)}`;
 
   const specialties = [...new Set(doctors.map((d) => d.specialty).filter(Boolean))];
 
   contentEl.innerHTML = `
     <div class="profile-header-card">
-      <div class="profile-logo" style="${logoStyle}">${clinic.logoUrl ? '' : escapeHtml(initials(clinic.name))}</div>
+      <div class="profile-logo" style="${logoStyle}">${logoInner}</div>
       <div class="profile-header-info">
         <h1 class="profile-clinic-name">${escapeHtml(clinic.name)}</h1>
         ${clinic.address ? `<p class="profile-address">📍 ${escapeHtml(clinic.address)}</p>` : ''}

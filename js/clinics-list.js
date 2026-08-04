@@ -30,13 +30,14 @@ function renderClinicsList(clinics) {
   }
 
   wrap.innerHTML = clinics.map((c) => {
-    const logoStyle = c.logoUrl
-      ? `background-image:url('${c.logoUrl}')`
-      : `background:${avatarColor(c.name)}`;
+    const logoInner = c.logoUrl
+      ? `<img src="${c.logoUrl}" alt="${escapeHtml(c.name)}" class="clinic-list-card-logo-img">`
+      : escapeHtml((c.name || '؟').trim().slice(0, 1));
+    const logoStyle = c.logoUrl ? '' : `background:${avatarColor(c.name)}`;
 
     return `
     <a href="clinic-profile.html?id=${c.id}" class="clinic-list-card">
-      <div class="clinic-list-card-logo" style="${logoStyle}">${c.logoUrl ? '' : escapeHtml((c.name || '؟').trim().slice(0, 1))}</div>
+      <div class="clinic-list-card-logo" style="${logoStyle}">${logoInner}</div>
       <div class="clinic-list-card-info">
         <p class="clinic-list-card-name">${escapeHtml(c.name)}</p>
         ${c.address ? `<p class="clinic-list-card-address">📍 ${escapeHtml(c.address)}</p>` : ''}

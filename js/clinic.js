@@ -1829,12 +1829,13 @@ async function loadClinicLogo() {
 
 function renderLogoPreview(logoUrl) {
   const preview = document.getElementById('clinic-logo-preview');
+
   if (logoUrl) {
-    preview.style.backgroundImage = `url('${logoUrl}')`;
-    preview.textContent = '';
+    preview.style.background = 'var(--gray-200)';
+    preview.innerHTML = `<img id="clinic-logo-preview-img" class="clinic-logo-preview-img" alt="شعار العيادة" src="${logoUrl}">`;
   } else {
-    preview.style.backgroundImage = 'none';
     preview.style.background = stringToColor(clinicName);
+    preview.innerHTML = '';
     preview.textContent = (clinicName || '؟').trim().slice(0, 1);
   }
 }
