@@ -32,12 +32,14 @@ async function initClinicProfile() {
 
     const clinic = { id: clinicDoc.id, ...clinicDoc.data() };
 
-    const [doctorsSnap, reviewsSnap] = await Promise.all([
+    const [doctorsSnap, reviewsSnap, branchesSnap] = await Promise.all([
       db.collection('doctors').where('clinicId', '==', clinicId).get(),
       db.collection('reviews').where('clinicId', '==', clinicId).get(),
+      db.collection('users').where('parentClinicId', '==', clinicId).where('role', '==', 'clinic').where('status', '==', 'active').get(),
     ]);
 
     const doctors = doctorsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const branches = branchesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
     const ratingsMap = {};
     reviewsSnap.docs.forEach((doc) => {
@@ -50,11 +52,12 @@ async function initClinicProfile() {
     cachedClinic = clinic;
     cachedDoctors = doctors;
     cachedRatingsMap = ratingsMap;
+    cachedBranches = branches;
 
     document.getElementById('page-title').textContent = `موعد | ${clinic.name}`;
     document.getElementById('book-now-nav-btn').href = `login.html?clinic=${clinicId}`;
 
-    renderProfile(clinic, doctors, ratingsMap);
+    renderProfile(clinic, doctors, ratingsMap, branches);
     loadingEl.classList.add('hidden');
     contentEl.classList.remove('hidden');
   } catch (err) {
@@ -63,10 +66,12 @@ async function initClinicProfile() {
   }
 }
 
+let cachedBranches = [];
+
 // لما تتبدّل اللغة، نعيد رسم محتوى الصفحة من البيانات المحفوظة بدون إعادة تحميل من القاعدة
 function onLanguageChanged() {
   updateBackArrowDirection();
-  if (cachedClinic) renderProfile(cachedClinic, cachedDoctors, cachedRatingsMap);
+  if (cachedClinic) renderProfile(cachedClinic, cachedDoctors, cachedRatingsMap, cachedBranches);
 }
 
 // سهم الرجوع: يشاور يمين بالعربي (RTL)، ويسار بالإنجليزي (LTR) — نحدد شكله صراحة بدل الاعتماد على CSS بس
@@ -82,7 +87,7 @@ function updateBackArrowDirection() {
   svg.setAttribute('d', currentLang === 'ar' ? pointRight : pointLeft);
 }
 
-function renderProfile(clinic, doctors, ratingsMap) {
+function renderProfile(clinic, doctors, ratingsMap, branches) {
   const contentEl = document.getElementById('profile-content');
 
   const logoStyle = clinic.logoUrl
@@ -129,6 +134,20 @@ function renderProfile(clinic, doctors, ratingsMap) {
         <h2 class="profile-block-title">${t('profile_services_title')}</h2>
         <div class="profile-services-list">
           ${clinic.services.map((s) => `<span class="service-tag">${escapeHtml(s)}</span>`).join('')}
+        </div>
+      </section>
+    ` : ''}
+
+    ${(branches && branches.length) ? `
+      <section class="profile-block">
+        <h2 class="profile-block-title">${t('profile_branches_title')}</h2>
+        <div class="profile-branches-list">
+          ${branches.map((b) => `
+            <a class="profile-branch-card" href="clinic-profile.html?id=${b.id}">
+              <span class="branch-icon">🏢</span>
+              <span>${escapeHtml(b.name)}</span>
+            </a>
+          `).join('')}
         </div>
       </section>
     ` : ''}

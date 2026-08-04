@@ -2571,3 +2571,58 @@ body.landing {
   margin: 5px 0 0;
   line-height: 1.5;
 }
+
+/* ============================================
+   نقاط قسمي العيادات والأطباء بالشاشة الرئيسية
+   ============================================ */
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gray-200);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, width 0.2s;
+}
+
+.carousel-dot.active {
+  background: var(--gold-600);
+  width: 20px;
+  border-radius: 999px;
+}
+
+/* ============================================
+   قسم فروع العيادة بصفحة الملف التفصيلي
+   ============================================ */
+.profile-branches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-branch-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--white);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  color: var(--blue-900);
+  font-weight: 800;
+  font-size: 14px;
+  text-decoration: none;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.profile-branch-card:hover { border-color: var(--gold-600); transform: translateX(-3px); }
+
+.branch-icon { font-size: 18px; }

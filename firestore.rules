@@ -68,7 +68,14 @@ service cloud.firestore {
             && request.resource.data.role == 'staff'
             && request.resource.data.status == 'active'
             && request.resource.data.name is string
-            && request.resource.data.email is string);
+            && request.resource.data.email is string)
+        // العيادة الأساسية تقدر تنشئ فرع جديد (حساب عيادة منفصل ومرتبط بيها)، بانتظار موافقة الأدمن زي أي عيادة جديدة
+        || (isActiveClinic(request.resource.data.parentClinicId)
+            && request.resource.data.role == 'clinic'
+            && request.resource.data.status == 'pending'
+            && request.resource.data.name is string
+            && request.resource.data.email is string
+            && request.resource.data.phone is string);
 
       // تعديل: الأدمن يقدر يعدل أي حساب (موافقة عيادة / إيقاف / تفعيل)
       // المستخدم العادي يقدر يعدل بياناته (مثل الاسم) لكن ما يقدر يغيّر role أو status لحاله

@@ -70,6 +70,7 @@
       <button type="button" data-tab="upcoming24h" data-i18n="clinic_tab_upcoming24">المواعيد القادمة خلال 24 ساعة</button>
       <button type="button" data-tab="patients" data-i18n="clinic_tab_patients">بحث المرضى</button>
       <button type="button" data-tab="staff" data-i18n="clinic_tab_staff">الموظفين</button>
+      <button type="button" data-tab="branches" data-i18n="clinic_tab_branches">الفروع</button>
       <button type="button" data-tab="analytics" data-i18n="clinic_tab_analytics">الإحصائيات</button>
       <button type="button" data-tab="settings" data-i18n="clinic_tab_settings">إعدادات العيادة</button>
     </div>
@@ -173,6 +174,33 @@
       </form>
 
       <div id="staff-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
+    </section>
+
+    <section class="section-card tab-panel hidden" data-panel="branches">
+      <h2 class="section-title" data-i18n="clinic_tab_branches">الفروع</h2>
+      <p class="section-hint" data-i18n="branches_hint">أضف فرع جديد لعيادتك — يصير حساب مستقل بالكامل (أطباء، حجوزات، إحصائيات خاصة فيه)، وبحاجة موافقة الإدارة قبل ما يُفعّل، زي أي عيادة جديدة</p>
+
+      <form id="add-branch-form" class="inline-form">
+        <div class="field">
+          <label for="new-branch-name" data-i18n="branch_name_label">اسم الفرع</label>
+          <input type="text" id="new-branch-name" data-i18n-placeholder="branch_name_placeholder" placeholder="مثال: موعد - فرع الخوض" required>
+        </div>
+        <div class="field">
+          <label for="new-branch-email" data-i18n="label_email">البريد الإلكتروني</label>
+          <input type="email" id="new-branch-email" placeholder="branch@example.com" required>
+        </div>
+        <div class="field">
+          <label for="new-branch-phone" data-i18n="label_phone">رقم الجوال (واتساب)</label>
+          <input type="tel" id="new-branch-phone" placeholder="9665xxxxxxxx" required>
+        </div>
+        <div class="field">
+          <label for="new-branch-password" data-i18n="staff_password_label">كلمة المرور</label>
+          <input type="password" id="new-branch-password" data-i18n-placeholder="placeholder_password" placeholder="6 أحرف على الأقل" minlength="6" required>
+        </div>
+        <button type="submit" class="btn-primary" data-i18n="add_branch_btn">إضافة فرع</button>
+      </form>
+
+      <div id="branches-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="analytics">

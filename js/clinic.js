@@ -61,11 +61,15 @@ auth.onAuthStateChanged(async (user) => {
   const staffPanel = document.querySelector('.tab-panel[data-panel="staff"]');
   const settingsTabBtn = document.querySelector('.page-tabs button[data-tab="settings"]');
   const settingsPanel = document.querySelector('.tab-panel[data-panel="settings"]');
+  const branchesTabBtn = document.querySelector('.page-tabs button[data-tab="branches"]');
+  const branchesPanel = document.querySelector('.tab-panel[data-panel="branches"]');
   if (!isPrimaryOwner) {
     if (staffTabBtn) staffTabBtn.remove();
     if (staffPanel) staffPanel.remove();
     if (settingsTabBtn) settingsTabBtn.remove();
     if (settingsPanel) settingsPanel.remove();
+    if (branchesTabBtn) branchesTabBtn.remove();
+    if (branchesPanel) branchesPanel.remove();
   }
 
   loadDashboard();
@@ -92,6 +96,7 @@ async function loadDashboard() {
   if (isPrimaryOwner) {
     loadStaffList();
     loadClinicLogo();
+    loadBranchesList();
   }
 }
 
@@ -1387,6 +1392,130 @@ async function addStaffMember(name, email, password) {
   });
 
   await secondaryAuth.signOut();
+}
+
+// ============================================
+// الفروع: كل فرع حساب عيادة مستقل بالكامل (أطباء/حجوزات/إحصائيات خاصة فيه)،
+// مرتبط بالعيادة الأم عبر parentClinicId بس، وبحاجة موافقة الأدمن زي أي عيادة جديدة
+// ============================================
+async function addBranchClinic(name, email, phone, password) {
+  let secondaryApp = firebase.apps.find((a) => a.name === 'Secondary');
+  if (!secondaryApp) {
+    secondaryApp = firebase.initializeApp(firebaseConfig, 'Secondary');
+  }
+  const secondaryAuth = secondaryApp.auth();
+
+  const cred = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+  const branchUid = cred.user.uid;
+
+  await db.collection('users').doc(branchUid).set({
+    name,
+    email,
+    phone,
+    role: 'clinic',
+    status: 'pending',
+    parentClinicId: currentUid,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+
+  await secondaryAuth.signOut();
+}
+
+const addBranchForm = document.getElementById('add-branch-form');
+if (addBranchForm) {
+  addBranchForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('new-branch-name').value.trim();
+    const email = document.getElementById('new-branch-email').value.trim();
+    const phone = document.getElementById('new-branch-phone').value.trim();
+    const password = document.getElementById('new-branch-password').value;
+
+    if (!name || !email || !phone || password.length < 6) {
+      alert(t('staff_fields_required'));
+      return;
+    }
+
+    const submitBtn = addBranchForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = t('adding');
+
+    try {
+      await addBranchClinic(name, email, phone, password);
+      addBranchForm.reset();
+      loadBranchesList();
+      alert(t('branch_added_success'));
+    } catch (err) {
+      console.error('addBranchClinic error:', err);
+      const messages = {
+        'auth/email-already-in-use': t('err_email_in_use'),
+        'auth/invalid-email': t('err_invalid_email'),
+        'auth/weak-password': t('err_weak_password'),
+      };
+      alert(messages[err.code] || t('add_branch_error'));
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = t('add_branch_btn');
+    }
+  });
+}
+
+async function loadBranchesList() {
+  const wrap = document.getElementById('branches-wrap');
+  if (!wrap) return;
+
+  try {
+    const snap = await db.collection('users')
+      .where('parentClinicId', '==', currentUid)
+      .where('role', '==', 'clinic')
+      .get();
+
+    const branches = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    renderBranchesList(branches);
+  } catch (err) {
+    console.error('loadBranchesList error:', err);
+    wrap.innerHTML = `<p class="empty-state">${t('branches_load_error')}</p>`;
+  }
+}
+
+function renderBranchesList(branches) {
+  const wrap = document.getElementById('branches-wrap');
+
+  if (branches.length === 0) {
+    wrap.innerHTML = `<p class="empty-state">${t('no_branches_added')}</p>`;
+    return;
+  }
+
+  const statusLabels = {
+    pending: t('branch_status_pending'),
+    active: t('status_active'),
+    rejected: t('branch_status_rejected'),
+    disabled: t('status_disabled'),
+  };
+  const statusCls = { pending: 'badge-pending', active: 'badge-active', rejected: 'badge-rejected', disabled: 'badge-disabled' };
+
+  wrap.innerHTML = `
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>${t('branch_name_label')}</th>
+            <th>${t('label_email')}</th>
+            <th>${t('col_status')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${branches.map((b) => `
+            <tr>
+              <td class="cell-name">${escapeHtml(b.name)}</td>
+              <td class="cell-sub">${escapeHtml(b.email)}</td>
+              <td><span class="badge ${statusCls[b.status] || ''}">${statusLabels[b.status] || b.status}</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 async function loadStaffList() {

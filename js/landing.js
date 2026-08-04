@@ -368,7 +368,10 @@ function renderDoctorsCarousel(doctors) {
   }
 
   const display = showAllDoctors ? doctors : doctors.slice(0, CAROUSEL_CAP);
-  wrap.innerHTML = `<div class="carousel-track">${display.map((d) => renderDoctorMiniCard(d)).join('')}</div>`;
+  wrap.innerHTML = `
+    <div class="carousel-track">${display.map((d) => renderDoctorMiniCard(d)).join('')}</div>
+    <div class="carousel-dots" id="doctors-carousel-wrap-dots"></div>
+  `;
   setupAutoScroll('doctors-carousel-wrap');
   updateViewAllButton('doctors-carousel-wrap', doctors.length, showAllDoctors);
 }
@@ -400,7 +403,10 @@ function renderClinicsCarousel(clinics) {
   }
 
   const display = showAllClinics ? clinics : clinics.slice(0, CAROUSEL_CAP);
-  wrap.innerHTML = `<div class="carousel-track">${display.map((c) => renderClinicMiniCard(c)).join('')}</div>`;
+  wrap.innerHTML = `
+    <div class="carousel-track">${display.map((c) => renderClinicMiniCard(c)).join('')}</div>
+    <div class="carousel-dots" id="clinics-carousel-wrap-dots"></div>
+  `;
   setupAutoScroll('clinics-carousel-wrap');
   updateViewAllButton('clinics-carousel-wrap', clinics.length, showAllClinics);
 }
@@ -451,40 +457,77 @@ function setupAutoScroll(wrapId) {
   clearInterval(autoScrollTimers[wrapId]);
 
   const track = document.querySelector(`#${wrapId} .carousel-track`);
+  const dotsWrap = document.getElementById(`${wrapId}-dots`);
   if (!track) return;
 
-  // ما نفعّل التمرير التلقائي إلا لو فيه محتوى أطول من عرض الشاشة فعلاً
-  if (track.scrollWidth <= track.clientWidth + 10) return;
+  // ما نفعّل التمرير التلقائي ولا النقاط إلا لو فيه محتوى أطول من عرض الشاشة فعلاً
+  if (track.scrollWidth <= track.clientWidth + 10) {
+    if (dotsWrap) dotsWrap.innerHTML = '';
+    return;
+  }
 
-  let resumeTimeout = null;
+  const stepWidth = track.clientWidth * 0.85;
+  const maxScroll = track.scrollWidth - track.clientWidth;
+  const totalPages = Math.min(10, Math.max(2, Math.ceil(maxScroll / stepWidth) + 1));
 
-  // "قفزة" بمقدار عرض الشاشة تقريباً كل فترة (نفس إحساس شريط الإعلانات)، بدل تمرير بكسل بكسل
+  let currentPage = 0;
+
+  if (dotsWrap) {
+    dotsWrap.innerHTML = Array.from({ length: totalPages }, (_, i) =>
+      `<button type="button" class="carousel-dot ${i === 0 ? 'active' : ''}" data-page="${i}"></button>`
+    ).join('');
+
+    dotsWrap.querySelectorAll('.carousel-dot').forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const page = Number(dot.dataset.page);
+        const delta = (page - currentPage) * stepWidth;
+        track.scrollBy({ left: -delta, behavior: 'smooth' });
+        currentPage = page;
+        updateActiveDot(dotsWrap, currentPage);
+        restartTimer();
+      });
+    });
+  }
+
+  const updateDots = () => { if (dotsWrap) updateActiveDot(dotsWrap, currentPage); };
+
   const step = () => {
-    const maxScroll = track.scrollWidth - track.clientWidth;
     const atEnd = Math.abs(track.scrollLeft) >= maxScroll - 2;
 
     if (atEnd) {
       track.scrollTo({ left: 0, behavior: 'smooth' });
+      currentPage = 0;
     } else {
-      track.scrollBy({ left: -track.clientWidth * 0.85, behavior: 'smooth' });
+      track.scrollBy({ left: -stepWidth, behavior: 'smooth' });
+      currentPage = Math.min(currentPage + 1, totalPages - 1);
     }
+    updateDots();
   };
 
-  autoScrollTimers[wrapId] = setInterval(step, 3500);
+  function restartTimer() {
+    clearInterval(autoScrollTimers[wrapId]);
+    autoScrollTimers[wrapId] = setInterval(step, 3500);
+  }
 
+  restartTimer();
+
+  let resumeTimeout = null;
   const pause = () => clearInterval(autoScrollTimers[wrapId]);
   const resume = () => {
     clearTimeout(resumeTimeout);
-    resumeTimeout = setTimeout(() => {
-      clearInterval(autoScrollTimers[wrapId]);
-      autoScrollTimers[wrapId] = setInterval(step, 3500);
-    }, 2500);
+    resumeTimeout = setTimeout(restartTimer, 2500);
   };
 
   track.addEventListener('mouseenter', pause);
   track.addEventListener('mouseleave', resume);
   track.addEventListener('touchstart', pause, { passive: true });
   track.addEventListener('touchend', resume);
+}
+
+function updateActiveDot(dotsWrap, activeIndex) {
+  dotsWrap.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i === activeIndex);
+  });
 }
 
 // ============================================

@@ -31,6 +31,8 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 // ============================================
 // تحميل كل بيانات اللوحة
 // ============================================
+let cachedAllUsers = [];
+
 async function loadDashboard() {
   const [usersSnap, doctorsSnap, bookingsSnap] = await Promise.all([
     db.collection('users').get(),
@@ -39,6 +41,7 @@ async function loadDashboard() {
   ]);
 
   const allUsers = usersSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  cachedAllUsers = allUsers;
   const allDoctors = doctorsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   const allBookings = bookingsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
@@ -134,9 +137,14 @@ function renderClinicStatusTable(clinics, wrapId, emptyText) {
 }
 
 function renderClinicStatusRow(u) {
+  const parentClinic = u.parentClinicId ? cachedAllUsers.find((x) => x.id === u.parentClinicId) : null;
+
   return `
     <tr>
-      <td class="cell-name">${escapeHtml(u.name)}</td>
+      <td class="cell-name">
+        ${escapeHtml(u.name)}
+        ${parentClinic ? `<p class="cell-sub">🏢 فرع من: ${escapeHtml(parentClinic.name)}</p>` : ''}
+      </td>
       <td class="cell-sub">${escapeHtml(u.email)}</td>
       <td class="cell-sub">${escapeHtml(u.phone || '—')}</td>
       <td>
