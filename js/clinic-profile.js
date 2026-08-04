@@ -70,21 +70,7 @@ let cachedBranches = [];
 
 // لما تتبدّل اللغة، نعيد رسم محتوى الصفحة من البيانات المحفوظة بدون إعادة تحميل من القاعدة
 function onLanguageChanged() {
-  updateBackArrowDirection();
   if (cachedClinic) renderProfile(cachedClinic, cachedDoctors, cachedRatingsMap, cachedBranches);
-}
-
-// سهم الرجوع: يشاور يمين بالعربي (RTL)، ويسار بالإنجليزي (LTR) — نحدد شكله صراحة بدل الاعتماد على CSS بس
-function updateBackArrowDirection() {
-  const svg = document.querySelector('#back-btn svg path');
-  if (!svg) return;
-
-  // شكل يشاور يسار (LTR/إنجليزي)
-  const pointLeft = 'M17 3l1.4 1.4L9.8 13l8.6 8.6L17 23 7 13z';
-  // نفس الشكل معكوس أفقياً (يشاور يمين - RTL/عربي)
-  const pointRight = 'M7 3L5.6 4.4 14.2 13l-8.6 8.6L7 23l10-10z';
-
-  svg.setAttribute('d', currentLang === 'ar' ? pointRight : pointLeft);
 }
 
 function renderProfile(clinic, doctors, ratingsMap, branches) {
@@ -236,16 +222,6 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-// زر الرجوع: يرجع لنفس الصفحة اللي جاء منها المستخدم لو فيه سجل تصفّح، وإلا يرجعه للرئيسية
-document.getElementById('back-btn').addEventListener('click', () => {
-  if (document.referrer && document.referrer.includes(window.location.host)) {
-    history.back();
-  } else {
-    window.location.href = 'index.html';
-  }
-});
-
-updateBackArrowDirection();
 initClinicProfile();
 checkPatientBottomNav();
 

@@ -644,7 +644,7 @@ function renderBookingsList(elementId, bookings, emptyText, isUpcoming) {
         ${myReview ? `<p class="appt-sub">${starsDisplay(myReview.rating)} ${myReview.comment ? '— ' + escapeHtml(myReview.comment) : ''}</p>` : ''}
       </div>
       <div class="appt-actions">
-        ${bookingStatusBadge(b.status)}
+        ${patientFriendlyStatusBadge(b)}
         ${isUpcoming && (b.status === 'pending' || b.status === 'accepted')
           ? `
             <button type="button" class="btn-xs toggle" data-action="reschedule" data-id="${b.id}">${t('reschedule_btn')}</button>
@@ -1050,6 +1050,27 @@ function bookingStatusBadge(status) {
   };
   const cls = { pending: 'badge-pending', accepted: 'badge-active', rejected: 'badge-rejected', cancelled: 'badge-cancelled', no_show: 'badge-no-show' };
   return `<span class="badge ${cls[status] || ''}">${labels[status] || status}</span>`;
+}
+
+// تصنيف مبسّط لحالة الموعد من منظور المريض بس (القادمة/مكتمل/ملغي) —
+// بدل حالة سير العمل الخام (قيد الانتظار/مقبول/مرفوض) اللي تفيد العيادة أكثر من المريض
+function patientFriendlyStatusBadge(b) {
+  const todayStr = todayISO();
+  let label;
+  let cls;
+
+  if (b.status === 'cancelled' || b.status === 'rejected' || b.status === 'no_show') {
+    label = t('status_display_cancelled');
+    cls = 'badge-cancelled';
+  } else if (b.status === 'accepted' && b.date < todayStr) {
+    label = t('status_display_completed');
+    cls = 'badge-active';
+  } else {
+    label = t('status_display_upcoming');
+    cls = 'badge-pending';
+  }
+
+  return `<span class="badge ${cls}">${label}</span>`;
 }
 
 function bookingNumber(id) {

@@ -1,8 +1,6 @@
 let allClinicsList = [];
 
 async function initClinicsList() {
-  updateBackArrowDirection();
-
   const wrap = document.getElementById('clinics-list-wrap');
 
   try {
@@ -31,15 +29,22 @@ function renderClinicsList(clinics) {
     return;
   }
 
-  wrap.innerHTML = clinics.map((c) => `
+  wrap.innerHTML = clinics.map((c) => {
+    const logoStyle = c.logoUrl
+      ? `background-image:url('${c.logoUrl}')`
+      : `background:${avatarColor(c.name)}`;
+
+    return `
     <a href="clinic-profile.html?id=${c.id}" class="clinic-list-card">
+      <div class="clinic-list-card-logo" style="${logoStyle}">${c.logoUrl ? '' : escapeHtml((c.name || '؟').trim().slice(0, 1))}</div>
       <div class="clinic-list-card-info">
         <p class="clinic-list-card-name">${escapeHtml(c.name)}</p>
         ${c.address ? `<p class="clinic-list-card-address">📍 ${escapeHtml(c.address)}</p>` : ''}
       </div>
       <span class="clinic-list-card-arrow">‹</span>
     </a>
-  `).join('');
+  `;
+  }).join('');
 }
 
 document.getElementById('clinics-search-input').addEventListener('input', (e) => {
@@ -50,25 +55,7 @@ document.getElementById('clinics-search-input').addEventListener('input', (e) =>
   renderClinicsList(filtered);
 });
 
-// سهم الرجوع
-document.getElementById('back-btn').addEventListener('click', () => {
-  if (document.referrer && document.referrer.includes(window.location.host)) {
-    history.back();
-  } else {
-    window.location.href = 'index.html';
-  }
-});
-
-function updateBackArrowDirection() {
-  const svg = document.querySelector('#back-btn svg path');
-  if (!svg) return;
-  const pointLeft = 'M17 3l1.4 1.4L9.8 13l8.6 8.6L17 23 7 13z';
-  const pointRight = 'M7 3L5.6 4.4 14.2 13l-8.6 8.6L7 23l10-10z';
-  svg.setAttribute('d', currentLang === 'ar' ? pointRight : pointLeft);
-}
-
 function onLanguageChanged() {
-  updateBackArrowDirection();
   renderClinicsList(allClinicsList);
 }
 
@@ -101,6 +88,13 @@ function checkPatientBottomNav() {
       console.error('checkPatientBottomNav error:', err);
     }
   });
+}
+
+const AVATAR_COLORS = ['#158A7E', '#0F2440', '#1C6B93', '#2E9E6D', '#4A7A9E', '#0E7A72'];
+function avatarColor(name) {
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
 function escapeHtml(str) {

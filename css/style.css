@@ -993,26 +993,6 @@ body.landing {
   transform: translateX(-50%);
 }
 
-.profile-back-btn {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  background: transparent;
-  color: var(--white);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: border-color 0.2s, background 0.2s;
-}
-
-.profile-back-btn:hover { border-color: var(--gold-glow); background: rgba(255, 255, 255, 0.08); }
-
 .nav-bottom-row { justify-content: space-between; gap: 10px; }
 
 .lang-toggle-btn {
@@ -2764,6 +2744,21 @@ body.landing {
 }
 
 .clinic-list-card:hover { transform: translateX(-3px); }
+
+.clinic-list-card-logo {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: 900;
+  font-size: 18px;
+}
 
 .clinic-list-card-info { flex: 1; min-width: 0; }
 
