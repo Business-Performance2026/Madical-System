@@ -1322,17 +1322,25 @@ body.landing {
   padding: 5px 13px;
 }
 
-.carousel-track {
-  display: flex;
-  gap: 14px;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  padding: 4px 2px 12px;
-  -webkit-overflow-scrolling: touch;
+.paged-carousel-viewport {
+  overflow: hidden;
+  padding: 4px 2px 16px;
+  /* نجبر LTR داخلياً عشان حساب حركة الانزلاق يكون متوقع بغض النظر عن اتجاه الصفحة */
+  direction: ltr;
 }
 
-.carousel-track::-webkit-scrollbar { height: 6px; }
-.carousel-track::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 999px; }
+.paged-carousel-track {
+  display: flex;
+  transition: transform 0.5s ease;
+}
+
+.paged-carousel-page {
+  flex: 0 0 100%;
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  direction: rtl;
+}
 
 .doctor-card-mini,
 .clinic-card-mini {
