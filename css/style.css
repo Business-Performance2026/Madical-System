@@ -68,12 +68,15 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  padding: 6px;
+  box-sizing: border-box;
 }
 
 .brand-logo-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
 }
 
 .pulse-line {
@@ -367,6 +370,7 @@ body.dashboard {
   height: 44px;
   box-shadow: none;
   background: var(--blue-100);
+  padding: 4px;
 }
 
 .dashboard-header .header-brand svg { width: 26px; height: auto; }
@@ -1050,6 +1054,7 @@ body.landing {
   height: 40px;
   box-shadow: none;
   background: var(--blue-100);
+  padding: 4px;
 }
 
 .landing-nav .nav-brand svg { width: 24px; height: auto; }
@@ -1562,6 +1567,7 @@ body.landing {
   .dashboard-header .header-brand .brand-mark {
     width: 32px;
     height: 32px;
+    padding: 3px;
   }
 
   .header-actions { gap: 6px; }
