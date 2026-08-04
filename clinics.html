@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="page-title">موعد | ملف العيادة</title>
+  <title id="page-title">موعد | كل العيادات</title>
   <link rel="manifest" href="manifest.json">
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(() => {});</script>
   <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
@@ -26,32 +26,33 @@
           <span>موعد</span>
         </a>
       </div>
-      <a href="login.html" class="btn-primary" id="book-now-nav-btn" data-i18n="nav_login">تسجيل الدخول</a>
+      <a href="login.html" class="btn-primary" id="nav-login-btn" data-i18n="nav_login">تسجيل الدخول</a>
     </div>
   </nav>
 
-  <main class="profile-section">
-    <div id="profile-loading" class="loading-state" data-i18n="loading">جاري التحميل...</div>
-    <div id="profile-content" class="hidden"></div>
+  <main class="clinics-list-section">
+    <h1 class="clinics-list-title" data-i18n="all_clinics_title">كل العيادات</h1>
+    <input type="text" id="clinics-search-input" class="search-box" data-i18n-placeholder="search_placeholder" placeholder="دوّر على اسم عيادة...">
+    <div id="clinics-list-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
   </main>
 
   <nav class="bottom-nav hidden" id="patient-bottom-nav">
-    <a href="../index.html" class="bottom-nav-item">
+    <a href="index.html" class="bottom-nav-item">
       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3z"/></svg>
       <span data-i18n="bottom_nav_home">الرئيسية</span>
     </a>
-    <a href="../clinics.html" class="bottom-nav-item active">
+    <a href="clinics.html" class="bottom-nav-item active">
       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M5 21V7l7-4 7 4v14h-6v-6h-2v6zm4-8h2V9H9zm4 0h2V9h-2zM9 9h2V9zm4 0h2V9z"/></svg>
       <span data-i18n="bottom_nav_clinics">العيادات</span>
     </a>
-    <a href="../login.html" class="bottom-nav-center" aria-label="احجز الآن">
+    <a href="login.html" class="bottom-nav-center" aria-label="احجز الآن">
       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14zm0-12H5V6h14z"/><path fill="currentColor" d="M11 12h2v2h-2zM7 12h2v2H7zM15 12h2v2h-2z"/></svg>
     </a>
-    <a href="../login.html?tab=appointments" class="bottom-nav-item">
+    <a href="login.html?tab=appointments" class="bottom-nav-item">
       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M4 4h16v2H4zm0 5h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
       <span data-i18n="bottom_nav_appointments">مواعيدي</span>
     </a>
-    <a href="../login.html?tab=account" class="bottom-nav-item">
+    <a href="login.html?tab=account" class="bottom-nav-item">
       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.4 0-8 2.2-8 5v3h16v-3c0-2.8-3.6-5-8-5z"/></svg>
       <span data-i18n="bottom_nav_profile">حسابي</span>
     </a>
@@ -64,6 +65,6 @@
 
   <script src="js/i18n.js"></script>
   <script src="js/firebase-config.js"></script>
-  <script src="js/clinic-profile.js"></script>
+  <script src="js/clinics-list.js"></script>
 </body>
 </html>

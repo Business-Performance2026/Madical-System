@@ -2732,3 +2732,75 @@ body.landing {
 
 .account-danger-zone { margin-top: 4px; }
 .account-menu-item.account-danger { color: var(--red-600); }
+
+/* ============================================
+   صفحة "كل العيادات" (clinics.html) - بطاقات مستطيلة
+   ============================================ */
+.clinics-list-section {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 10px 20px 60px;
+}
+
+.clinics-list-title {
+  color: var(--white);
+  font-size: 20px;
+  font-weight: 900;
+  margin: 0 0 16px;
+}
+
+.clinic-list-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.clinic-list-card-name {
+  font-weight: 900;
+  font-size: 15px;
+  color: var(--blue-900);
+  text-decoration: none;
+  flex: 1;
+}
+
+.clinic-list-card-btn {
+  flex-shrink: 0;
+  padding: 9px 18px;
+  font-size: 13px;
+  width: auto;
+}
+
+/* ============================================
+   تبديل مواعيدي الحالية/السابقة (لوحة المريض)
+   ============================================ */
+.appts-subtabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.appts-subtab {
+  flex: 1;
+  padding: 12px 8px;
+  background: var(--gray-50);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 13.5px;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.appts-subtab.active {
+  background: var(--blue-900);
+  border-color: var(--blue-900);
+  color: var(--white);
+}

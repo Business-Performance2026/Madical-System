@@ -48,12 +48,19 @@
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="appointments">
-      <h2 class="section-title" data-i18n="section_upcoming_title">مواعيدي الحالية</h2>
-      <div id="upcoming-appts-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
-      <div id="my-waitlist-wrap"></div>
+      <div class="appts-subtabs">
+        <button type="button" class="appts-subtab active" data-subtab="upcoming" data-i18n="section_upcoming_title">مواعيدي الحالية</button>
+        <button type="button" class="appts-subtab" data-subtab="past" data-i18n="section_past_title">مواعيدي السابقة</button>
+      </div>
 
-      <h2 class="section-title" style="margin-top:30px;" data-i18n="section_past_title">مواعيدي السابقة</h2>
-      <div id="past-appts-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
+      <div id="upcoming-appts-panel" class="appts-subpanel">
+        <div id="upcoming-appts-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
+        <div id="my-waitlist-wrap"></div>
+      </div>
+
+      <div id="past-appts-panel" class="appts-subpanel hidden">
+        <div id="past-appts-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
+      </div>
     </section>
 
     <section class="section-card tab-panel hidden" data-panel="account">
@@ -94,7 +101,7 @@
       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3z"/></svg>
       <span data-i18n="bottom_nav_home">الرئيسية</span>
     </a>
-    <a href="../index.html" class="bottom-nav-item">
+    <a href="../clinics.html" class="bottom-nav-item">
       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M5 21V7l7-4 7 4v14h-6v-6h-2v6zm4-8h2V9H9zm4 0h2V9h-2zM9 9h2V9zm4 0h2V9z"/></svg>
       <span data-i18n="bottom_nav_clinics">العيادات</span>
     </a>

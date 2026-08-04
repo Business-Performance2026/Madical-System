@@ -137,12 +137,14 @@ async function initLanding() {
 // يظهر الشريط السفلي بس لو المستخدم مسجّل دخول كمريض فعّال (زائر عادي يبقى يشوف زر تسجيل الدخول عادي)
 function checkPatientBottomNav() {
   const bottomNav = document.getElementById('patient-bottom-nav');
+  const loginBtn = document.getElementById('nav-login-btn');
   if (!bottomNav || typeof auth === 'undefined') return;
 
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
       bottomNav.classList.add('hidden');
       document.body.classList.remove('has-bottom-nav');
+      if (loginBtn) loginBtn.classList.remove('hidden');
       return;
     }
 
@@ -151,9 +153,11 @@ function checkPatientBottomNav() {
       if (userDoc.exists && userDoc.data().role === 'patient' && userDoc.data().status === 'active') {
         bottomNav.classList.remove('hidden');
         document.body.classList.add('has-bottom-nav');
+        if (loginBtn) loginBtn.classList.add('hidden');
       } else {
         bottomNav.classList.add('hidden');
         document.body.classList.remove('has-bottom-nav');
+        if (loginBtn) loginBtn.classList.remove('hidden');
       }
     } catch (err) {
       console.error('checkPatientBottomNav error:', err);

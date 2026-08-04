@@ -252,6 +252,7 @@ checkPatientBottomNav();
 // يظهر الشريط السفلي بس لو المستخدم مسجّل دخول كمريض فعّال
 function checkPatientBottomNav() {
   const bottomNav = document.getElementById('patient-bottom-nav');
+  const loginBtn = document.getElementById('book-now-nav-btn');
   if (!bottomNav || typeof auth === 'undefined') return;
 
   auth.onAuthStateChanged(async (user) => {
@@ -266,6 +267,7 @@ function checkPatientBottomNav() {
       if (userDoc.exists && userDoc.data().role === 'patient' && userDoc.data().status === 'active') {
         bottomNav.classList.remove('hidden');
         document.body.classList.add('has-bottom-nav');
+        if (loginBtn) loginBtn.classList.add('hidden');
       } else {
         bottomNav.classList.add('hidden');
         document.body.classList.remove('has-bottom-nav');

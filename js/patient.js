@@ -1235,4 +1235,16 @@ if (accountDeleteBtn) {
   });
 }
 
+// ============================================
+// تبديل بين "مواعيدي الحالية" و"مواعيدي السابقة" داخل شاشة مواعيدي
+// ============================================
+document.querySelectorAll('.appts-subtab').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.appts-subtab').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('upcoming-appts-panel').classList.toggle('hidden', btn.dataset.subtab !== 'upcoming');
+    document.getElementById('past-appts-panel').classList.toggle('hidden', btn.dataset.subtab !== 'past');
+  });
+});
+
 initPageTabs();
