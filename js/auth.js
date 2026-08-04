@@ -1,4 +1,39 @@
 // ============================================
+// التحقق من جلسة نشطة مسبقاً — لو المستخدم مسجّل دخول أصلاً (حتى لو رجع من صفحة ثانية
+// زي الرئيسية أو ملف عيادة)، نوديه لحسابه مباشرة بدون ما نطلب بياناته من جديد
+// ============================================
+let sessionCheckHandled = false;
+
+auth.onAuthStateChanged(async (user) => {
+  if (sessionCheckHandled) return; // نتعامل مع أول تغيّر حالة بس هنا (الدخول اليدوي له مساره الخاص لاحقاً)
+  sessionCheckHandled = true;
+
+  if (!user) {
+    revealLoginForm();
+    return;
+  }
+
+  try {
+    const userDoc = await db.collection('users').doc(user.uid).get();
+
+    if (userDoc.exists && userDoc.data().status === 'active') {
+      redirectByRole(userDoc.data().role, true);
+      return;
+    }
+  } catch (err) {
+    console.error('session check error:', err);
+  }
+
+  // حساب موقوف، أو بانتظار موافقة، أو ما لقينا بياناته — نعرض نموذج الدخول العادي
+  revealLoginForm();
+});
+
+function revealLoginForm() {
+  document.getElementById('session-check-loading').classList.add('hidden');
+  document.getElementById('login-page-content').classList.remove('hidden');
+}
+
+// ============================================
 // عناصر الصفحة
 // ============================================
 const tabLogin = document.getElementById('tab-login');
@@ -343,7 +378,7 @@ async function handleLogin(email, password) {
 // ============================================
 // التوجيه حسب نوع المستخدم
 // ============================================
-function redirectByRole(role) {
+function redirectByRole(role, immediate) {
   const destinations = {
     patient: 'patient/home.html',
     clinic: 'clinic/dashboard.html',
@@ -357,6 +392,11 @@ function redirectByRole(role) {
   const clinicParam = new URLSearchParams(window.location.search).get('clinic');
   if (clinicParam && role === 'patient') {
     destination += `?clinic=${encodeURIComponent(clinicParam)}`;
+  }
+
+  if (immediate) {
+    window.location.href = destination;
+    return;
   }
 
   setTimeout(() => {
