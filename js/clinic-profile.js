@@ -65,7 +65,21 @@ async function initClinicProfile() {
 
 // لما تتبدّل اللغة، نعيد رسم محتوى الصفحة من البيانات المحفوظة بدون إعادة تحميل من القاعدة
 function onLanguageChanged() {
+  updateBackArrowDirection();
   if (cachedClinic) renderProfile(cachedClinic, cachedDoctors, cachedRatingsMap);
+}
+
+// سهم الرجوع: يشاور يمين بالعربي (RTL)، ويسار بالإنجليزي (LTR) — نحدد شكله صراحة بدل الاعتماد على CSS بس
+function updateBackArrowDirection() {
+  const svg = document.querySelector('#back-btn svg path');
+  if (!svg) return;
+
+  // شكل يشاور يسار (LTR/إنجليزي)
+  const pointLeft = 'M17 3l1.4 1.4L9.8 13l8.6 8.6L17 23 7 13z';
+  // نفس الشكل معكوس أفقياً (يشاور يمين - RTL/عربي)
+  const pointRight = 'M7 3L5.6 4.4 14.2 13l-8.6 8.6L7 23l10-10z';
+
+  svg.setAttribute('d', currentLang === 'ar' ? pointRight : pointLeft);
 }
 
 function renderProfile(clinic, doctors, ratingsMap) {
@@ -212,4 +226,5 @@ document.getElementById('back-btn').addEventListener('click', () => {
   }
 });
 
+updateBackArrowDirection();
 initClinicProfile();

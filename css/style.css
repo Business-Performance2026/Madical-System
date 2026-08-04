@@ -283,6 +283,29 @@ footer.disclaimer {
   scrollbar-width: thin;
 }
 
+.mobile-tab-select { display: none; }
+
+@media (max-width: 640px) {
+  .page-tabs { display: none; }
+
+  .mobile-tab-select {
+    display: block;
+    width: 100%;
+    padding: 13px 16px;
+    margin-bottom: 20px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--blue-900);
+    background: var(--white);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+  }
+
+  .mobile-tab-select:focus { outline: none; border-color: var(--blue-700); }
+}
+
 .page-tabs button {
   flex-shrink: 0;
   border: none;
@@ -989,9 +1012,6 @@ body.landing {
 }
 
 .profile-back-btn:hover { border-color: var(--gold-glow); background: rgba(255, 255, 255, 0.08); }
-
-/* السهم مرسوم أصلاً للاتجاه الإنجليزي (يسار)، ننعكسه بالعربي (يمين) تلقائياً حسب اتجاه الصفحة */
-html[dir="rtl"] .profile-back-btn svg { transform: scaleX(-1); }
 
 .nav-bottom-row { justify-content: space-between; gap: 10px; }
 

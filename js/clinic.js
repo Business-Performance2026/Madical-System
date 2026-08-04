@@ -1284,8 +1284,37 @@ function initPageTabs() {
       tabButtons.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       panels.forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== btn.dataset.tab));
+      const select = document.getElementById('mobile-tab-select');
+      if (select) select.value = btn.dataset.tab;
     });
   });
+
+  buildMobileTabSelect(tabButtons);
+}
+
+// قائمة منسدلة بديلة عن شريط التبويبات الأفقي — تناسب شاشات الجوال الصغيرة أكثر من التمرير
+function buildMobileTabSelect(tabButtons) {
+  const pageTabs = document.querySelector('.page-tabs');
+  if (!pageTabs || document.getElementById('mobile-tab-select')) return;
+
+  const select = document.createElement('select');
+  select.id = 'mobile-tab-select';
+  select.className = 'mobile-tab-select';
+
+  tabButtons.forEach((btn) => {
+    const option = document.createElement('option');
+    option.value = btn.dataset.tab;
+    option.textContent = btn.textContent.trim();
+    if (btn.classList.contains('active')) option.selected = true;
+    select.appendChild(option);
+  });
+
+  select.addEventListener('change', () => {
+    const targetBtn = document.querySelector(`.page-tabs button[data-tab="${select.value}"]`);
+    if (targetBtn) targetBtn.click();
+  });
+
+  pageTabs.parentNode.insertBefore(select, pageTabs);
 }
 
 // يفعّل تبويب معيّن برمجياً (يُستخدم مثلاً عند الضغط على تنبيه يخص قسم ثاني)

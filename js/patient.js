@@ -567,6 +567,7 @@ function loadMyBookings() {
 
           cachedMyBookings = newBookings;
           rerenderBookingsListsFromCache();
+          updateNotifBadge();
 
           if (isInitialMyBookingsLoad) {
             isInitialMyBookingsLoad = false;
@@ -1086,6 +1087,46 @@ function initPageTabs() {
 function switchToTab(tabName) {
   const btn = document.querySelector(`.page-tabs button[data-tab="${tabName}"]`);
   if (btn) btn.click();
+}
+
+// ============================================
+// جرس التنبيهات: يعدّ حالات "قبول/رفض/غيره" اللي ما شافها المريض بعد
+// ============================================
+function getSeenBookingIds() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem('mawid_seen_bookings') || '[]'));
+  } catch {
+    return new Set();
+  }
+}
+
+function updateNotifBadge() {
+  const badge = document.getElementById('patient-notif-badge');
+  if (!badge) return;
+
+  const seenIds = getSeenBookingIds();
+  const unseenCount = cachedMyBookings.filter((b) =>
+    ['accepted', 'rejected', 'no_show'].includes(b.status) && !seenIds.has(b.id)
+  ).length;
+
+  if (unseenCount > 0) {
+    badge.textContent = unseenCount > 9 ? '9+' : String(unseenCount);
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+const patientNotifBell = document.getElementById('patient-notif-bell');
+if (patientNotifBell) {
+  patientNotifBell.addEventListener('click', () => {
+    // نعلّم كل الحجوزات الحالية كـ"مشاهدة" ونصفّر العلامة
+    const seenIds = getSeenBookingIds();
+    cachedMyBookings.forEach((b) => seenIds.add(b.id));
+    localStorage.setItem('mawid_seen_bookings', JSON.stringify([...seenIds]));
+    updateNotifBadge();
+    switchToTab('upcoming');
+  });
 }
 
 initPageTabs();

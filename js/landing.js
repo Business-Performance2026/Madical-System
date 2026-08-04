@@ -458,27 +458,27 @@ function setupAutoScroll(wrapId) {
 
   let resumeTimeout = null;
 
+  // "قفزة" بمقدار عرض الشاشة تقريباً كل فترة (نفس إحساس شريط الإعلانات)، بدل تمرير بكسل بكسل
   const step = () => {
-    // بالـ RTL الأصلي، أقصى تمرير (آخر عنصر) يوصله scrollLeft عند قيمة سالبة تقارب -(scrollWidth - clientWidth)
     const maxScroll = track.scrollWidth - track.clientWidth;
     const atEnd = Math.abs(track.scrollLeft) >= maxScroll - 2;
 
     if (atEnd) {
       track.scrollTo({ left: 0, behavior: 'smooth' });
     } else {
-      track.scrollBy({ left: -1, behavior: 'auto' });
+      track.scrollBy({ left: -track.clientWidth * 0.85, behavior: 'smooth' });
     }
   };
 
-  autoScrollTimers[wrapId] = setInterval(step, 30);
+  autoScrollTimers[wrapId] = setInterval(step, 3500);
 
   const pause = () => clearInterval(autoScrollTimers[wrapId]);
   const resume = () => {
     clearTimeout(resumeTimeout);
     resumeTimeout = setTimeout(() => {
       clearInterval(autoScrollTimers[wrapId]);
-      autoScrollTimers[wrapId] = setInterval(step, 30);
-    }, 2000);
+      autoScrollTimers[wrapId] = setInterval(step, 3500);
+    }, 2500);
   };
 
   track.addEventListener('mouseenter', pause);
