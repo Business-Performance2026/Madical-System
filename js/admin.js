@@ -781,6 +781,7 @@ if (addSpecialtyForm) {
     e.preventDefault();
 
     const name = document.getElementById('new-specialty-name').value.trim();
+    const nameEn = document.getElementById('new-specialty-name-en').value.trim();
     const icon = document.getElementById('new-specialty-icon').value.trim();
 
     if (!name || !icon) {
@@ -796,6 +797,7 @@ if (addSpecialtyForm) {
       const maxOrder = cachedSpecialties.reduce((max, s) => Math.max(max, s.order || 0), 0);
       await db.collection('specialties').add({
         name,
+        nameEn,
         icon,
         order: maxOrder + 1,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -855,7 +857,7 @@ function renderSpecialtiesList() {
                 <button class="btn-xs toggle" data-action="move-specialty-down" data-id="${s.id}" ${i === cachedSpecialties.length - 1 ? 'disabled' : ''}>▼</button>
               </td>
               <td style="font-size:20px;">${escapeHtml(s.icon)}</td>
-              <td class="cell-name">${escapeHtml(s.name)}</td>
+              <td class="cell-name">${escapeHtml(s.name)}${s.nameEn ? `<p class="cell-sub">${escapeHtml(s.nameEn)}</p>` : ''}</td>
               <td>
                 <button class="btn-xs toggle" data-action="edit-specialty" data-id="${s.id}">✏️</button>
                 <button class="btn-xs delete" data-action="delete-specialty" data-id="${s.id}">🗑️</button>
@@ -908,8 +910,10 @@ function editSpecialty(specId) {
   const spec = cachedSpecialties.find((s) => s.id === specId);
   if (!spec) return;
 
-  const newName = prompt('اسم التخصص:', spec.name);
+  const newName = prompt('اسم التخصص (عربي):', spec.name);
   if (newName === null) return;
+  const newNameEn = prompt('الاسم بالإنجليزي (اختياري):', spec.nameEn || '');
+  if (newNameEn === null) return;
   const newIcon = prompt('الأيقونة (إيموجي):', spec.icon);
   if (newIcon === null) return;
 
@@ -918,7 +922,7 @@ function editSpecialty(specId) {
     return;
   }
 
-  db.collection('specialties').doc(specId).update({ name: newName.trim(), icon: newIcon.trim() })
+  db.collection('specialties').doc(specId).update({ name: newName.trim(), nameEn: newNameEn.trim(), icon: newIcon.trim() })
     .then(loadSpecialties)
     .catch((err) => {
       console.error('editSpecialty error:', err);

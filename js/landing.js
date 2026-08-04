@@ -80,8 +80,10 @@ function applyLanguage(lang) {
   });
 }
 
-document.getElementById('lang-toggle-btn').addEventListener('click', () => {
+document.getElementById('lang-toggle-btn').addEventListener('click', async () => {
   applyLanguage(currentLang === 'ar' ? 'en' : 'ar');
+  await loadSpecialtiesBar();
+  renderSpecialtyCounts();
   renderDirectory();
 });
 
@@ -147,13 +149,19 @@ async function loadSpecialtiesBar() {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'specialty-pill';
-      btn.dataset.specialty = s.name;
+      if (s.name === activeSpecialty) btn.classList.add('active');
+      btn.dataset.specialty = s.name; // نحتفظ بالاسم العربي دايماً كقيمة فلترة (يطابق بيانات الأطباء)
+      const displayName = (currentLang === 'en' && s.nameEn) ? s.nameEn : s.name;
       btn.innerHTML = `
         <span class="pill-circle">${escapeHtml(s.icon)}</span>
-        <span class="pill-label">${escapeHtml(s.name)}<span class="pill-count" data-count-for="${escapeHtml(s.name)}"></span></span>
+        <span class="pill-label">${escapeHtml(displayName)}<span class="pill-count" data-count-for="${escapeHtml(s.name)}"></span></span>
       `;
       bar.appendChild(btn);
     });
+
+    // زر "الكل" يفعّل بس لو ما فيه تخصص مفعّل حالياً
+    const allBtn = bar.querySelector('.specialty-pill[data-specialty=""]');
+    if (allBtn) allBtn.classList.toggle('active', !activeSpecialty);
 
     bindSpecialtyPillClicks();
   } catch (err) {

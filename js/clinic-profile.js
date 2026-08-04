@@ -8,13 +8,17 @@ const ICON_INSTAGRAM = '<svg viewBox="0 0 24 24" width="18" height="18"><path fi
 // ============================================
 // تحميل بيانات العيادة من رقم المعرّف بالرابط (?id=)
 // ============================================
+let cachedClinic = null;
+let cachedDoctors = [];
+let cachedRatingsMap = {};
+
 async function initClinicProfile() {
   const clinicId = new URLSearchParams(window.location.search).get('id');
   const loadingEl = document.getElementById('profile-loading');
   const contentEl = document.getElementById('profile-content');
 
   if (!clinicId) {
-    loadingEl.innerHTML = '<p class="empty-state">رابط غير صحيح — ما فيه عيادة محددة</p>';
+    loadingEl.innerHTML = `<p class="empty-state">${t('profile_invalid_link')}</p>`;
     return;
   }
 
@@ -22,7 +26,7 @@ async function initClinicProfile() {
     const clinicDoc = await db.collection('users').doc(clinicId).get();
 
     if (!clinicDoc.exists || clinicDoc.data().role !== 'clinic' || clinicDoc.data().status !== 'active') {
-      loadingEl.innerHTML = '<p class="empty-state">هذي العيادة مو موجودة أو غير فعّالة حالياً</p>';
+      loadingEl.innerHTML = `<p class="empty-state">${t('profile_clinic_not_found')}</p>`;
       return;
     }
 
@@ -43,6 +47,10 @@ async function initClinicProfile() {
       ratingsMap[r.doctorId].count += 1;
     });
 
+    cachedClinic = clinic;
+    cachedDoctors = doctors;
+    cachedRatingsMap = ratingsMap;
+
     document.getElementById('page-title').textContent = `موعد | ${clinic.name}`;
     document.getElementById('book-now-nav-btn').href = `login.html?clinic=${clinicId}`;
 
@@ -51,8 +59,13 @@ async function initClinicProfile() {
     contentEl.classList.remove('hidden');
   } catch (err) {
     console.error('initClinicProfile error:', err);
-    loadingEl.innerHTML = '<p class="empty-state">تعذر تحميل بيانات العيادة، حاول مرة أخرى</p>';
+    loadingEl.innerHTML = `<p class="empty-state">${t('profile_load_error')}</p>`;
   }
+}
+
+// لما تتبدّل اللغة، نعيد رسم محتوى الصفحة من البيانات المحفوظة بدون إعادة تحميل من القاعدة
+function onLanguageChanged() {
+  if (cachedClinic) renderProfile(cachedClinic, cachedDoctors, cachedRatingsMap);
 }
 
 function renderProfile(clinic, doctors, ratingsMap) {
@@ -84,22 +97,22 @@ function renderProfile(clinic, doctors, ratingsMap) {
       <div class="profile-contact-row">
         ${clinic.whatsapp ? `
           <a class="profile-contact-btn" href="https://wa.me/${sanitizePhone(clinic.whatsapp)}" target="_blank" rel="noopener">
-            ${ICON_WHATSAPP} واتساب
+            ${ICON_WHATSAPP} ${t('profile_whatsapp')}
           </a>
         ` : ''}
         ${clinic.instagram ? `
           <a class="profile-contact-btn" href="${escapeHtml(instagramUrl(clinic.instagram))}" target="_blank" rel="noopener">
-            ${ICON_INSTAGRAM} انستقرام
+            ${ICON_INSTAGRAM} ${t('profile_instagram')}
           </a>
         ` : ''}
       </div>
     ` : ''}
 
-    <a href="login.html?clinic=${clinic.id}" class="btn-primary profile-book-btn">احجز موعد الآن ←</a>
+    <a href="login.html?clinic=${clinic.id}" class="btn-primary profile-book-btn">${t('profile_book_now')}</a>
 
     ${(clinic.services && clinic.services.length) ? `
       <section class="profile-block">
-        <h2 class="profile-block-title">خدمات العيادة</h2>
+        <h2 class="profile-block-title">${t('profile_services_title')}</h2>
         <div class="profile-services-list">
           ${clinic.services.map((s) => `<span class="service-tag">${escapeHtml(s)}</span>`).join('')}
         </div>
@@ -107,9 +120,9 @@ function renderProfile(clinic, doctors, ratingsMap) {
     ` : ''}
 
     <section class="profile-block">
-      <h2 class="profile-block-title">الأطباء</h2>
+      <h2 class="profile-block-title">${t('profile_doctors_title')}</h2>
       ${doctors.length === 0
-        ? '<p class="empty-state">هذي العيادة ما أضافت أطباء بعد</p>'
+        ? `<p class="empty-state">${t('profile_no_doctors')}</p>`
         : `<div class="profile-doctors-grid">${doctors.map((d) => renderDoctorCard(d, ratingsMap)).join('')}</div>`}
     </section>
   `;
@@ -131,7 +144,7 @@ function buildMapBlock(clinic) {
   return `
     <a class="profile-directions-link" href="${escapeHtml(mapUrl)}" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24" width="18" height="18"><path fill="var(--gold-600)" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
-      <span>موقع العيادة على خرائط جوجل</span>
+      <span>${t('profile_maps_link')}</span>
     </a>
   `;
 }
@@ -143,8 +156,8 @@ function renderDoctorCard(d, ratingsMap) {
 
   const ratingInfo = ratingsMap[d.id];
   const ratingText = ratingInfo
-    ? `⭐ ${(ratingInfo.sum / ratingInfo.count).toFixed(1)} (${ratingInfo.count} تقييم)`
-    : 'ما فيه تقييمات بعد';
+    ? t('profile_rating_summary', (ratingInfo.sum / ratingInfo.count).toFixed(1), ratingInfo.count)
+    : t('profile_no_reviews');
 
   return `
     <div class="profile-doctor-card">

@@ -990,6 +990,9 @@ body.landing {
 
 .profile-back-btn:hover { border-color: var(--gold-glow); background: rgba(255, 255, 255, 0.08); }
 
+/* السهم مرسوم أصلاً للاتجاه الإنجليزي (يسار)، ننعكسه بالعربي (يمين) تلقائياً حسب اتجاه الصفحة */
+html[dir="rtl"] .profile-back-btn svg { transform: scaleX(-1); }
+
 .nav-bottom-row { justify-content: space-between; gap: 10px; }
 
 .lang-toggle-btn {
