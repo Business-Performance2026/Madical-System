@@ -62,6 +62,7 @@
       <button type="button" data-tab="platform-stats">الإحصائيات الشاملة</button>
       <button type="button" data-tab="ads">إعلانات الرئيسية</button>
       <button type="button" data-tab="specialties">تخصصات الرئيسية</button>
+      <button type="button" data-tab="platform-settings">إعدادات المنصة</button>
     </div>
 
     <section class="section-card tab-panel" data-panel="pending">
@@ -185,6 +186,19 @@
       </form>
 
       <div id="specialties-list-wrap" class="loading-state">جاري التحميل...</div>
+    </section>
+
+    <section class="section-card tab-panel hidden" data-panel="platform-settings">
+      <h2 class="section-title">إعدادات المنصة</h2>
+      <p class="section-hint">هذا الرقم يظهر للمرضى بزر "مساعدة" بحسابهم — يفتح واتساب مباشرة عليه لو احتاجوا دعم</p>
+
+      <form id="platform-settings-form">
+        <div class="field">
+          <label for="support-whatsapp">رقم واتساب الدعم الفني</label>
+          <input type="tel" id="support-whatsapp" placeholder="9689xxxxxxx">
+        </div>
+        <button type="submit" class="btn-primary" style="width:auto; padding:12px 28px;">حفظ الرقم</button>
+      </form>
     </section>
 
   </div>

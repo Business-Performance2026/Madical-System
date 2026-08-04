@@ -50,12 +50,14 @@ auth.onAuthStateChanged(async (user) => {
 
   // لو دخل برابط يطلب تبويب معيّن (من الشريط السفلي بصفحات ثانية مثلاً)
   const tabParam = new URLSearchParams(window.location.search).get('tab');
-  if (tabParam && ['booking', 'upcoming', 'past'].includes(tabParam)) {
+  if (tabParam && ['booking', 'appointments', 'account'].includes(tabParam)) {
     switchToTab(tabParam);
   }
 });
 
-document.getElementById('logout-btn').addEventListener('click', async () => {
+document.getElementById('account-logout-btn').addEventListener('click', async () => {
+  const sure = confirm(t('confirm_logout'));
+  if (!sure) return;
   await auth.signOut();
   window.location.href = '../index.html';
 });
@@ -601,7 +603,7 @@ function showBookingStatusToast(booking) {
     <p class="toast-body">${escapeHtml(booking.doctorName)} — ${booking.date}<br>${bookingStatusBadge(booking.status)}</p>
   `;
   el.addEventListener('click', () => {
-    switchToTab(booking.status === 'pending' || booking.status === 'accepted' ? 'upcoming' : 'past');
+    switchToTab('appointments');
     el.remove();
   });
   root.appendChild(el);
@@ -1099,7 +1101,7 @@ function switchToTab(tabName) {
 // ============================================
 // شريط التنقل السفلي (جوال بس) - نفس التبويبات الموجودة، بشكل أقرب لتطبيقات الجوال
 // ============================================
-const bottomNavMap = { booking: 'bottom-nav-book', upcoming: 'bottom-nav-appointments', past: 'bottom-nav-profile' };
+const bottomNavMap = { booking: 'bottom-nav-book', appointments: 'bottom-nav-appointments', account: 'bottom-nav-profile' };
 
 function syncBottomNavActive(tabName) {
   Object.values(bottomNavMap).forEach((id) => {
@@ -1115,10 +1117,10 @@ const bottomNavBook = document.getElementById('bottom-nav-book');
 if (bottomNavBook) bottomNavBook.addEventListener('click', () => { switchToTab('booking'); syncBottomNavActive('booking'); });
 
 const bottomNavAppointments = document.getElementById('bottom-nav-appointments');
-if (bottomNavAppointments) bottomNavAppointments.addEventListener('click', () => { switchToTab('upcoming'); syncBottomNavActive('upcoming'); });
+if (bottomNavAppointments) bottomNavAppointments.addEventListener('click', () => { switchToTab('appointments'); syncBottomNavActive('appointments'); });
 
 const bottomNavProfile = document.getElementById('bottom-nav-profile');
-if (bottomNavProfile) bottomNavProfile.addEventListener('click', () => { switchToTab('past'); syncBottomNavActive('past'); });
+if (bottomNavProfile) bottomNavProfile.addEventListener('click', () => { switchToTab('account'); syncBottomNavActive('account'); });
 
 // لو المستخدم بدّل التبويب من الشريط العلوي مباشرة، نزامن الشريط السفلي معه
 document.querySelectorAll('.page-tabs button').forEach((btn) => {
@@ -1139,31 +1141,97 @@ function getSeenBookingIds() {
 }
 
 function updateNotifBadge() {
-  const badge = document.getElementById('patient-notif-badge');
-  if (!badge) return;
-
   const seenIds = getSeenBookingIds();
   const unseenCount = cachedMyBookings.filter((b) =>
     ['accepted', 'rejected', 'no_show'].includes(b.status) && !seenIds.has(b.id)
   ).length;
 
-  if (unseenCount > 0) {
-    badge.textContent = unseenCount > 9 ? '9+' : String(unseenCount);
-    badge.classList.remove('hidden');
-  } else {
-    badge.classList.add('hidden');
-  }
+  const badgeText = unseenCount > 9 ? '9+' : String(unseenCount);
+
+  ['account-notif-badge', 'bottom-nav-appointments-badge'].forEach((id) => {
+    const badge = document.getElementById(id);
+    if (!badge) return;
+    if (unseenCount > 0) {
+      badge.textContent = badgeText;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  });
 }
 
-const patientNotifBell = document.getElementById('patient-notif-bell');
-if (patientNotifBell) {
-  patientNotifBell.addEventListener('click', () => {
-    // نعلّم كل الحجوزات الحالية كـ"مشاهدة" ونصفّر العلامة
-    const seenIds = getSeenBookingIds();
-    cachedMyBookings.forEach((b) => seenIds.add(b.id));
-    localStorage.setItem('mawid_seen_bookings', JSON.stringify([...seenIds]));
-    updateNotifBadge();
-    switchToTab('upcoming');
+function markAllBookingsSeen() {
+  const seenIds = getSeenBookingIds();
+  cachedMyBookings.forEach((b) => seenIds.add(b.id));
+  localStorage.setItem('mawid_seen_bookings', JSON.stringify([...seenIds]));
+  updateNotifBadge();
+}
+
+// ============================================
+// شاشة "حسابي"
+// ============================================
+const accountNotifBtn = document.getElementById('account-notifications-btn');
+if (accountNotifBtn) {
+  accountNotifBtn.addEventListener('click', () => {
+    markAllBookingsSeen();
+    switchToTab('appointments');
+  });
+}
+
+const accountLanguageBtn = document.getElementById('account-language-btn');
+if (accountLanguageBtn) {
+  accountLanguageBtn.addEventListener('click', () => {
+    if (typeof toggleLanguage === 'function') toggleLanguage();
+  });
+}
+
+const accountHelpBtn = document.getElementById('account-help-btn');
+if (accountHelpBtn) {
+  accountHelpBtn.addEventListener('click', async () => {
+    try {
+      const doc = await db.collection('settings').doc('platform').get();
+      const supportWhatsapp = doc.exists ? doc.data().supportWhatsapp : '';
+
+      if (!supportWhatsapp) {
+        alert(t('help_unavailable'));
+        return;
+      }
+
+      const sanitized = supportWhatsapp.replace(/[^0-9]/g, '');
+      window.open(`https://wa.me/${sanitized}`, '_blank');
+    } catch (err) {
+      console.error('account help error:', err);
+      alert(t('help_unavailable'));
+    }
+  });
+}
+
+const accountDeleteBtn = document.getElementById('account-delete-btn');
+if (accountDeleteBtn) {
+  accountDeleteBtn.addEventListener('click', async () => {
+    const sure = confirm(t('confirm_delete_account'));
+    if (!sure) return;
+
+    const sureAgain = confirm(t('confirm_delete_account_final'));
+    if (!sureAgain) return;
+
+    accountDeleteBtn.disabled = true;
+    accountDeleteBtn.textContent = t('deleting');
+
+    try {
+      await db.collection('users').doc(currentUid).delete();
+      await auth.currentUser.delete();
+      window.location.href = '../index.html';
+    } catch (err) {
+      console.error('delete account error:', err);
+      if (err.code === 'auth/requires-recent-login') {
+        alert(t('delete_requires_recent_login'));
+      } else {
+        alert(t('delete_account_error'));
+      }
+      accountDeleteBtn.disabled = false;
+      accountDeleteBtn.textContent = '🗑️ ' + t('account_delete');
+    }
   });
 }
 

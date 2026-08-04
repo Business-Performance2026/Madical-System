@@ -84,8 +84,8 @@ service cloud.firestore {
             && request.resource.data.role == resource.data.role
             && request.resource.data.status == resource.data.status);
 
-      // حذف حساب: الأدمن بس
-      allow delete: if isAdmin();
+      // حذف حساب: الأدمن، أو المستخدم نفسه (حذف حسابه بنفسه)
+      allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
     }
 
     // ============================================
@@ -210,12 +210,30 @@ service cloud.firestore {
     }
 
     // ============================================
+    // settings
+    // إعدادات عامة للتطبيق (رقم واتساب الدعم مثلاً) - قراءة عامة، تحكم الأدمن بس
+    // ============================================
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ============================================
     // specialties
     // قائمة التخصصات وأيقوناتها بالشاشة الرئيسية - قراءة عامة، تحكم كامل للأدمن بس
     // ============================================
     match /specialties/{specId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // settings
+    // إعدادات المنصة العامة (رقم واتساب الدعم إلخ) - قراءة عامة، تحكم الأدمن بس
+    // ============================================
+    match /settings/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
     }
 
     // ============================================

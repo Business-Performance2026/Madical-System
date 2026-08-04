@@ -31,21 +31,14 @@
           <p class="brand-subtitle"><span data-i18n="welcome_prefix">مرحباً، </span><span id="patient-name">...</span></p>
         </div>
       </div>
-      <div class="header-actions">
-        <button type="button" class="notif-bell" id="patient-notif-bell" title="التحديثات">
-          🔔
-          <span class="notif-badge hidden" id="patient-notif-badge">0</span>
-        </button>
-        <button class="btn-outline" id="logout-btn" data-i18n="logout">تسجيل الخروج</button>
-      </div>
     </header>
 
     <div id="guest-banner-wrap"></div>
 
     <div class="page-tabs">
       <button type="button" class="active" data-tab="booking" data-i18n="tab_new_booking">احجز موعد جديد</button>
-      <button type="button" data-tab="upcoming" data-i18n="tab_upcoming">مواعيدي الحالية</button>
-      <button type="button" data-tab="past" data-i18n="tab_past">مواعيدي السابقة</button>
+      <button type="button" data-tab="appointments" data-i18n="tab_appointments">مواعيدي</button>
+      <button type="button" data-tab="account" data-i18n="tab_account">حسابي</button>
     </div>
 
     <section class="section-card tab-panel" data-panel="booking">
@@ -54,15 +47,44 @@
       <div id="booking-steps" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
 
-    <section class="section-card tab-panel hidden" data-panel="upcoming">
+    <section class="section-card tab-panel hidden" data-panel="appointments">
       <h2 class="section-title" data-i18n="section_upcoming_title">مواعيدي الحالية</h2>
       <div id="upcoming-appts-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
       <div id="my-waitlist-wrap"></div>
+
+      <h2 class="section-title" style="margin-top:30px;" data-i18n="section_past_title">مواعيدي السابقة</h2>
+      <div id="past-appts-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
     </section>
 
-    <section class="section-card tab-panel hidden" data-panel="past">
-      <h2 class="section-title" data-i18n="section_past_title">مواعيدي السابقة</h2>
-      <div id="past-appts-wrap" class="loading-state" data-i18n="loading">جاري التحميل...</div>
+    <section class="section-card tab-panel hidden" data-panel="account">
+      <h2 class="section-title" data-i18n="tab_account">حسابي</h2>
+
+      <div class="account-menu">
+        <button type="button" class="account-menu-item" id="account-notifications-btn">
+          <span class="account-menu-icon">🔔</span>
+          <span class="account-menu-label" data-i18n="account_notifications">الإشعارات</span>
+          <span class="notif-badge hidden" id="account-notif-badge">0</span>
+        </button>
+        <button type="button" class="account-menu-item" id="account-language-btn">
+          <span class="account-menu-icon">🌐</span>
+          <span class="account-menu-label" data-i18n="account_language">اللغة</span>
+        </button>
+        <button type="button" class="account-menu-item" id="account-help-btn">
+          <span class="account-menu-icon">🆘</span>
+          <span class="account-menu-label" data-i18n="account_help">مساعدة</span>
+        </button>
+      </div>
+
+      <div class="account-menu account-danger-zone">
+        <button type="button" class="account-menu-item" id="account-logout-btn">
+          <span class="account-menu-icon">🚪</span>
+          <span class="account-menu-label" data-i18n="logout">تسجيل الخروج</span>
+        </button>
+        <button type="button" class="account-menu-item account-danger" id="account-delete-btn">
+          <span class="account-menu-icon">🗑️</span>
+          <span class="account-menu-label" data-i18n="account_delete">حذف حسابي</span>
+        </button>
+      </div>
     </section>
 
   </div>
@@ -82,6 +104,7 @@
     <button type="button" class="bottom-nav-item" id="bottom-nav-appointments">
       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M4 4h16v2H4zm0 5h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
       <span data-i18n="bottom_nav_appointments">مواعيدي</span>
+      <span class="notif-badge hidden bottom-nav-badge" id="bottom-nav-appointments-badge">0</span>
     </button>
     <button type="button" class="bottom-nav-item" id="bottom-nav-profile">
       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.4 0-8 2.2-8 5v3h16v-3c0-2.8-3.6-5-8-5z"/></svg>

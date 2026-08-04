@@ -980,4 +980,44 @@ async function deleteSpecialty(specId) {
   }
 }
 
+// ============================================
+// إعدادات المنصة (رقم واتساب الدعم)
+// ============================================
+async function loadPlatformSettings() {
+  const input = document.getElementById('support-whatsapp');
+  if (!input) return;
+
+  try {
+    const doc = await db.collection('settings').doc('platform').get();
+    if (doc.exists) input.value = doc.data().supportWhatsapp || '';
+  } catch (err) {
+    console.error('loadPlatformSettings error:', err);
+  }
+}
+
+const platformSettingsForm = document.getElementById('platform-settings-form');
+if (platformSettingsForm) {
+  platformSettingsForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const supportWhatsapp = document.getElementById('support-whatsapp').value.trim();
+    const btn = platformSettingsForm.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'جاري الحفظ...';
+
+    try {
+      await db.collection('settings').doc('platform').set({ supportWhatsapp }, { merge: true });
+      alert('تم حفظ الرقم بنجاح');
+    } catch (err) {
+      console.error('save platform settings error:', err);
+      alert('تعذر الحفظ، حاول مرة أخرى');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'حفظ الرقم';
+    }
+  });
+}
+
+loadPlatformSettings();
+
 initPageTabs();
