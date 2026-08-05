@@ -989,21 +989,13 @@ body.landing {
 
 .nav-top-row {
   position: relative;
-  min-height: 44px;
+  min-height: 58px;
 }
 
 .nav-top-row .nav-brand {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-}
-
-/* الرئيسية بس: الشعار يمين ومنزّل شوي (بدل المنتصف الافتراضي) */
-body.home-page .nav-top-row .nav-brand {
-  left: auto;
-  right: 0;
-  top: 62%;
-  transform: translateY(-50%);
 }
 
 .nav-bottom-row { justify-content: space-between; gap: 10px; }
@@ -1054,6 +1046,13 @@ body.home-page .nav-top-row .nav-brand {
 
 .landing-nav .nav-brand {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.landing-nav .nav-brand-top {
+  display: flex;
   align-items: center;
   gap: 10px;
 }
@@ -1068,6 +1067,14 @@ body.home-page .nav-top-row .nav-brand {
 
 .landing-nav .nav-brand svg { width: 24px; height: auto; }
 .landing-nav .nav-brand span { font-weight: 900; font-size: 18px; color: var(--white); }
+
+.nav-brand-tagline {
+  margin: 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+}
 
 .landing-nav .btn-primary { width: auto; padding: 11px 22px; font-size: 15px; }
 

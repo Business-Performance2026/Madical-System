@@ -4,6 +4,7 @@
 const translations = {
   ar: {
     nav_login: 'تسجيل الدخول',
+    nav_tagline: 'احجز موعدك بثواني',
     search_placeholder: 'دوّر على تخصص أو اسم عيادة...',
     spec_all: 'الكل',
     spec_dental: 'أسنان',
@@ -30,6 +31,7 @@ const translations = {
   },
   en: {
     nav_login: 'Login',
+    nav_tagline: 'Book your appointment in seconds',
     search_placeholder: 'Search by specialty or clinic name...',
     spec_all: 'All',
     spec_dental: 'Dental',
