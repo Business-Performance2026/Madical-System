@@ -404,28 +404,56 @@ body.dashboard {
 }
 
 .stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   background: var(--white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: 18px 16px;
-  text-align: center;
-  transition: transform 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border-bottom: 3px solid transparent;
 }
 
-.stat-card:hover { transform: translateY(-2px); }
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(15,36,64,0.14); }
+
+.stat-icon {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.stat-icon-blue { background: #E3EEF7; }
+.stat-icon-teal { background: #DEF3EF; }
+.stat-icon-gold { background: #FBF0D6; }
+.stat-icon-green { background: #E1F5E8; }
+.stat-icon-red { background: #FBE4E1; }
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 
 .stat-card .stat-number {
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 900;
   color: var(--blue-900);
-  display: block;
   line-height: 1.2;
 }
 
 .stat-card .stat-label {
-  font-size: 14px;
+  font-size: 12.5px;
   color: var(--gray-500);
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* بطاقة قسم عام */

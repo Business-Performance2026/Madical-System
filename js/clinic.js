@@ -1755,43 +1755,150 @@ function formatMonthLabel(key) {
 // ============================================
 const exportCsvBtn = document.getElementById('export-csv-btn');
 if (exportCsvBtn) {
-  exportCsvBtn.addEventListener('click', exportBookingsCSV);
+  exportCsvBtn.addEventListener('click', exportBookingsExcel);
 }
 
-function exportBookingsCSV() {
-  const statusLabels = {
-    pending: t('status_pending'),
-    accepted: t('status_accepted'),
-    rejected: t('status_rejected'),
-    cancelled: t('status_cancelled'),
-    no_show: t('status_no_show'),
-  };
-  const headers = [t('col_booking_number'), t('col_patient'), t('col_phone'), t('col_doctor'), t('col_date'), t('col_time'), t('col_status')];
+async function exportBookingsExcel() {
+  const exportBtn = document.getElementById('export-csv-btn');
+  const originalText = exportBtn.textContent;
+  exportBtn.disabled = true;
+  exportBtn.textContent = t('exporting');
 
-  const rows = [...cachedBookings]
-    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
-    .map((b) => [
-      bookingNumber(b.id),
-      b.patientName,
-      b.patientPhone || '',
-      b.doctorName,
-      b.date,
-      b.time,
-      statusLabels[b.status] || b.status,
-    ]);
+  try {
+    const statusLabels = {
+      pending: t('status_pending'),
+      accepted: t('status_accepted'),
+      rejected: t('status_rejected'),
+      cancelled: t('status_cancelled'),
+      no_show: t('status_no_show'),
+    };
 
-  const csvContent = [headers, ...rows]
-    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-    .join('\n');
+    // ألوان لكل حالة (تطابق ألوان الشارات المستخدمة بالتطبيق نفسه)
+    const statusColors = {
+      pending: 'FFF6E3B4',
+      accepted: 'FFD8F0E1',
+      rejected: 'FFFBE0DC',
+      cancelled: 'FFE6E8EB',
+      no_show: 'FFF3D9D9',
+    };
+    const statusFontColors = {
+      pending: 'FF8A6200',
+      accepted: 'FF1E7A4C',
+      rejected: 'FFB03A2E',
+      cancelled: 'FF5A6472',
+      no_show: 'FFA33A2E',
+    };
 
-  // نضيف BOM بالبداية عشان Excel يقرأ الحروف العربية صح
-  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `حجوزات-${clinicName}-${todayISO()}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
+    const rows = [...cachedBookings].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'موعد';
+    workbook.created = new Date();
+
+    const sheet = workbook.addWorksheet(t('export_sheet_name'), {
+      views: [{ rightToLeft: true }],
+    });
+
+    // ===== شعار وعنوان التقرير =====
+    sheet.mergeCells('A1:G1');
+    const titleCell = sheet.getCell('A1');
+    titleCell.value = `${t('export_report_title')} — ${escapeHtmlPlain(clinicName)}`;
+    titleCell.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF044059' } };
+    sheet.getRow(1).height = 34;
+
+    sheet.mergeCells('A2:G2');
+    const subtitleCell = sheet.getCell('A2');
+    subtitleCell.value = `${t('export_generated_on')}: ${new Date().toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US')}`;
+    subtitleCell.font = { name: 'Calibri', size: 10.5, italic: true, color: { argb: 'FFFFFFFF' } };
+    subtitleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    subtitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0E5478' } };
+    sheet.getRow(2).height = 22;
+
+    sheet.addRow([]);
+
+    // ===== رأس الجدول =====
+    const headers = [
+      t('col_booking_number'), t('col_patient'), t('col_phone'),
+      t('col_doctor'), t('col_date'), t('col_time'), t('col_status'),
+    ];
+    const headerRow = sheet.addRow(headers);
+    headerRow.eachCell((cell) => {
+      cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD19F00' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFB88700' } },
+        bottom: { style: 'thin', color: { argb: 'FFB88700' } },
+        left: { style: 'thin', color: { argb: 'FFB88700' } },
+        right: { style: 'thin', color: { argb: 'FFB88700' } },
+      };
+    });
+    headerRow.height = 26;
+
+    // ===== صفوف البيانات =====
+    rows.forEach((b, i) => {
+      const row = sheet.addRow([
+        bookingNumber(b.id),
+        b.patientName,
+        b.patientPhone || '—',
+        b.doctorName,
+        b.date,
+        b.time,
+        statusLabels[b.status] || b.status,
+      ]);
+
+      const isEven = i % 2 === 0;
+      row.eachCell((cell, colNumber) => {
+        cell.font = { name: 'Calibri', size: 11, color: { argb: 'FF223142' } };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFE3E7EB' } },
+          bottom: { style: 'thin', color: { argb: 'FFE3E7EB' } },
+          left: { style: 'thin', color: { argb: 'FFE3E7EB' } },
+          right: { style: 'thin', color: { argb: 'FFE3E7EB' } },
+        };
+
+        // عمود الحالة (السابع) يتلوّن حسب حالة الحجز نفسها
+        if (colNumber === 7) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: statusColors[b.status] || 'FFF4F6F8' } };
+          cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: statusFontColors[b.status] || 'FF223142' } };
+        } else {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isEven ? 'FFFFFFFF' : 'FFF6F8FA' } };
+        }
+      });
+      row.height = 22;
+    });
+
+    // ===== عرض الأعمدة =====
+    sheet.columns = [
+      { width: 14 }, { width: 22 }, { width: 16 },
+      { width: 20 }, { width: 13 }, { width: 10 }, { width: 14 },
+    ];
+
+    // تجميد الصفوف العلوية (العنوان + الرأس) عشان تبقى ظاهرة أثناء التمرير
+    sheet.views = [{ state: 'frozen', ySplit: 4, rightToLeft: true }];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${t('export_file_prefix')}-${clinicName}-${todayISO()}.xlsx`;
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('exportBookingsExcel error:', err);
+    alert(t('export_error'));
+  } finally {
+    exportBtn.disabled = false;
+    exportBtn.textContent = originalText;
+  }
+}
+
+function escapeHtmlPlain(str) {
+  return (str || '').toString();
 }
 
 // ============================================

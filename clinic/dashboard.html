@@ -42,20 +42,32 @@
 
     <div class="stats-grid">
       <div class="stat-card">
-        <span class="stat-number" id="stat-today">—</span>
-        <span class="stat-label" data-i18n="stat_today">حجوزات اليوم</span>
+        <div class="stat-icon stat-icon-blue">📅</div>
+        <div class="stat-info">
+          <span class="stat-number" id="stat-today">—</span>
+          <span class="stat-label" data-i18n="stat_today">حجوزات اليوم</span>
+        </div>
       </div>
       <div class="stat-card">
-        <span class="stat-number" id="stat-upcoming">—</span>
-        <span class="stat-label" data-i18n="stat_upcoming">حجوزات قادمة</span>
+        <div class="stat-icon stat-icon-teal">🗓️</div>
+        <div class="stat-info">
+          <span class="stat-number" id="stat-upcoming">—</span>
+          <span class="stat-label" data-i18n="stat_upcoming">حجوزات قادمة</span>
+        </div>
       </div>
       <div class="stat-card">
-        <span class="stat-number" id="stat-pending">—</span>
-        <span class="stat-label" data-i18n="stat_pending">طلبات جديدة</span>
+        <div class="stat-icon stat-icon-gold">🔔</div>
+        <div class="stat-info">
+          <span class="stat-number" id="stat-pending">—</span>
+          <span class="stat-label" data-i18n="stat_pending">طلبات جديدة</span>
+        </div>
       </div>
       <div class="stat-card">
-        <span class="stat-number" id="stat-patients">—</span>
-        <span class="stat-label" data-i18n="stat_total_patients">إجمالي المرضى</span>
+        <div class="stat-icon stat-icon-green">👥</div>
+        <div class="stat-info">
+          <span class="stat-number" id="stat-patients">—</span>
+          <span class="stat-label" data-i18n="stat_total_patients">إجمالي المرضى</span>
+        </div>
       </div>
     </div>
 
@@ -209,24 +221,36 @@
       <div id="analytics-content">
         <div class="stats-grid" style="margin-bottom:22px;">
           <div class="stat-card">
-            <span class="stat-number" id="stat-total-bookings">—</span>
-            <span class="stat-label" data-i18n="stat_total_bookings">إجمالي الحجوزات</span>
+            <div class="stat-icon stat-icon-blue">📊</div>
+            <div class="stat-info">
+              <span class="stat-number" id="stat-total-bookings">—</span>
+              <span class="stat-label" data-i18n="stat_total_bookings">إجمالي الحجوزات</span>
+            </div>
           </div>
           <div class="stat-card">
-            <span class="stat-number" id="stat-top-doctor" style="font-size:18px;">—</span>
-            <span class="stat-label" data-i18n="stat_top_doctor">أكثر طبيب مطلوب</span>
+            <div class="stat-icon stat-icon-teal">🏆</div>
+            <div class="stat-info">
+              <span class="stat-number" id="stat-top-doctor" style="font-size:18px;">—</span>
+              <span class="stat-label" data-i18n="stat_top_doctor">أكثر طبيب مطلوب</span>
+            </div>
           </div>
           <div class="stat-card">
-            <span class="stat-number" id="stat-top-hour">—</span>
-            <span class="stat-label" data-i18n="stat_top_hour">أكثر وقت ازدحاماً</span>
+            <div class="stat-icon stat-icon-gold">⏰</div>
+            <div class="stat-info">
+              <span class="stat-number" id="stat-top-hour">—</span>
+              <span class="stat-label" data-i18n="stat_top_hour">أكثر وقت ازدحاماً</span>
+            </div>
           </div>
           <div class="stat-card">
-            <span class="stat-number" id="stat-cancel-rate">—</span>
-            <span class="stat-label" data-i18n="stat_cancel_rate">نسبة الإلغاء/الرفض/الغياب</span>
+            <div class="stat-icon stat-icon-red">📉</div>
+            <div class="stat-info">
+              <span class="stat-number" id="stat-cancel-rate">—</span>
+              <span class="stat-label" data-i18n="stat_cancel_rate">نسبة الإلغاء/الرفض/الغياب</span>
+            </div>
           </div>
         </div>
 
-        <button type="button" class="btn-outline" id="export-csv-btn" style="margin-bottom:22px;" data-i18n="export_csv_btn">📥 تصدير كل الحجوزات (Excel/CSV)</button>
+        <button type="button" class="btn-outline" id="export-csv-btn" style="margin-bottom:22px;" data-i18n="export_csv_btn">📥 تصدير تقرير إكسل منسّق</button>
 
         <div class="chart-block">
           <p class="chart-title" data-i18n="chart_by_doctor">الحجوزات حسب الطبيب</p>
@@ -312,6 +336,9 @@
 
   <!-- Chart.js لرسم الإحصائيات -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+
+  <!-- ExcelJS لتصدير تقارير إكسل منسّقة وملوّنة -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
   <script src="../js/i18n.js"></script>
   <script src="../js/firebase-config.js"></script>
