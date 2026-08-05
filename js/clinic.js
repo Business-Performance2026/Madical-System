@@ -486,6 +486,12 @@ function renderDoctors() {
       printDoctorSchedule(btn.dataset.id);
     });
   });
+  wrap.querySelectorAll('[data-action="export-doctor"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      exportDoctorScheduleExcel(btn.dataset.id);
+    });
+  });
   wrap.querySelectorAll('[data-action="edit-doctor"]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -688,6 +694,7 @@ function renderDoctorAccordionItem(doc) {
         </div>
         <div class="doctor-item-actions">
           <button class="btn-xs toggle" data-action="print-doctor" data-id="${doc.id}" title="${t('print_doctor_title')}">🖨️</button>
+          <button class="btn-xs toggle" data-action="export-doctor" data-id="${doc.id}" title="${t('export_doctor_title')}">📊</button>
           <button class="btn-xs toggle" data-action="edit-doctor" data-id="${doc.id}">✏️</button>
           <button class="btn-xs delete" data-action="delete-doctor" data-id="${doc.id}">🗑️</button>
           <span class="doctor-item-arrow">${isExpanded ? '▲' : '▼'}</span>
@@ -1765,30 +1772,6 @@ async function exportBookingsExcel() {
   exportBtn.textContent = t('exporting');
 
   try {
-    const statusLabels = {
-      pending: t('status_pending'),
-      accepted: t('status_accepted'),
-      rejected: t('status_rejected'),
-      cancelled: t('status_cancelled'),
-      no_show: t('status_no_show'),
-    };
-
-    // ألوان لكل حالة (تطابق ألوان الشارات المستخدمة بالتطبيق نفسه)
-    const statusColors = {
-      pending: 'FFF6E3B4',
-      accepted: 'FFD8F0E1',
-      rejected: 'FFFBE0DC',
-      cancelled: 'FFE6E8EB',
-      no_show: 'FFF3D9D9',
-    };
-    const statusFontColors = {
-      pending: 'FF8A6200',
-      accepted: 'FF1E7A4C',
-      rejected: 'FFB03A2E',
-      cancelled: 'FF5A6472',
-      no_show: 'FFA33A2E',
-    };
-
     const rows = [...cachedBookings].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 
     const workbook = new ExcelJS.Workbook();
@@ -1799,86 +1782,7 @@ async function exportBookingsExcel() {
       views: [{ rightToLeft: true }],
     });
 
-    // ===== شعار وعنوان التقرير =====
-    sheet.mergeCells('A1:G1');
-    const titleCell = sheet.getCell('A1');
-    titleCell.value = `${t('export_report_title')} — ${escapeHtmlPlain(clinicName)}`;
-    titleCell.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
-    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
-    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF044059' } };
-    sheet.getRow(1).height = 34;
-
-    sheet.mergeCells('A2:G2');
-    const subtitleCell = sheet.getCell('A2');
-    subtitleCell.value = `${t('export_generated_on')}: ${new Date().toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US')}`;
-    subtitleCell.font = { name: 'Calibri', size: 10.5, italic: true, color: { argb: 'FFFFFFFF' } };
-    subtitleCell.alignment = { vertical: 'middle', horizontal: 'center' };
-    subtitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0E5478' } };
-    sheet.getRow(2).height = 22;
-
-    sheet.addRow([]);
-
-    // ===== رأس الجدول =====
-    const headers = [
-      t('col_booking_number'), t('col_patient'), t('col_phone'),
-      t('col_doctor'), t('col_date'), t('col_time'), t('col_status'),
-    ];
-    const headerRow = sheet.addRow(headers);
-    headerRow.eachCell((cell) => {
-      cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD19F00' } };
-      cell.alignment = { vertical: 'middle', horizontal: 'center' };
-      cell.border = {
-        top: { style: 'thin', color: { argb: 'FFB88700' } },
-        bottom: { style: 'thin', color: { argb: 'FFB88700' } },
-        left: { style: 'thin', color: { argb: 'FFB88700' } },
-        right: { style: 'thin', color: { argb: 'FFB88700' } },
-      };
-    });
-    headerRow.height = 26;
-
-    // ===== صفوف البيانات =====
-    rows.forEach((b, i) => {
-      const row = sheet.addRow([
-        bookingNumber(b.id),
-        b.patientName,
-        b.patientPhone || '—',
-        b.doctorName,
-        b.date,
-        b.time,
-        statusLabels[b.status] || b.status,
-      ]);
-
-      const isEven = i % 2 === 0;
-      row.eachCell((cell, colNumber) => {
-        cell.font = { name: 'Calibri', size: 11, color: { argb: 'FF223142' } };
-        cell.alignment = { vertical: 'middle', horizontal: 'center' };
-        cell.border = {
-          top: { style: 'thin', color: { argb: 'FFE3E7EB' } },
-          bottom: { style: 'thin', color: { argb: 'FFE3E7EB' } },
-          left: { style: 'thin', color: { argb: 'FFE3E7EB' } },
-          right: { style: 'thin', color: { argb: 'FFE3E7EB' } },
-        };
-
-        // عمود الحالة (السابع) يتلوّن حسب حالة الحجز نفسها
-        if (colNumber === 7) {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: statusColors[b.status] || 'FFF4F6F8' } };
-          cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: statusFontColors[b.status] || 'FF223142' } };
-        } else {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isEven ? 'FFFFFFFF' : 'FFF6F8FA' } };
-        }
-      });
-      row.height = 22;
-    });
-
-    // ===== عرض الأعمدة =====
-    sheet.columns = [
-      { width: 14 }, { width: 22 }, { width: 16 },
-      { width: 20 }, { width: 13 }, { width: 10 }, { width: 14 },
-    ];
-
-    // تجميد الصفوف العلوية (العنوان + الرأس) عشان تبقى ظاهرة أثناء التمرير
-    sheet.views = [{ state: 'frozen', ySplit: 4, rightToLeft: true }];
+    buildStyledBookingsSheet(sheet, `${t('export_report_title')} — ${escapeHtmlPlain(clinicName)}`, rows, true);
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -1899,6 +1803,143 @@ async function exportBookingsExcel() {
 
 function escapeHtmlPlain(str) {
   return (str || '').toString();
+}
+
+// يبني ورقة إكسل منسّقة وملوّنة (عنوان + رأس جدول + صفوف ملوّنة حسب الحالة) - يُستخدم لتقرير الحجوزات العام ولجدول كل طبيب لحاله
+function buildStyledBookingsSheet(sheet, titleText, bookings, showDoctorColumn) {
+  const statusLabels = {
+    pending: t('status_pending'),
+    accepted: t('status_accepted'),
+    rejected: t('status_rejected'),
+    cancelled: t('status_cancelled'),
+    no_show: t('status_no_show'),
+  };
+
+  // ألوان لكل حالة (تطابق ألوان الشارات المستخدمة بالتطبيق نفسه)
+  const statusColors = {
+    pending: 'FFF6E3B4', accepted: 'FFD8F0E1', rejected: 'FFFBE0DC', cancelled: 'FFE6E8EB', no_show: 'FFF3D9D9',
+  };
+  const statusFontColors = {
+    pending: 'FF8A6200', accepted: 'FF1E7A4C', rejected: 'FFB03A2E', cancelled: 'FF5A6472', no_show: 'FFA33A2E',
+  };
+
+  const colCount = showDoctorColumn ? 7 : 6;
+  const lastCol = String.fromCharCode(64 + colCount); // A..G
+
+  // ===== شعار وعنوان التقرير =====
+  sheet.mergeCells(`A1:${lastCol}1`);
+  const titleCell = sheet.getCell('A1');
+  titleCell.value = titleText;
+  titleCell.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF044059' } };
+  sheet.getRow(1).height = 34;
+
+  sheet.mergeCells(`A2:${lastCol}2`);
+  const subtitleCell = sheet.getCell('A2');
+  subtitleCell.value = `${t('export_generated_on')}: ${new Date().toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US')}`;
+  subtitleCell.font = { name: 'Calibri', size: 10.5, italic: true, color: { argb: 'FFFFFFFF' } };
+  subtitleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+  subtitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0E5478' } };
+  sheet.getRow(2).height = 22;
+
+  sheet.addRow([]);
+
+  // ===== رأس الجدول =====
+  const headers = [t('col_booking_number'), t('col_patient'), t('col_phone')];
+  if (showDoctorColumn) headers.push(t('col_doctor'));
+  headers.push(t('col_date'), t('col_time'), t('col_status'));
+
+  const headerRow = sheet.addRow(headers);
+  headerRow.eachCell((cell) => {
+    cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD19F00' } };
+    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FFB88700' } }, bottom: { style: 'thin', color: { argb: 'FFB88700' } },
+      left: { style: 'thin', color: { argb: 'FFB88700' } }, right: { style: 'thin', color: { argb: 'FFB88700' } },
+    };
+  });
+  headerRow.height = 26;
+
+  // ===== صفوف البيانات =====
+  bookings.forEach((b, i) => {
+    const values = [bookingNumber(b.id), b.patientName, b.patientPhone || '—'];
+    if (showDoctorColumn) values.push(b.doctorName);
+    values.push(b.date, b.time, statusLabels[b.status] || b.status);
+
+    const row = sheet.addRow(values);
+    const isEven = i % 2 === 0;
+    const statusColNumber = colCount;
+
+    row.eachCell((cell, colNumber) => {
+      cell.font = { name: 'Calibri', size: 11, color: { argb: 'FF223142' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFE3E7EB' } }, bottom: { style: 'thin', color: { argb: 'FFE3E7EB' } },
+        left: { style: 'thin', color: { argb: 'FFE3E7EB' } }, right: { style: 'thin', color: { argb: 'FFE3E7EB' } },
+      };
+
+      if (colNumber === statusColNumber) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: statusColors[b.status] || 'FFF4F6F8' } };
+        cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: statusFontColors[b.status] || 'FF223142' } };
+      } else {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isEven ? 'FFFFFFFF' : 'FFF6F8FA' } };
+      }
+    });
+    row.height = 22;
+  });
+
+  // ===== عرض الأعمدة =====
+  const baseCols = [{ width: 14 }, { width: 22 }, { width: 16 }];
+  if (showDoctorColumn) baseCols.push({ width: 20 });
+  baseCols.push({ width: 13 }, { width: 10 }, { width: 14 });
+  sheet.columns = baseCols;
+
+  // تجميد الصفوف العلوية (العنوان + الرأس) عشان تبقى ظاهرة أثناء التمرير
+  sheet.views = [{ state: 'frozen', ySplit: 4, rightToLeft: true }];
+}
+
+// يصدّر جدول طبيب واحد (حجوزات هذا الأسبوع المقبولة) كملف إكسل منسّق ومنفصل
+async function exportDoctorScheduleExcel(doctorId) {
+  const doctor = cachedDoctors.find((d) => d.id === doctorId);
+  if (!doctor) return;
+
+  const btn = document.querySelector(`[data-action="export-doctor"][data-id="${doctorId}"]`);
+  const originalText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+
+  try {
+    const weekDates = getWeekDates();
+    const weekIsoSet = new Set(weekDates.map((d) => d.iso));
+    const bookings = cachedBookings
+      .filter((b) => b.status === 'accepted' && b.doctorId === doctorId && weekIsoSet.has(b.date))
+      .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'موعد';
+    workbook.created = new Date();
+
+    const sheet = workbook.addWorksheet(escapeHtmlPlain(doctor.name).slice(0, 28) || t('export_sheet_name'), {
+      views: [{ rightToLeft: true }],
+    });
+
+    buildStyledBookingsSheet(sheet, `${doctor.name} — ${doctor.specialty}`, bookings, false);
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${t('export_file_prefix')}-${doctor.name}-${todayISO()}.xlsx`;
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('exportDoctorScheduleExcel error:', err);
+    alert(t('export_error'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = originalText; }
+  }
 }
 
 // ============================================

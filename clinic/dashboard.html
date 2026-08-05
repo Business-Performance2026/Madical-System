@@ -71,18 +71,21 @@
       </div>
     </div>
 
-    <div class="page-tabs">
-      <button type="button" class="active" data-tab="requests" data-i18n="clinic_tab_requests">طلبات الحجز الجديدة</button>
-      <button type="button" data-tab="rejected" data-i18n="clinic_tab_rejected">المواعيد المرفوضة</button>
-      <button type="button" data-tab="doctors" data-i18n="clinic_tab_doctors">الأطباء</button>
-      <button type="button" data-tab="schedule" data-i18n="clinic_tab_schedule">جدول الأسبوع</button>
-      <button type="button" data-tab="upcoming24h" data-i18n="clinic_tab_upcoming24">المواعيد القادمة خلال 24 ساعة</button>
-      <button type="button" data-tab="patients" data-i18n="clinic_tab_patients">بحث المرضى</button>
-      <button type="button" data-tab="staff" data-i18n="clinic_tab_staff">الموظفين</button>
-      <button type="button" data-tab="branches" data-i18n="clinic_tab_branches">الفروع</button>
-      <button type="button" data-tab="analytics" data-i18n="clinic_tab_analytics">الإحصائيات</button>
-      <button type="button" data-tab="settings" data-i18n="clinic_tab_settings">إعدادات العيادة</button>
-    </div>
+    <div class="dashboard-body">
+    <nav class="page-tabs">
+      <button type="button" class="active" data-tab="requests"><span class="tab-icon">📥</span><span data-i18n="clinic_tab_requests">طلبات الحجز الجديدة</span></button>
+      <button type="button" data-tab="rejected"><span class="tab-icon">❌</span><span data-i18n="clinic_tab_rejected">المواعيد المرفوضة</span></button>
+      <button type="button" data-tab="doctors"><span class="tab-icon">👨‍⚕️</span><span data-i18n="clinic_tab_doctors">الأطباء</span></button>
+      <button type="button" data-tab="schedule"><span class="tab-icon">🗓️</span><span data-i18n="clinic_tab_schedule">جدول الأسبوع</span></button>
+      <button type="button" data-tab="upcoming24h"><span class="tab-icon">⏰</span><span data-i18n="clinic_tab_upcoming24">المواعيد القادمة خلال 24 ساعة</span></button>
+      <button type="button" data-tab="patients"><span class="tab-icon">🔍</span><span data-i18n="clinic_tab_patients">بحث المرضى</span></button>
+      <button type="button" data-tab="staff"><span class="tab-icon">👥</span><span data-i18n="clinic_tab_staff">الموظفين</span></button>
+      <button type="button" data-tab="branches"><span class="tab-icon">🏢</span><span data-i18n="clinic_tab_branches">الفروع</span></button>
+      <button type="button" data-tab="analytics"><span class="tab-icon">📊</span><span data-i18n="clinic_tab_analytics">الإحصائيات</span></button>
+      <button type="button" data-tab="settings"><span class="tab-icon">⚙️</span><span data-i18n="clinic_tab_settings">إعدادات العيادة</span></button>
+    </nav>
+
+    <div class="dashboard-main">
 
     <section class="section-card tab-panel" data-panel="requests">
       <h2 class="section-title" data-i18n="clinic_tab_requests">طلبات الحجز الجديدة</h2>
@@ -321,6 +324,9 @@
         <img id="booking-qr-img" class="booking-qr-img" alt="رمز QR لرابط الحجز">
       </div>
     </section>
+
+    </div>
+    </div>
 
   </div>
 
