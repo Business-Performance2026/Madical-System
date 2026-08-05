@@ -997,6 +997,14 @@ body.landing {
   transform: translateX(-50%);
 }
 
+/* الرئيسية بس: الشعار يمين ومنزّل شوي (بدل المنتصف الافتراضي) */
+body.home-page .nav-top-row .nav-brand {
+  left: auto;
+  right: 0;
+  top: 62%;
+  transform: translateY(-50%);
+}
+
 .nav-bottom-row { justify-content: space-between; gap: 10px; }
 
 .lang-toggle-btn {
@@ -1347,7 +1355,21 @@ body.landing {
   color: inherit;
 }
 
-.doctor-photo-circle,
+.doctor-photo-circle {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: 900;
+  font-size: 22px;
+}
+
 .clinic-logo-circle {
   width: 62px;
   height: 62px;
