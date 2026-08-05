@@ -989,6 +989,7 @@ body.landing {
 
 .nav-top-row {
   position: relative;
+  min-height: 44px;
 }
 
 .nav-top-row .nav-brand {
